@@ -27,7 +27,7 @@ function ActionIcon({ label, title, onClick, dim = '' }) {
   )
 }
 
-function ProfilesPanel({ onEdit, editingId }) {
+function ProfilesPanel({ onEdit, editingId, onAddToBattle }) {
   const profiles         = useProfilesStore((s) => s.profiles)
   const deleteProfile    = useProfilesStore((s) => s.deleteProfile)
   const duplicateProfile = useProfilesStore((s) => s.duplicateProfile)
@@ -83,9 +83,10 @@ function ProfilesPanel({ onEdit, editingId }) {
               </p>
             </div>
             <div className={`flex gap-1 shrink-0 ${editingId === p.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
-              <ActionIcon label="✎" title="Edit"      onClick={() => onEdit(p.id)} dim="text-(--neon-cyan)" />
-              <ActionIcon label="⧉" title="Duplicate" onClick={() => duplicateProfile(p.id)} />
-              <ActionIcon label="⊗" title="Delete"    onClick={() => { if (confirm(`Delete "${p.name}"?`)) deleteProfile(p.id) }} dim="hover:text-red-400" />
+              <ActionIcon label="⊕" title="Add to Battle" onClick={() => onAddToBattle(p)} dim="text-green-400" />
+              <ActionIcon label="✎" title="Edit"           onClick={() => onEdit(p.id)} dim="text-(--neon-cyan)" />
+              <ActionIcon label="⧉" title="Duplicate"      onClick={() => duplicateProfile(p.id)} />
+              <ActionIcon label="⊗" title="Delete"         onClick={() => { if (confirm(`Delete "${p.name}"?`)) deleteProfile(p.id) }} dim="hover:text-red-400" />
             </div>
           </div>
         ))}
@@ -340,7 +341,7 @@ export default function Dashboard() {
 
       {/* Left: profiles library */}
       <div className="w-72 shrink-0 border-r border-slate-800 flex flex-col overflow-hidden">
-        <ProfilesPanel editingId={editingId} onEdit={setEditingId} />
+        <ProfilesPanel editingId={editingId} onEdit={setEditingId} onAddToBattle={setAddTarget} />
       </div>
 
       {/* Right: logo header + session panels */}
