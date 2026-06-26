@@ -243,7 +243,7 @@ Come Trav2022 CRB p.158–159, con queste sostituzioni:
 11. **Strict Scope**: Stay within discussed scope. Do not add extra features unless requested.
 12. **Tailwind v4 Syntax**: Canonical class syntax — `(--var)` not `[var(--var)]`, `bg-linear-to-t` not `bg-gradient-to-t`. No `tailwind.config.js` — use CSS `@theme` for custom tokens.
 13. **No External State Libraries**: Do not introduce Redux, Jotai, Context-based state — Zustand only.
-14. **Game Rules Fidelity**: Tutti i calcoli meccanici (DM, danno, TAC Speed, range bands, critical hits) devono corrispondere a **2300AD B3 p.52–62** come fonte primaria, con Trav2022 CRB usato solo per tabelle crit interno (p.158–159) e weapon traits (p.75). Segnalare qualsiasi ambiguità prima di implementare. Correzioni note a `data/weapons.js`: LL-98 optimal=Close, traits=[Accurate]; Grumbler TL=12, traits=[Advanced,Inefficient]; anti_missile_laser optimal=Adjacent, damage=1D. Software validi in 2300AD: `stutterwarp_control`, `fire_control_1/2/3`, `auto_repair_1/2`, `operations`, `intellect`, `archive` — NON `manoeuvre` o `evade_N`.
+14. **Game Rules Fidelity**: Tutti i calcoli meccanici (DM, danno, TAC Speed, range bands, critical hits) devono corrispondere a **2300AD B3 p.52–62** come fonte primaria, con Trav2022 CRB usato solo per tabelle crit interno (p.158–159) e weapon traits (p.75). Segnalare qualsiasi ambiguità prima di implementare. Software validi in 2300AD: `stutterwarp_control`, `fire_control_1/2/3`, `auto_repair_1/2`, `operations`, `intellect`, `archive` — NON `manoeuvre` o `evade_N`. Funzioni chiave in `utils/combat.js` già implementate: `getWeaponTraitAttackDm(traits)` (Accurate +1, Slow −2 all'attacco), `computeEffectiveSignature(ship)` (firma effettiva con tutti i modificatori dinamici B3 p.57), `computeAttackDMs(params)` (include weaponTraitDm), `rollDamage(weaponId, count, armour)` (Advanced/Obsolete per die).
 
 ## CRITICAL RULES
 
@@ -270,7 +270,7 @@ src/
 │   │   └── useProfileImport.js   ← Hook: import profiles from file
 │   ├── battle/
 │   │   ├── BattleView.jsx        ← Layout principale: fascie + bento cards per nave
-│   │   ├── ShipBentoCard.jsx     ← Card nave: hull bar, thrust, armi, critici, missili ETA
+│   │   ├── ShipBentoCard.jsx     ← Card nave: hull bar, TAC Speed, SIG effettiva, critici, missili ETA
 │   │   └── MissileTracker.jsx    ← Salvi missili in volo con round all'impatto
 │   ├── modals/
 │   │   ├── Modal.jsx             ← Generic modal wrapper
@@ -284,12 +284,12 @@ src/
 │   │   ├── ActionModal.jsx       ← Azioni crew (Overload, Repair, EW, Sensor Lock, ecc.)
 │   │   ├── CrewAssignmentModal.jsx← Assegna crew a ruoli
 │   │   ├── InitiativeModal.jsx   ← Roll iniziativa + Tactics check + ordinamento
-│   │   └── ShipDetailModal.jsx   ← Sheet completo della nave
+│   │   └── ShipDetailModal.jsx   ← Sheet completo + toggle SIGNATURE CONDITIONS
 │   ├── ui/
 │   │   ├── HUD.jsx               ← Round/fase/iniziativa overlay + exit confirm
 │   │   ├── BattleLog.jsx         ← Log eventi collassabile, color-coded
 │   │   ├── PhaseTracker.jsx      ← Step corrente (Manoeuvre/Attack/Actions)
-│   │   ├── ContextMenu.jsx       ← Right-click context menu sulla nave
+│   │   ├── ContextMenu.jsx       ← Right-click menu (phase-gated: Attack/Missiles solo in Attack phase, Action solo in Actions phase)
 │   │   ├── Tooltip.jsx           ← Portal-based tooltip generico
 │   │   ├── ErrorBoundary.jsx     ← Global React error boundary
 │   │   └── LegalFooter.jsx       ← Disclaimer Mongoose Publishing fisso
@@ -303,7 +303,7 @@ src/
 │   ├── battleStore.js            ← Stato battaglia (navi, fascia, missili, round, fase)
 │   └── uiStore.js                ← Modal open state, nave selezionata, context menu
 ├── utils/
-│   ├── combat.js                 ← DM calc, formula attacco, danno, critical hits
+│   ├── combat.js                 ← getWeaponTraitAttackDm, computeEffectiveSignature, computeAttackDMs, rollDamage, crits
 │   ├── rangeBands.js             ← Logica fascie: thrust cost, movement, pairKey, basicBandPool
 │   ├── missiles.js               ← Lancio, round all'impatto, contromisure, EW
 │   ├── crew.js                   ← Crew helpers (getCrewSkill, role assignment)
@@ -311,13 +311,14 @@ src/
 │   ├── io.js                     ← JSON import/export via File API
 │   └── db.js                     ← IndexedDB wrapper (openDB, get, put, delete)
 └── data/
-    ├── weapons.js                ← Tabella armi: tipo, TL, range, danno, traits
-    ├── rangeBands.js             ← Definizioni 7 fascie: nome, distanza, thrustCost, attackDM
+    ├── weapons.js                ← Armi canoniche 2300AD: tipo, TL, range, danno, traits
+    ├── rangeBands.js             ← Definizioni 7 fascie: nome, distanza, thrustCost, attackDM, timeLagDM
     ├── criticalHits.js           ← Location table (2D) + effetti per severity 1–6 × 11 sistemi
     ├── crewActions.js            ← Definizioni azioni Actions phase per ruolo
     ├── software.js               ← Software: nome, TL, bandwidth, effetto in combattimento
     ├── factions.js               ← Fazioni disponibili (players/npc/neutral)
-    └── defaultProfiles.js        ← Profili nave preimpostati 2300AD (es. Trilon ISV-2)
+    ├── defaultProfiles.js        ← Profili nave preimpostati 2300AD caricati all'avvio
+    └── shipCatalog.js            ← Catalogo navi canoniche per quick-add in battaglia
 ```
 
 ## PATTERNS (from sibling project thrust-and-drift)
@@ -329,7 +330,7 @@ Il progetto è il sibling diretto di `~/projects/react/thrust-and-drift`. Riusar
 | **MODAL_MAP** | `App.jsx` | `{ modalId: Component }` — aggiungere modals senza toccare il render |
 | **`wh()` wrapper** | `battleStore.js` | Pushes undo snapshot automatico prima di ogni mutazione |
 | **`_skipHistory`** | battleStore actions | Evita snapshot cascata su mutazioni interne |
-| **`pairKey(id1,id2)`** | `utils/combat.js` | Chiave order-independent per coppie di navi |
+| **`pairKey(id1,id2)`** | `utils/rangeBands.js` | Chiave order-independent per coppie di navi |
 | **`basicBandPool`** | battleStore | TAC Speed accumulato per coppia — persiste fino al cambio di fascia |
 | **`buildNextRoundState(s)`** | battleStore | Funzione pura che avanza il round; condivisa tra `advancePhase` e `startNextRound` |
 | **`makeLogEntry()`** | utils | Factory per LogEntry con shape consistente |
@@ -365,3 +366,10 @@ font-mono: 'Share Tech Mono' (body/values)
 - Project: keep `doc/` updated in Italian Markdown.
 - Game rules references: always cite source (e.g. `// Trav2022 CRB p.164`, `// 2300AD B3 p.56`).
 - Full combat rules: `doc/space-combat-rules.md`
+
+## TESTING
+
+- **Unit tests** (Vitest + jsdom): `src/**/*.test.js` — colocated with source. Cover `utils/` logic: combat, rangeBands, missiles, crew. Run: `npm test`.
+- **E2E tests** (Playwright, Chromium): `e2e/*.spec.js` at repo root. 52 tests across 8 spec files. Store injection via `window.__ZUSTAND_*_STORE__` exposed in non-production builds. Run: `npm run e2e` (requires dev server on :5173).
+- **Do NOT write Vitest tests for React components or Zustand stores** — E2E covers those flows. Unit tests are for pure-logic utils only.
+- `e2e/helpers.js` exports `clearAppState` (full reset including IndexedDB + profiles), `gotoBattle`, `advanceToPhase`.
