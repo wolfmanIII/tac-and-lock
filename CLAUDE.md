@@ -26,51 +26,198 @@ Il combattimento usa **fascie di distanza** (range bands) — nessuna griglia es
 Riferimenti regole:
 
 - `// Trav2022 CRB p.xxx` — Traveller 2022 Core Rulebook
-- `// 2300AD B1 p.xxx` — 2300AD Core Book 1
+- `// 2300AD B1 p.xxx` — 2300AD Core Book 1 (setting, core rules)
+- `// 2300AD B3 p.xxx` — 2300AD Core Book 3: Vehicles and Spacecraft (ship stats, starship combat p.52–62)
 
 Regole complete in `doc/space-combat-rules.md`.
 
+> **FONTE PRIMARIA per il combattimento spaziale: 2300AD B3 p.52–62** (non il CRB).
+> Il CRB si usa per le tabelle di critical hit interno (p.158–159) e weapon traits (p.75).
+> Dove B3 e CRB divergono, B3 vince sempre.
+
 ## GAME RULES SUMMARY
 
-### Round Structure (6 minuti)
+### Round Structure (6 minuti) — 2300AD B3 p.53
 
-1. **Manoeuvre Step** — spesa Thrust (movimento + riserva evasive action)
-2. **Attack Step** — gunner aprono il fuoco; reazioni (evasion, point defence, sand)
-3. **Actions Step** — azioni speciali crew (sensor lock, EW, overload, repair, boarding)
+1. **Manoeuvre Step** — spesa TAC Speed (movimento tra fasce + riserva evasion)
+2. **Attack Step** — task chain Firing Solution → Gunner; reazioni (evasion, point defence, sand)
+3. **Actions Step** — azioni speciali crew (repair, EW, boost power, boarding)
 
-### Fascie di Distanza
+### Fascie di Distanza — 2300AD B3 p.52
 
-| Fascia | Distanza | Thrust per muoversi |
+> Scala light-second. Ogni fascia = ½ light second (~150.000 km). Cinque volte la scala Trav2022 CRB.
+
+| Fascia | Distanza (km) | TAC Speed per muoversi |
 | --- | --- | --- |
-| Adjacent | ≤ 1 km | 1 |
-| Close | 1–10 km | 1 |
-| Short | 11–1.250 km | 2 |
-| Medium | 1.251–10.000 km | 5 |
-| Long | 10.001–25.000 km | 10 |
-| Very Long | 25.001–50.000 km | 25 |
-| Distant | > 50.000 km | 50 |
+| Adjacent | < 100 | 1 |
+| Close | ≤ 150.000 | 1 |
+| Short | 150.001 – 300.000 | 2 |
+| Medium | 301.000 – 450.000 | 5 |
+| Long | 450.001 – 600.000 | 10 |
+| Very Long | 600.001 – 750.000 | 25 |
+| Distant | > 750.000 | 50 |
+
+### Range Modifiers (attacco) — 2300AD B3 p.57
+
+> La stragrande maggioranza delle armi è efficace **solo entro Close range**. Short è il limite assoluto per le armi con Range "Short" (es. Grumbler). La colonna "Range" nella tabella armi = fascia massima a DM 0.
+
+| Fascia | Attack roll DM |
+| --- | --- |
+| Adjacent | +2 |
+| Close | +0 |
+| Short | −6 |
+| Medium+ | Non applicabile (nessuna arma da nave standard arriva) |
+
+Il campo `rangeDm` in `data/weapons.js` codifica per ogni arma: DM ottimale alla sua Range massima, penalità secondo questa tabella oltre.
+
+### Sensor Time-lag (sensori) — 2300AD B3 p.47
+
+Usato per tutti i check Electronics (sensors), incluso lo step 1 della Firing Solution. Si somma (non si sostituisce) ai DM di qualità sensori.
+
+| Fascia | Range DM |
+| --- | --- |
+| Adjacent | +1 |
+| Close | +0 |
+| Short | −1 |
+| Medium | −2 |
+| Long | −3 |
+| Very Long | −4 |
+| Distant | −5 |
+
+### Firing Solution (Task Chain) — 2300AD B3 p.56
+
+L'attacco in 2300AD è una catena di check interdipendenti. Ogni Effect positivo si trasferisce come DM al check successivo.
+
+1. **Sensor Operator** — Very Difficult (12+) Electronics (sensors) INT
+   - DM positivi: +Signature del bersaglio; qualità sensori (Basic Military +0, Improved +1, Advanced +2); Sensor Time-lag (tabella sopra, negativo a distanza)
+   - Engineer assist opzionale: Routine (8+) Engineer (power) INT
+2. **Pilot** — Difficult (10+) Pilot DEX
+   - DM positivi: +TAC Speed della nave
+   - Engineer assist opzionale: Routine (8+) Engineer (power) INT (può aumentare temporaneamente TAC Speed)
+3. **Gunner** — Difficult (10+) Gunner INT — bersaglio **10+**
+   - DM: +Fire Control software rating (DM+1/livello)
+   - Captain assist opzionale: Difficult (10+) Tactics (naval) INT
+
+### Signature — 2300AD B3 p.57
+
+Ogni nave ha un valore **Signature** (basato su tonnellaggio + power plant). Usato come DM positivo nei check Electronics (sensors) nemici durante la Firing Solution.
+
+| Azione / Condizione | Effetto su Signature |
+| --- | --- |
+| Damage > 50% Hull | +1 |
+| Electronic Warfare | +2 |
+| Heat Sink (durata limitata) | −4 |
+| Power Plant Critical | +1 |
+| Radiators Retracted | −1 |
+| Reaction Drive in uso | +4 razzi / +6 thruster / +8 nucleare |
+| Sensor attivi (TTA, UTES) | +1 |
+| Solar Panels estesi | +2 |
+| Spin Habitat ritirato | −1 |
+| Stealth | −4 |
+
+### Critical Hits — 2300AD B3 p.58
+
+#### Surface Fixture Damage (esterno, non penetrante)
+Qualsiasi hit con Effect ≥ 3 triggerizza questo roll (anche se non penetra l'armatura).
+
+| 2D | Sistema | 1° Hit | 2° Hit |
+| --- | --- | --- | --- |
+| 2 | Fire Control | DM−2 ai roll di attacco | — |
+| 3–4 | Weapon | −1D Damage, DM−2 ai roll di attacco | Disabled |
+| 5 | Sensors | DM−2 ai check Electronics (sensors) | — |
+| 6–8 | Radiator | Vedi regole Radiator | — |
+| 9 | Sensors | DM−2 ai check Electronics (sensors) | — |
+| 10–11 | Discharge Vanes | Disabled | Destroyed |
+| 12 | Other System | Disabled | Destroyed |
+
+#### Internal Critical Hits
+Come Trav2022 CRB p.158–159, con queste sostituzioni:
+- J-Drive → **Stutterwarp Drive** (crit riduce TAC Speed di −1 per punto perso, non Thrust)
+- M-Drive → **Reaction Drive** (primo crit: inoperabile; secondo: distrutto)
+
+### Weapon Traits — 2300AD B3 p.59
+
+| Trait | Effetto | Fonte |
+| --- | --- | --- |
+| Accurate | DM+1 ai roll di attacco | B3 |
+| Advanced | +1 damage per dado | B3 |
+| AP X | Ignora X punti di Armatura | B3 |
+| Auto X | Come CRB p.75 | B3 (ref CRB) |
+| Blast X | Max X bersagli aggiuntivi a Close range | B3 |
+| EM | Roll aggiuntivo sulla crit table ad ogni crit | B3 |
+| Hardened | Ignora il primo crit che subisce | B3 |
+| Inefficient | Raddoppia il consumo di Power/heat | B3 |
+| Obsolete | −1 damage per dado | B3 |
+| Ortillery | DM+4 quando si attacca un bersaglio su superficie planetaria | B3 |
+| Point Defence | DM+2 vs missili, droni e fighter. Solo a Close range | B3 |
+| Radiation | Inflicts rads = Effect × 10 | B3 |
+| Rapid Fire | Come Auto X; usato specificamente per la Quinn PDC — definizione in CRB p.75 | B3 weapon table / CRB |
+| Slow | DM−2 ai roll di attacco | B3 |
+
+### Software di Bordo — 2300AD B3 p.44
+
+| Software | TL | Bandwidth | Effetto combat-rilevante |
+| --- | --- | --- | --- |
+| Operations | 10 | 0 | Controllo base nave (incluso) |
+| Intellect | 10 | 10 | Comandi vocali in linguaggio naturale |
+| Stutterwarp Control | As drive | 2× Warp Efficiency | Abilita il viaggio stutterwarp |
+| Fire Control/1 | 10 | 5 | DM+1 al Gunner check (step 3 Firing Solution) |
+| Fire Control/2 | 11 | 10 | DM+2 al Gunner check |
+| Fire Control/3 | 12 | 15 | DM+3 al Gunner check |
+| Auto-Repair/1 | 10 | 10 | 1 tentativo riparazione/round (o DM+1 a repair check) |
+| Auto-Repair/2 | 11 | 20 | 2 tentativi/round (o DM+2) |
+| Archive | 10 | 0 | Banca dati (incluso) |
+
+> Nota: in 2300AD non esistono i software "Manoeuvre" e "Evade" del Trav2022 CRB. I profili nave usano `stutterwarp_control`, `fire_control_N`, `auto_repair_N`.
+
+### Armi Canoniche 2300AD — B3 p.60–61
+
+#### Laser (spacecraft)
+| Arma | TL | Range | Danno | Traits |
+| --- | --- | --- | --- | --- |
+| Darlan LL-88 | 10 | Close | 1D−1 | Obsolete, Accurate |
+| Darlan LL-98 | 11 | Close | 2D | Accurate |
+| Darlan G2 (Laser Drill) | 10 | Adjacent | 1D−1 | Obsolete |
+| Quinn Type 17 PDC | 12 | Adjacent | 1D | Point Defence, Rapid Fire |
+| Kaefer 'Grumbler' | 12 | Short | 2D+2 | Advanced, Inefficient |
+
+#### Particle Beam
+| Arma | TL | Range | Danno | Traits |
+| --- | --- | --- | --- | --- |
+| Allen BMZ-50 | 11 | Close | 3D | AP 4, EM, Inefficient, Slow |
+
+#### Combat Drones — B3 p.61
+| Drone | TL | Danno | TAC Speed | Endurance | Traits |
+| --- | --- | --- | --- | --- | --- |
+| Ritage-1 | 11 | 1D | 3 | 6 ore | — |
+| Ritage-2 | 12 | 5D | 4 | 4 ore | Blast 6, Radiation |
+| 'Whiskey' (Kaefer) | 12 | 1D laser / 3D det. laser | 4 | 2 ore | Blast 3, Radiation |
 
 ### Ship Profile Fields (combat-relevant)
 
-`name`, `class`, `hullPoints`, `currentHull`, `armour`, `tacSpeed`, `sensors` (type + DM), `computer` (model + bandwidth), `weapons[]`, `software[]`, `criticalTracks` (11 track × 6 livelli di severità)
+`name`, `class`, `hullPoints`, `currentHull`, `armour`, `tacSpeed`, `signature` (base value), `sensors` (type + DM), `computer` (model + bandwidth), `weapons[]`, `software[]`, `criticalTracks` (11 track × 6 livelli di severità)
 
-### Ruoli Crew & Skill
+### Ruoli Crew & Skill — 2300AD B3 p.53
 
-| Ruolo | Skill chiave |
-| --- | --- |
-| Pilot | Pilot |
-| Captain | Tactics (naval), Leadership |
-| Engineer | Engineer (m-drive / power / stutterwarp), Mechanic |
-| Sensor Operator | Electronics (sensors) |
-| Turret Gunner | Gunner (turret) |
-| Bay Gunner | Gunner (bay) |
-| Marine | Gun Combat / Melee |
+| Ruolo | Skill chiave | Azione primaria |
+| --- | --- | --- |
+| Captain | Tactics (naval), Leadership | Initiative, ordini, assist Tactics |
+| Sensor Operator | Electronics (sensors) | Firing Solution step 1, EW, scan |
+| Pilot | Pilot | Firing Solution step 2, manoeuvre, evasion |
+| Engineer | Engineer (power/stutterwarp) | Assist sensor + pilot, boost power/TAC Speed, repair |
+| Turret Gunner | Gunner (turret) | Firing Solution step 3, point defence |
+| Bay Gunner | Gunner (bay) | Come turret gunner, armi di bay |
+| Remote Pilot | Electronics (remote ops) | Pilota droni e missili guidati |
+| Damage Control | Mechanic | Riparazione critical hits e hull |
+| Ship's Troops | Vacc Suit, Gun Combat | Damage control assist, boarding |
 
 ### 2300AD Specifics
 
 - Nessun Jump Drive — usa **Stutterwarp** (`Engineer (stutterwarp)` sostituisce `Engineer (j-drive)`)
 - Navi più piccole (fino a ~20.000 ton); TL10–TL12
 - `Astrogation` usata per rotte stutterwarp, non per plot di salto
+- Combattimento inizia tipicamente a **Long range**; armi efficaci solo a **Close**
+- Bersagli stazionari (reaction drive spento, in orbita): DM+2 e danno doppio — 2300AD B3 p.56
 
 ## CODING GUIDELINES
 
@@ -87,7 +234,7 @@ Regole complete in `doc/space-combat-rules.md`.
 11. **Strict Scope**: Stay within discussed scope. Do not add extra features unless requested.
 12. **Tailwind v4 Syntax**: Canonical class syntax — `(--var)` not `[var(--var)]`, `bg-linear-to-t` not `bg-gradient-to-t`. No `tailwind.config.js` — use CSS `@theme` for custom tokens.
 13. **No External State Libraries**: Do not introduce Redux, Jotai, Context-based state — Zustand only.
-14. **Game Rules Fidelity**: Tutti i calcoli meccanici (DM, danno, thrust, range bands, critical hits) devono corrispondere al Traveller 2022 CRB RAW + modifiche 2300AD. Segnalare qualsiasi ambiguità prima di implementare.
+14. **Game Rules Fidelity**: Tutti i calcoli meccanici (DM, danno, TAC Speed, range bands, critical hits) devono corrispondere a **2300AD B3 p.52–62** come fonte primaria, con Trav2022 CRB usato solo per tabelle crit interno (p.158–159) e weapon traits (p.75). Segnalare qualsiasi ambiguità prima di implementare. Correzioni note a `data/weapons.js`: LL-98 optimal=Close, traits=[Accurate]; Grumbler TL=12, traits=[Advanced,Inefficient]; anti_missile_laser optimal=Adjacent, damage=1D. Software validi in 2300AD: `stutterwarp_control`, `fire_control_1/2/3`, `auto_repair_1/2`, `operations`, `intellect`, `archive` — NON `manoeuvre` o `evade_N`.
 
 ## CRITICAL RULES
 
@@ -182,7 +329,7 @@ Il progetto è il sibling diretto di `~/projects/react/thrust-and-drift`. Riusar
 
 ### Differenza range bands: thrust-and-drift → tac-and-lock
 
-thrust-and-drift ha **6 fasce** (no "Close"). 2300AD ne ha **7** — aggiunge "Close" (1–10 km, TAC Speed cost 1) tra Adjacent e Short.
+thrust-and-drift ha **6 fasce** (no "Close"). 2300AD ne ha **7** — aggiunge "Close" (≤150.000 km, TAC Speed cost 1) tra Adjacent e Short. Le distanze km sono scala light-second, non CRB.
 
 ### Tema visuale (riusare da thrust-and-drift)
 
@@ -207,5 +354,5 @@ font-mono: 'Share Tech Mono' (body/values)
 
 - Code: JSDoc on hooks and complex functions (English, technical tone).
 - Project: keep `doc/` updated in Italian Markdown.
-- Game rules references: always cite source (e.g. `// Trav2022 CRB p.164`, `// 2300AD B1 p.11`).
+- Game rules references: always cite source (e.g. `// Trav2022 CRB p.164`, `// 2300AD B3 p.56`).
 - Full combat rules: `doc/space-combat-rules.md`
