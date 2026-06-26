@@ -382,9 +382,8 @@ export default function Dashboard() {
       <div className="flex-1 flex flex-col overflow-hidden">
 
         <header className="shrink-0 px-6 py-4 border-b border-slate-800 flex items-center gap-4">
-          <div className="relative shrink-0 w-24 h-24">
-            <img src="/logo.png" alt="TAC & LOCK" className="w-24 h-24 object-contain" />
-            <div className="logo-shimmer" />
+          <div className="logo-stutter-wrap">
+            <img src="/logo.png" alt="TAC &amp; LOCK" />
           </div>
           <div className="flex flex-col gap-0.5">
             <h1 className="font-display font-bold text-(--neon-cyan) tracking-widest text-2xl leading-tight">
