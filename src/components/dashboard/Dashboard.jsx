@@ -84,7 +84,7 @@ function ProfilesPanel({ onEdit, editingId, onAddToBattle }) {
             </div>
             <div className={`flex gap-1 shrink-0 ${editingId === p.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
               <ActionIcon label="⊕" title="Add to Battle" onClick={() => onAddToBattle(p)} dim="text-green-400" />
-              <ActionIcon label="✎" title="Edit"           onClick={() => onEdit(p.id)} dim="text-(--neon-cyan)" />
+              <ActionIcon label="✎" title="Edit"           onClick={() => { onEdit(p.id); openModal('ship-profile', { profileId: p.id }) }} dim="text-(--neon-cyan)" />
               <ActionIcon label="⧉" title="Duplicate"      onClick={() => duplicateProfile(p.id)} />
               <ActionIcon label="⊗" title="Delete"         onClick={() => { if (confirm(`Delete "${p.name}"?`)) deleteProfile(p.id) }} dim="hover:text-red-400" />
             </div>
