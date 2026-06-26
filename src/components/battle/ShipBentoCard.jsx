@@ -1,0 +1,163 @@
+import { useUIStore } from '../../store/uiStore.js'
+import { useBattleStore } from '../../store/battleStore.js'
+import { FACTION_COLOR } from '../../data/factions.js'
+import { CRITICAL_HIT_SYSTEM_LABELS } from '../../data/criticalHits.js'
+import { Tooltip } from '../ui/Tooltip.jsx'
+
+const SEV_COLOR = ['', 'text-amber-300', 'text-amber-400', 'text-orange-400', 'text-orange-500', 'text-red-500', 'text-red-600']
+
+function HullBar({ current, max }) {
+  const pct = max > 0 ? Math.max(0, current / max) : 0
+  const color = pct > 0.5 ? 'bg-emerald-500' : pct > 0.25 ? 'bg-amber-500' : 'bg-red-500'
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+        <div className={`h-full ${color} transition-all duration-300`} style={{ width: `${pct * 100}%` }} />
+      </div>
+      <span className="text-xs font-mono text-slate-300 w-12 text-right shrink-0">
+        {current}/{max}
+      </span>
+    </div>
+  )
+}
+
+function TacSpeedBar({ available, total }) {
+  const pips = Array.from({ length: Math.max(total, 1) }, (_, i) => i < available)
+  return (
+    <div className="flex gap-0.5">
+      {pips.map((filled, i) => (
+        <div
+          key={i}
+          className={`h-2 w-3 rounded-sm ${filled ? 'bg-sky-400' : 'bg-slate-700'}`}
+        />
+      ))}
+    </div>
+  )
+}
+
+export function ShipBentoCard({ ship }) {
+  const { openModal, showContextMenu, selectedShipId, selectShip } = useUIStore()
+  const phase = useBattleStore((s) => s.phase)
+  const isSelected = selectedShipId === ship.id
+
+  const factionColor = FACTION_COLOR[ship.faction] ?? '#94a3b8'
+  const activeCrits  = Object.entries(ship.criticalTracks ?? {}).filter(([, sev]) => sev > 0)
+  const isDestroyed  = ship.isDestroyed
+
+  function onContextMenu(e) {
+    e.preventDefault()
+    showContextMenu(e.clientX, e.clientY, ship.id)
+  }
+
+  return (
+    <div
+      className={`relative rounded border transition-all duration-150 cursor-pointer select-none
+        ${isDestroyed ? 'opacity-40 border-slate-800 bg-slate-900/50' : 'bg-slate-900 border-slate-700'}
+        ${isSelected ? 'border-sky-500 shadow-[0_0_0_1px_rgba(125,211,252,0.3)]' : 'hover:border-slate-500'}`}
+      style={{ borderLeftColor: factionColor, borderLeftWidth: 3 }}
+      onClick={() => selectShip(isSelected ? null : ship.id)}
+      onContextMenu={onContextMenu}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 pt-2 pb-1 gap-2">
+        <div className="min-w-0">
+          <p className="font-display text-sm text-slate-100 truncate">{ship.profile?.name ?? ship.id}</p>
+          <p className="text-[10px] font-mono text-slate-500 truncate">{ship.profile?.class}</p>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          {ship.sensorLocked && (
+            <Tooltip content="Sensor locked — attackers gain DM bonus">
+              <span className="text-[10px] text-amber-400 border border-amber-800 rounded px-1">LOCK</span>
+            </Tooltip>
+          )}
+          {ship.ewTarget && (
+            <Tooltip content="This ship is jamming a target">
+              <span className="text-[10px] text-purple-400 border border-purple-800 rounded px-1">EW</span>
+            </Tooltip>
+          )}
+          {isDestroyed && (
+            <span className="text-[10px] text-red-500 border border-red-900 rounded px-1 font-display">DEST</span>
+          )}
+        </div>
+      </div>
+
+      {/* Hull bar */}
+      <div className="px-3 pb-1">
+        <div className="flex items-center justify-between mb-0.5">
+          <span className="text-[10px] font-display text-slate-500 tracking-widest">HULL</span>
+        </div>
+        <HullBar current={ship.currentHull} max={ship.hullPoints} />
+      </div>
+
+      {/* Stats row */}
+      <div className="px-3 pb-1.5 flex items-center gap-4 text-xs font-mono">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[10px] text-slate-500 font-display tracking-widest">TAC SPD</span>
+          <TacSpeedBar available={ship.tacSpeedAvailable} total={ship.currentTacSpeed} />
+        </div>
+        <Tooltip content={`Armour rating: ${ship.currentArmour}`}>
+          <div className="flex flex-col">
+            <span className="text-[10px] text-slate-500 font-display tracking-widest">ARM</span>
+            <span className="text-slate-300">{ship.currentArmour}</span>
+          </div>
+        </Tooltip>
+        {ship.evasionSpent > 0 && (
+          <Tooltip content={`${ship.evasionSpent} TAC Speed reserved for evasion`}>
+            <div className="flex flex-col">
+              <span className="text-[10px] text-slate-500 font-display tracking-widest">EVA</span>
+              <span className="text-purple-300">{ship.evasionSpent}</span>
+            </div>
+          </Tooltip>
+        )}
+      </div>
+
+      {/* Critical hit tracks */}
+      {activeCrits.length > 0 && (
+        <div className="px-3 pb-1.5 flex flex-wrap gap-1">
+          {activeCrits.map(([sys, sev]) => (
+            <Tooltip key={sys} content={`${CRITICAL_HIT_SYSTEM_LABELS[sys]}: severity ${sev}`}>
+              <span className={`text-[10px] font-mono border border-current/30 rounded px-1 ${SEV_COLOR[sev] ?? 'text-amber-300'}`}>
+                {CRITICAL_HIT_SYSTEM_LABELS[sys]?.slice(0, 4).toUpperCase()} {sev}
+              </span>
+            </Tooltip>
+          ))}
+        </div>
+      )}
+
+      {/* Action buttons */}
+      <div className="px-3 pb-2 flex gap-1.5">
+        <button
+          disabled={phase !== 'attack' || isDestroyed}
+          className="flex-1 py-1 text-[10px] font-display tracking-widest border border-red-900 text-red-400
+            hover:bg-red-900/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded"
+          onClick={(e) => { e.stopPropagation(); openModal('attack', { attackerId: ship.id }) }}
+        >
+          ATK
+        </button>
+        <button
+          disabled={phase !== 'manoeuvre' || isDestroyed}
+          className="flex-1 py-1 text-[10px] font-display tracking-widest border border-purple-900 text-purple-400
+            hover:bg-purple-900/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded"
+          onClick={(e) => { e.stopPropagation(); openModal('manoeuvre', { shipId: ship.id }) }}
+        >
+          MNV
+        </button>
+        <button
+          disabled={phase !== 'actions' || isDestroyed}
+          className="flex-1 py-1 text-[10px] font-display tracking-widest border border-emerald-900 text-emerald-400
+            hover:bg-emerald-900/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded"
+          onClick={(e) => { e.stopPropagation(); openModal('action', { shipId: ship.id }) }}
+        >
+          ACT
+        </button>
+        <button
+          className="py-1 px-2 text-[10px] font-display tracking-widest border border-slate-700 text-slate-400
+            hover:bg-slate-800 transition-colors rounded"
+          onClick={(e) => { e.stopPropagation(); openModal('ship-detail', { shipId: ship.id }) }}
+        >
+          ···
+        </button>
+      </div>
+    </div>
+  )
+}
