@@ -17,6 +17,7 @@ import {
   isCriticalHit,
   getNextSeverity,
   rollSandcasterAbsorption,
+  getWeaponTraitAttackDm,
 } from './combat.js'
 
 // === parseDiceNotation ===
@@ -124,8 +125,8 @@ describe('computeAttackDMs', () => {
       ewDm:            -1,
       otherDm:         0,
     })
-    // rangeDm@Close = 0
-    expect(r.total).toBe(2 + 1 + 0 + 2 + 1 + 0 + (-2) + (-1) + 0)
+    // rangeDm@Close = 0; ll98 has Accurate → weaponTraitDm = +1 // 2300AD B3 p.59
+    expect(r.total).toBe(2 + 1 + 0 + 1 + 2 + 1 + 0 + (-2) + (-1) + 0)
   })
 
   it('includes rangeDm from weapon definition', () => {
@@ -135,12 +136,15 @@ describe('computeAttackDMs', () => {
 
   it('all optional DMs default to 0', () => {
     const r = computeAttackDMs({ gunnerSkill: 3, weaponId: 'll98', rangeBand: 'Close' })
-    expect(r.total).toBe(3 + 0) // gunnerSkill + rangeDm(Close=0)
+    // ll98 has Accurate (+1 weaponTraitDm) // 2300AD B3 p.59, p.60
+    expect(r.total).toBe(3 + 0 + 1) // gunnerSkill + rangeDm(Close=0) + Accurate
+    expect(r.dms.weaponTraitDm).toBe(1)
   })
 
   it('carryEffect carries positive Pilot check Effect to Gunner', () => {
     const r = computeAttackDMs({ gunnerSkill: 1, weaponId: 'll98', rangeBand: 'Close', carryEffect: 3 })
-    expect(r.total).toBe(1 + 0 + 3) // gunnerSkill + rangeDm + carryEffect
+    // ll98 has Accurate (+1 weaponTraitDm) // 2300AD B3 p.59, p.60
+    expect(r.total).toBe(1 + 0 + 3 + 1) // gunnerSkill + rangeDm + carryEffect + Accurate
     expect(r.dms.carryEffect).toBe(3)
   })
 })
@@ -351,10 +355,11 @@ describe('rollDamage', () => {
     expect(r.net).toBe(5) // 8 - 3
   })
 
-  it('grumbler flat bonus: 2D+2 → gross = 2×4 + 2 = 10', () => {
+  it('grumbler flat bonus + Advanced: 2D+2 Advanced → gross = 2×4 + 2(flat) + 2(Advanced) = 12', () => {
+    // Advanced: +1 per die; 2 dice → +2 bonus on top of the +2 flat // 2300AD B3 p.59
     const r = rollDamage('grumbler', 1, 0)
-    expect(r.gross).toBe(10)
-    expect(r.bonus).toBe(2)
+    expect(r.gross).toBe(12)
+    expect(r.bonus).toBe(4) // flatBonus(2) + traitBonus(2)
   })
 
   it('particle_barbette ignores armour (Radiation trait → AP∞)', () => {
@@ -414,5 +419,81 @@ describe('rollSandcasterAbsorption', () => {
         expect(roll).toBeLessThanOrEqual(3)
       }
     }
+  })
+})
+
+// === getWeaponTraitAttackDm — 2300AD B3 p.59 ===
+// Accurate: DM+1; Slow: DM−2; all other traits: 0
+
+describe('getWeaponTraitAttackDm', () => {
+  it('no traits → 0', () => {
+    expect(getWeaponTraitAttackDm([])).toBe(0)
+    expect(getWeaponTraitAttackDm()).toBe(0)
+  })
+
+  it('Accurate → +1', () => {
+    expect(getWeaponTraitAttackDm(['Accurate'])).toBe(1)
+  })
+
+  it('Slow → −2', () => {
+    expect(getWeaponTraitAttackDm(['Slow'])).toBe(-2)
+  })
+
+  it('Accurate + Slow → −1 (both apply)', () => {
+    expect(getWeaponTraitAttackDm(['Accurate', 'Slow'])).toBe(-1)
+  })
+
+  it('unrelated traits do not affect attack DM', () => {
+    expect(getWeaponTraitAttackDm(['AP4', 'EM', 'Inefficient', 'Point Defence'])).toBe(0)
+  })
+
+  it('ll98 has Accurate → DM+1 on attack', () => {
+    // Darlan LL-98: traits = ['Accurate'] // 2300AD B3 p.60
+    expect(getWeaponTraitAttackDm(['Accurate'])).toBe(1)
+  })
+
+  it('Allen BMZ-50 has Slow → DM−2 on attack', () => {
+    // Allen BMZ-50: traits = ['AP4', 'EM', 'Inefficient', 'Slow'] // 2300AD B3 p.60
+    expect(getWeaponTraitAttackDm(['AP4', 'EM', 'Inefficient', 'Slow'])).toBe(-2)
+  })
+})
+
+// === rollDamage — Advanced/Obsolete per-die modifiers // 2300AD B3 p.59 ===
+
+describe('rollDamage — Advanced/Obsolete traits', () => {
+  beforeEach(() => vi.spyOn(Math, 'random').mockReturnValue(0.5))
+  afterEach(() => vi.restoreAllMocks())
+
+  // Math.floor(0.5 * 6) + 1 = 4 per die
+
+  it('Grumbler (Advanced, 2D+2): gross = 2×4 + 2(flat) + 2(Advanced 2 dice×+1) = 12', () => {
+    // grumbler: damage='2D+2', traits=['Advanced','Inefficient']
+    // dice: [4,4]=8; flatBonus=2; traitBonus=2×1=2; gross=12
+    const r = rollDamage('grumbler', 1, 0)
+    expect(r.gross).toBe(12)
+    expect(r.bonus).toBe(4)   // flatBonus(2) + traitBonus(2)
+  })
+
+  it('Darlan LL-88 (Obsolete, 1D−1): gross = 4 + (−1 flat) + (1×−1 Obsolete) = 2', () => {
+    // ll88: damage='1D-1', traits=['Obsolete','Accurate']
+    // dice: [4]=4; flatBonus=−1; traitBonus=1×(−1)=−1; gross=max(0,2)=2
+    const r = rollDamage('ll88', 1, 0)
+    expect(r.gross).toBe(2)
+    expect(r.bonus).toBe(-2)  // flatBonus(−1) + traitBonus(−1)
+  })
+
+  it('gross is clamped to 0 if all bonuses drive it negative', () => {
+    // ll88 at die=1: 1 + (−1) + (−1) = −1 → clamped to 0
+    vi.spyOn(Math, 'random').mockReturnValue(0) // Math.floor(0*6)+1 = 1
+    const r = rollDamage('ll88', 1, 0)
+    expect(r.gross).toBe(0)
+    expect(r.net).toBe(0)
+  })
+
+  it('regular weapons without Advanced/Obsolete are unchanged', () => {
+    // ll98 (Accurate only — no damage-affecting trait): damage='2D', dice=[4,4]=8
+    const r = rollDamage('ll98', 1, 0)
+    expect(r.gross).toBe(8)
+    expect(r.bonus).toBe(0)
   })
 })

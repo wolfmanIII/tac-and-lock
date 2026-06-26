@@ -101,7 +101,8 @@ Può esserci **un solo Pilot e un solo Captain**; tutti gli altri ruoli ammetton
 | Fire Control/x | Gunner (può fare x attacchi automatici o dare DM ai gunner) |
 | Auto-Repair/x + repair drones | Engineer (damage control) |
 | Intellect + Expert (engineer/pilot/electronics-sensors) | Engineer / Pilot / Sensor Operator |
-| Evade/x | Pilot (DM negativo pari al rating su tutti gli attacchi in entrata) |
+
+> **Nota 2300AD**: I software "Manoeuvre" e "Evade" del Trav2022 CRB **non esistono** in 2300AD. L'evasion è un check Pilot attivo (§11), non un software passivo.
 
 ---
 
@@ -492,14 +493,17 @@ Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). Tirare sul
 
 - Missili verso bersagli a **Adjacent o Close**: perdono il trait **Smart**
 - Si lanciano in **salvo** (tutti i missili vs singolo bersaglio nello stesso round)
-- I missili hanno Thrust 10 e raggiungono il bersaglio dopo:
+- I missili raggiungono il bersaglio dopo un numero di round dipendente dalla distanza di lancio:
 
 | Range al lancio | Round all'impatto |
 | --- | --- |
-| Medium e meno | Immediato |
-| Long | 1 round |
-| Very Long | 4 round |
-| Distant | 10 round |
+| Adjacent | 1 round |
+| Close | 1 round |
+| Short | 2 round |
+| Medium | 3 round |
+| Long | 4 round |
+| Very Long | 5 round |
+| Distant | 6 round |
 
 Dopo 10 round senza impatto: missili esauriti, diventano inerti.
 
@@ -525,8 +529,8 @@ Dopo 10 round senza impatto: missili esauriti, diventano inerti.
 
 ### Impatto
 
-- Danno: singolo missile (nessun Effect aggiunto)
-- Il danno totale viene moltiplicato per l'Effect (ma Effect ≤ numero di missili rimanenti)
+- Danno: roll danno singolo missile; l'Effect del check **non si somma al danno** (come per le armi normali — B3 p.56 nota)
+- Ogni missile nel salvo che supera la PD può colpire; roll separato per missile se necessario (semplificazione: 1 roll per salvo)
 
 ---
 

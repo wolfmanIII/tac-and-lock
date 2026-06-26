@@ -75,6 +75,20 @@ export function getCharacteristicDM(stat) {
  * }} params
  * @returns {{ dms: Record<string, number>, total: number }}
  */
+/**
+ * Compute the attack DM contribution from a weapon's traits. // 2300AD B3 p.59
+ * Accurate: DM+1 to attack roll.
+ * Slow: DM−2 to attack roll.
+ * @param {string[]} traits
+ * @returns {number}
+ */
+export function getWeaponTraitAttackDm(traits = []) {
+  let dm = 0
+  if (traits.includes('Accurate')) dm += 1
+  if (traits.includes('Slow'))     dm -= 2
+  return dm
+}
+
 export function computeAttackDMs({
   gunnerSkill,
   gunnerIntDm     = 0,
@@ -87,10 +101,13 @@ export function computeAttackDMs({
   ewDm            = 0,
   otherDm         = 0,
 }) {
+  const weapon        = WEAPONS[weaponId]
+  const weaponTraitDm = weapon ? getWeaponTraitAttackDm(weapon.traits) : 0
   const dms = {
     gunnerSkill,
     gunnerIntDm,
     rangeDm:        getRangeDM(weaponId, rangeBand),
+    weaponTraitDm,
     fireControlDm,
     carryEffect,
     captainAssistDm,
@@ -161,10 +178,19 @@ export function rollDamage(weaponId, weaponCount = 1, armour = 0) {
 
   // Multi-weapon bonus: +damageBonus per additional weapon (not per die) // Trav2022 CRB p.167
   const multiBonus = weapon.damageBonus * Math.max(0, weaponCount - 1)
-  const bonus      = flatBonus + multiBonus
-  const gross      = diceTotal + bonus
 
-  const effectiveArmour = resolveArmour(weapon.traits, armour)
+  // Per-die trait modifiers // 2300AD B3 p.59
+  // Advanced: +1 per die; Obsolete: −1 per die (clamped so dice total never goes negative)
+  const traits = weapon.traits ?? []
+  let perDieMod = 0
+  if (traits.includes('Advanced')) perDieMod += 1
+  if (traits.includes('Obsolete')) perDieMod -= 1
+  const traitBonus = n * perDieMod
+
+  const bonus = flatBonus + multiBonus + traitBonus
+  const gross = Math.max(0, diceTotal + bonus)
+
+  const effectiveArmour = resolveArmour(traits, armour)
   const net = Math.max(0, gross - effectiveArmour)
 
   return { rolls, bonus, gross, armour: effectiveArmour, net }

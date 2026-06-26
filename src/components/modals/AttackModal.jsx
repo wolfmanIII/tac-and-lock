@@ -14,7 +14,7 @@ import { SENSOR_TIME_LAG_DM } from '../../data/rangeBands.js'
 import { pairKey }        from '../../utils/rangeBands.js'
 import { getAssignedSkill, getAssignedCharacteristic } from '../../utils/crew.js'
 import { getCharDM, roll2D6 } from '../../utils/dice.js'
-import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit } from '../../utils/combat.js'
+import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, getWeaponTraitAttackDm } from '../../utils/combat.js'
 import { DiceInput } from '../forms/DiceInput.jsx'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -219,7 +219,8 @@ export function AttackModal({ payload, onClose }) {
     const intDm          = getCharDM(intChar)
     const fireControlDm  = getFireControlDm(attacker.software)
     const rangeDm        = getRangeDM(weaponId, band)
-    const total = gunnerSkill + intDm + fireControlDm + rangeDm + step2CarryEffect + evasionDm
+    const weaponTraitDm  = getWeaponTraitAttackDm(weapon.traits) // Accurate +1, Slow −2 // B3 p.59
+    const total = gunnerSkill + intDm + fireControlDm + rangeDm + step2CarryEffect + evasionDm + weaponTraitDm
     return {
       rows: [
         ['Gunner skill',      gunnerSkill],
@@ -228,6 +229,7 @@ export function AttackModal({ payload, onClose }) {
         [`Range (${band})`,   rangeDm],
         ['Carry (Step 2)',    step2CarryEffect],
         ['Evasion penalty',   evasionDm],
+        ['Weapon trait',      weaponTraitDm],
       ],
       total,
     }
