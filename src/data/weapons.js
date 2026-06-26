@@ -1,7 +1,7 @@
-// Trav2022 CRB p.168 — Spacecraft weapons (turrets & barbettes).
-// 2300AD-specific weapons: stats from 2300AD B3 p.60–61 (Weapons & Targeting),
-// p.110 (Kaefer tech). Range DMs for 2300AD weapons are approximated from CRB
-// equivalents where B3 does not provide explicit spacecraft combat range tables.
+// 2300AD B3 p.60–61 — Canonical 2300AD spacecraft weapons.
+// CRB weapons (pulse_laser, beam_laser, particle_barbette, etc.) retained as legacy
+// stand-ins for profiles created before B3 weapons were added; do not use for new profiles.
+// Range DMs: Adjacent +2, Close +0, Short -6 per B3 p.57. Beyond Short → -20 (out of range).
 
 /**
  * Attack DM vs target band for each weapon.
@@ -132,7 +132,70 @@ export const WEAPONS = {
     notes: 'Ignores armour (AP∞). On hit, crew in targeted compartment take 2D6 radiation exposure.',
   },
 
-  // ── 2300AD weapons ─────────────────────────────────────────────────────────
+  // ── 2300AD canonical weapons — B3 p.60–61 ────────────────────────────────
+
+  ll88: {
+    id: 'll88',
+    name: 'Darlan LL-88',
+    mount: 'turret',
+    TL: 10,
+    damage: '1D-1',
+    damageBonus: 0,
+    optimalRange: 'Close',      // Range: Close // 2300AD B3 p.60
+    rangeDm: {
+      Adjacent:  2,
+      Close:     0,
+      Short:   -20,
+      Medium:  -20,
+      Long:    -20,
+      VeryLong:-20,
+      Distant: -20,
+    },
+    traits: ['Obsolete', 'Accurate'], // 2300AD B3 p.60
+    notes: 'Darlan LL-88. Older surplus beam laser. Obsolete (−1 dmg/die), Accurate (DM+1 to hit). // 2300AD B3 p.60',
+  },
+
+  darlan_g2: {
+    id: 'darlan_g2',
+    name: 'Darlan G2 (Laser Drill)',
+    mount: 'turret',
+    TL: 10,
+    damage: '1D-1',
+    damageBonus: 0,
+    optimalRange: 'Adjacent',   // Range: Adjacent // 2300AD B3 p.60
+    rangeDm: {
+      Adjacent:  2,
+      Close:     0,
+      Short:   -20,
+      Medium:  -20,
+      Long:    -20,
+      VeryLong:-20,
+      Distant: -20,
+    },
+    traits: ['Obsolete'],       // 2300AD B3 p.60
+    notes: 'Darlan G2 industrial laser drill. Adjacent range only. Obsolete (−1 dmg/die). // 2300AD B3 p.60',
+  },
+
+  allen_bmz50: {
+    id: 'allen_bmz50',
+    name: 'Allen BMZ-50',
+    mount: 'turret',
+    TL: 11,
+    damage: '3D',
+    damageBonus: 0,
+    optimalRange: 'Close',      // Range: Close // 2300AD B3 p.60
+    rangeDm: {
+      Adjacent:  2,
+      Close:     0,
+      Short:   -20,
+      Medium:  -20,
+      Long:    -20,
+      VeryLong:-20,
+      Distant: -20,
+    },
+    traits: ['AP4', 'EM', 'Inefficient', 'Slow'], // 2300AD B3 p.60
+    notes: 'Allen BMZ-50 particle beam. AP 4, EM (extra crit roll), Inefficient (×2 power), Slow (DM−2 to hit). // 2300AD B3 p.60',
+  },
 
   ll98: {
     id: 'll98',
@@ -303,19 +366,25 @@ export const WEAPONS = {
   },
 }
 
-/** Ordered list for UI display. */
+/** Ordered list for UI display — B3 canonical weapons first, CRB legacy last. */
 export const WEAPON_IDS = [
+  // 2300AD B3 p.60–61
+  'll88',
+  'darlan_g2',
+  'll98',
+  'anti_missile_laser',
+  'grumbler',
+  'allen_bmz50',
+  // B3 / 2300AD extended
+  'ea1000',
+  'autocannon_25mm',
+  'aero12',
+  'kingfisher',
+  'tri_beamer',
+  // CRB legacy (retained for backwards compatibility only)
   'pulse_laser',
   'beam_laser',
   'missile_rack',
   'sandcaster',
   'particle_barbette',
-  'll98',
-  'ea1000',
-  'aero12',
-  'anti_missile_laser',
-  'autocannon_25mm',
-  'grumbler',
-  'kingfisher',
-  'tri_beamer',
 ]
