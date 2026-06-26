@@ -2,28 +2,32 @@ import { useEffect, useRef } from 'react'
 import { useUIStore } from '../../store/uiStore.js'
 import { useBattleStore } from '../../store/battleStore.js'
 
-function MenuItem({ label, onClick, danger = false }) {
+function MenuItem({ icon, label, onClick, danger = false }) {
   return (
     <button
-      className={`w-full text-left px-4 py-2 text-sm font-mono hover:bg-slate-800 transition-colors
-        ${danger ? 'text-red-400 hover:text-red-300' : 'text-slate-200'}`}
       onClick={onClick}
+      className={`w-full flex items-center gap-2 px-3 py-1.5 text-left font-mono text-xs transition-colors ${
+        danger
+          ? 'text-red-400 hover:bg-red-950/50'
+          : 'text-slate-300 hover:bg-slate-700/60 hover:text-slate-100'
+      }`}
     >
+      <span className="w-4 text-center shrink-0">{icon}</span>
       {label}
     </button>
   )
 }
 
 function MenuDivider() {
-  return <div className="border-t border-slate-700 my-1" />
+  return <div className="border-t border-slate-700/50 my-0.5" />
 }
 
 function MenuShell({ x, y, menuRef, children }) {
   return (
     <div
       ref={menuRef}
-      className="absolute z-50 min-w-[180px] bg-slate-900 border border-slate-700 rounded shadow-2xl overflow-hidden"
       style={{ left: x, top: y }}
+      className="absolute z-50 min-w-44 bg-slate-900 border border-slate-600 rounded shadow-xl overflow-hidden"
     >
       {children}
     </div>
@@ -36,30 +40,34 @@ function BackgroundMenu({ x, y, menuRef, close }) {
 
   return (
     <MenuShell x={x} y={y} menuRef={menuRef}>
-      <MenuItem label="Add Ship..."        onClick={() => { openModal('add-ship'); close() }} />
+      <MenuItem icon="➕" label="Add ship…"          onClick={() => { openModal('add-ship'); close() }} />
       <MenuDivider />
-      <MenuItem label="Roll Initiative..." onClick={() => { openModal('initiative'); close() }} />
-      <MenuItem label="Next Phase"         onClick={() => { advancePhase(); close() }} />
+      <MenuItem icon="🎲" label="Roll Initiative…"   onClick={() => { openModal('initiative'); close() }} />
+      <MenuItem icon="🔄" label="Next phase"         onClick={() => { advancePhase(); close() }} />
     </MenuShell>
   )
 }
 
 function ShipMenu({ x, y, menuRef, shipId, close }) {
   const openModal = useUIStore((s) => s.openModal)
+  const ships     = useBattleStore((s) => s.ships)
+  const ship      = ships.find((s) => s.id === shipId)
 
   return (
     <MenuShell x={x} y={y} menuRef={menuRef}>
-      <MenuItem label="View Details"     onClick={() => { openModal('ship-detail',     { shipId }); close() }} />
-      <MenuItem label="Attack"           onClick={() => { openModal('attack',          { attackerId: shipId }); close() }} />
-      <MenuItem label="Launch Missiles"  onClick={() => { openModal('missile-launch',  { attackerId: shipId }); close() }} />
-      <MenuItem label="Crew Action"      onClick={() => { openModal('action',          { shipId }); close() }} />
-      <MenuItem label="Assign Crew"      onClick={() => { openModal('crew-assignment', { shipId }); close() }} />
+      {ship && (
+        <div className="px-3 py-1.5 bg-slate-800 border-b border-slate-700">
+          <p className="font-mono text-xs text-(--neon-cyan) font-bold truncate">{ship.profile.name}</p>
+          <p className="font-mono text-xs text-slate-400">Hull {ship.currentHull}/{ship.hullPoints}</p>
+        </div>
+      )}
+      <MenuItem icon="📊" label="Ship sheet"         onClick={() => { openModal('ship-detail',     { shipId }); close() }} />
+      <MenuItem icon="🎯" label="Attack…"            onClick={() => { openModal('attack',          { attackerId: shipId }); close() }} />
+      <MenuItem icon="🚀" label="Launch missiles…"   onClick={() => { openModal('missile-launch',  { attackerId: shipId }); close() }} />
+      <MenuItem icon="⚡" label="Crew action…"       onClick={() => { openModal('action',          { shipId }); close() }} />
+      <MenuItem icon="👥" label="Assign crew…"       onClick={() => { openModal('crew-assignment', { shipId }); close() }} />
       <MenuDivider />
-      <MenuItem
-        label="Remove from Battle"
-        danger
-        onClick={() => { useBattleStore.getState().removeShip(shipId); close() }}
-      />
+      <MenuItem icon="🗑" label="Remove from battle" danger onClick={() => { useBattleStore.getState().removeShip(shipId); close() }} />
     </MenuShell>
   )
 }
