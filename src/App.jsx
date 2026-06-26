@@ -6,6 +6,10 @@ import { Modal } from './components/modals/Modal.jsx'
 import LegalFooter from './components/ui/LegalFooter.jsx'
 import Dashboard from './components/dashboard/Dashboard.jsx'
 import BattleView from './components/battle/BattleView.jsx'
+import { HUD }          from './components/ui/HUD.jsx'
+import { PhaseTracker } from './components/ui/PhaseTracker.jsx'
+import { BattleLog }    from './components/ui/BattleLog.jsx'
+import { ContextMenu }  from './components/ui/ContextMenu.jsx'
 
 import { InitiativeModal }     from './components/modals/InitiativeModal.jsx'
 import { ManoeuvreModal }      from './components/modals/ManoeuvreModal.jsx'
@@ -18,6 +22,7 @@ import { ShipDetailModal }     from './components/modals/ShipDetailModal.jsx'
 import { ShipProfileModal }    from './components/modals/ShipProfileModal.jsx'
 import { CrewAssignmentModal } from './components/modals/CrewAssignmentModal.jsx'
 
+/** Maps modal ID → component. Extend here without touching render logic. */
 const MODAL_MAP = {
   'initiative':       InitiativeModal,
   'manoeuvre':        ManoeuvreModal,
@@ -43,7 +48,7 @@ function ModalLayer() {
   if (!ModalComponent) return null
 
   return (
-    <Modal onClose={closeModal} wide={WIDE_MODALS.has(activeModal)}>
+    <Modal onClose={closeModal} width={WIDE_MODALS.has(activeModal) ? 'max-w-2xl' : 'max-w-lg'} variant="dialog">
       <ModalComponent payload={modalPayload} onClose={closeModal} />
     </Modal>
   )
@@ -53,12 +58,29 @@ function AppScreens() {
   const screen = useUIStore((s) => s.screen)
   useAutosave()
 
+  if (screen === 'dashboard') {
+    return (
+      <>
+        <div className="h-[calc(100%-1.75rem)]">
+          <Dashboard />
+        </div>
+        <LegalFooter />
+      </>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 flex flex-col">
-      {screen === 'dashboard' ? <Dashboard /> : <BattleView />}
+    <>
+      <div className="relative w-full h-[calc(100%-1.75rem)] overflow-hidden bg-slate-950">
+        <BattleView />
+        <HUD />
+        <PhaseTracker />
+        <BattleLog />
+        <ContextMenu />
+        <ModalLayer />
+      </div>
       <LegalFooter />
-      <ModalLayer />
-    </div>
+    </>
   )
 }
 
