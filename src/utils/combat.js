@@ -135,7 +135,7 @@ export function rollAttack(totalDm) {
   const dice   = roll2D6()
   const base   = dice[0] + dice[1]
   const total  = base + totalDm
-  const target = 8 // Average difficulty for attack rolls
+  const target = 10 // Difficult (10+) — Gunner check in Firing Solution // 2300AD B3 p.56
   return {
     dice,
     base,
@@ -149,39 +149,49 @@ export function rollAttack(totalDm) {
 // === DAMAGE ===
 
 /**
+ * Resolve AP penetration from weapon traits. // 2300AD B3 p.59
+ * "Radiation" (particle barbette) = AP∞. "AP X" = ignore X armour points.
+ * @param {string[]} traits
+ * @param {number} armour
+ * @returns {number} effective armour after AP reduction
+ */
+function resolveArmour(traits, armour) {
+  if (traits.includes('Radiation')) return 0
+  const apTrait = traits.find((t) => /^AP\s*\d+$/i.test(t))
+  if (apTrait) {
+    const apValue = parseInt(apTrait.replace(/\D/g, ''), 10)
+    return Math.max(0, armour - apValue)
+  }
+  return Math.max(0, armour)
+}
+
+/**
  * Roll damage for a weapon hit.
- * Handles the multi-weapon bonus: each additional weapon in a turret adds +damageBonus
- * to the total damage roll (not extra dice). // Trav2022 CRB p.167
+ * Handles flat bonus in dice notation ("2D+2"), AP X trait, and multi-weapon bonus.
+ * // 2300AD B3 p.59–60; Trav2022 CRB p.167
  *
  * @param {string} weaponId
- * @param {number} weaponCount  — number of the same weapon type in the turret (1–3)
- * @param {number} armour       — target's current armour value
- * @param {{ type: string, value: number }[]} [bonusDice] — extra damage from AP or critical
+ * @param {number} weaponCount — number of same weapon type in turret (1–3)
+ * @param {number} armour      — target's current armour value
  * @returns {{ rolls: number[], bonus: number, gross: number, armour: number, net: number }}
  */
 export function rollDamage(weaponId, weaponCount = 1, armour = 0) {
   const weapon = WEAPONS[weaponId]
   if (!weapon) return { rolls: [], bonus: 0, gross: 0, armour: 0, net: 0 }
 
-  const [n] = parseDiceNotation(weapon.damage)
-  const rolls = Array.from({ length: n }, () => Math.floor(Math.random() * 6) + 1)
-  const gross = rolls.reduce((a, b) => a + b, 0)
+  const [n, sides, flatBonus] = parseDiceNotation(weapon.damage)
+  const rolls = Array.from({ length: n }, () => Math.floor(Math.random() * sides) + 1)
+  const diceTotal = rolls.reduce((a, b) => a + b, 0)
 
-  // Multi-weapon bonus: +damageBonus per additional weapon (not per die)
+  // Multi-weapon bonus: +damageBonus per additional weapon (not per die) // Trav2022 CRB p.167
   const multiBonus = weapon.damageBonus * Math.max(0, weaponCount - 1)
+  const bonus      = flatBonus + multiBonus
+  const gross      = diceTotal + bonus
 
-  const total   = gross + multiBonus
-  const isAp    = weapon.traits.includes('Radiation') // particle barbette ignores armour
-  const reduced = isAp ? 0 : Math.max(0, armour)
-  const net     = Math.max(0, total - reduced)
+  const effectiveArmour = resolveArmour(weapon.traits, armour)
+  const net = Math.max(0, gross - effectiveArmour)
 
-  return {
-    rolls,
-    bonus: multiBonus,
-    gross: total,
-    armour: reduced,
-    net,
-  }
+  return { rolls, bonus, gross, armour: effectiveArmour, net }
 }
 
 // === CRITICAL HITS ===
@@ -215,14 +225,19 @@ export function getNextSeverity(criticalTracks, system) {
 // === HELPERS ===
 
 /**
- * Parse a dice notation string like "2D" or "4D" into [count, sides].
- * @param {string} notation — e.g. "2D", "1D"
- * @returns {[number, number]}
+ * Parse a dice notation string into [count, sides, flatBonus].
+ * Handles "2D", "4D", "2D+2", "1D-1". // 2300AD B3 p.60 (Grumbler: 2D+2)
+ * @param {string} notation
+ * @returns {[number, number, number]} [diceCount, sides, flatBonus]
  */
 export function parseDiceNotation(notation) {
-  const match = notation.match(/^(\d+)D(\d*)$/i)
-  if (!match) return [1, 6]
-  return [parseInt(match[1], 10), match[2] ? parseInt(match[2], 10) : 6]
+  const match = notation.match(/^(\d+)D(\d*)([+-]\d+)?$/i)
+  if (!match) return [1, 6, 0]
+  return [
+    parseInt(match[1], 10),
+    match[2] ? parseInt(match[2], 10) : 6,
+    match[3] ? parseInt(match[3], 10) : 0,
+  ]
 }
 
 /**
