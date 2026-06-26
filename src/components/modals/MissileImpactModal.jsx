@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useBattleStore } from '../../store/battleStore.js'
 import { computeMissileAttackDM, rollMissileAttack, resolvePointDefence } from '../../utils/missiles.js'
-import { rollDamage, isCriticalHit } from '../../utils/combat.js'
+import { rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit } from '../../utils/combat.js'
 import { useUIStore } from '../../store/uiStore.js'
 import { DiceInput } from '../forms/DiceInput.jsx'
 
@@ -49,8 +49,8 @@ export function MissileImpactModal({ payload, onClose }) {
   }
 
   function onManualResult({ total }) {
-    const effect  = total - 8
-    const success = total >= 8
+    const effect  = total - 10  // Difficult (10+) // 2300AD B3 p.56
+    const success = total >= 10
     setAttackResult({ total, success, effect, dice: [] })
     if (success && remaining > 0) {
       const dmg = rollDamage('missile_rack', 1, target.currentArmour ?? 0)
@@ -62,8 +62,11 @@ export function MissileImpactModal({ payload, onClose }) {
     if (!attackResult?.success || !damageResult) return
     if (pdDestroyed > 0) applyPD(salvoId, pdDestroyed)
     applyDamage(target.id, damageResult.net, salvo.attackerId)
-    if (isCriticalHit(attackResult.effect, damageResult.net, target.currentHull)) {
-      openModal('critical-hit', { shipId: target.id })
+    const effect = attackResult.effect
+    if (isSurfaceFixtureDamage(effect) && !isInternalCriticalHit(effect, damageResult.net, target.currentHull)) {
+      openModal('critical-hit', { shipId: target.id, mode: 'surface', effect })
+    } else if (isInternalCriticalHit(effect, damageResult.net, target.currentHull)) {
+      openModal('critical-hit', { shipId: target.id, mode: 'internal' })
     }
     resolveImpact(salvoId)
     onClose()

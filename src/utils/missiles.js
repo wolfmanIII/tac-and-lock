@@ -1,4 +1,4 @@
-// Trav2022 CRB p.169 — Missile mechanics in basic (range band) mode.
+// 2300AD B3 p.56, p.61 — Missile mechanics (Combat Drones / Kingfisher-class).
 
 import { roll2D6 } from './dice.js'
 import { getBandIndex, RANGE_BAND_ORDER } from './rangeBands.js'
@@ -95,8 +95,8 @@ export function rollMissileAttack(totalDm) {
     base,
     totalDm,
     total,
-    success: total >= 8,
-    effect:  total - 8,
+    success: total >= 10, // Difficult (10+) — Gunner check at impact // 2300AD B3 p.56
+    effect:  total - 10,
   }
 }
 
