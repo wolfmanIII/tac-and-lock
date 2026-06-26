@@ -77,7 +77,6 @@ function AppScreens() {
         <PhaseTracker />
         <BattleLog />
         <ContextMenu />
-        <ModalLayer />
       </div>
       <LegalFooter />
     </>
@@ -88,6 +87,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <AppScreens />
+      <ModalLayer />
     </ErrorBoundary>
   )
 }
