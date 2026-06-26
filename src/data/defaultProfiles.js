@@ -5,7 +5,8 @@
 // are in 2300AD B3 p.46 (Sensor Operations), not reproduced here.
 // Weapon range DMs for 2300AD-specific weapons are approximated (see weapons.js).
 
-export { blankSurfaceFixtureTracks } from './criticalHits.js'
+import { blankSurfaceFixtureTracks } from './criticalHits.js'
+export { blankSurfaceFixtureTracks }
 
 /**
  * Fresh critical-hit track state (all systems undamaged).
