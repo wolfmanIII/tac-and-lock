@@ -1,7 +1,7 @@
 import { useUIStore } from '../../store/uiStore.js'
 import { useBattleStore } from '../../store/battleStore.js'
 import { FACTION_COLOR } from '../../data/factions.js'
-import { CRITICAL_HIT_SYSTEM_LABELS } from '../../data/criticalHits.js'
+import { CRITICAL_HIT_SYSTEM_LABELS, SURFACE_FIXTURE_SYSTEM_LABELS } from '../../data/criticalHits.js'
 import { Tooltip } from '../ui/Tooltip.jsx'
 
 const SEV_COLOR = ['', 'text-amber-300', 'text-amber-400', 'text-orange-400', 'text-orange-500', 'text-red-500', 'text-red-600']
@@ -39,9 +39,10 @@ export function ShipBentoCard({ ship }) {
   const { openModal, showContextMenu } = useUIStore()
   const phase = useBattleStore((s) => s.phase)
 
-  const shipColor = ship.color ?? FACTION_COLOR[ship.faction] ?? '#94a3b8'
-  const activeCrits  = Object.entries(ship.criticalTracks ?? {}).filter(([, sev]) => sev > 0)
-  const isDestroyed  = ship.isDestroyed
+  const shipColor        = ship.color ?? FACTION_COLOR[ship.faction] ?? '#94a3b8'
+  const activeCrits      = Object.entries(ship.criticalTracks ?? {}).filter(([, sev]) => sev > 0)
+  const activeSurface    = Object.entries(ship.surfaceFixtureTracks ?? {}).filter(([, hits]) => hits > 0)
+  const isDestroyed      = ship.isDestroyed
 
   function onContextMenu(e) {
     e.preventDefault()
@@ -76,6 +77,13 @@ export function ShipBentoCard({ ship }) {
               <span className="text-[10px] text-purple-400 border border-purple-800 rounded px-1">EW</span>
             </Tooltip>
           )}
+          {(ship.evasionDm ?? 0) !== 0 && (
+            <Tooltip content={`Evasion active: DM${ship.evasionDm > 0 ? '+' : ''}${ship.evasionDm} to incoming attacks`}>
+              <span className="text-[10px] text-sky-400 border border-sky-800 rounded px-1">
+                EVA {ship.evasionDm > 0 ? '+' : ''}{ship.evasionDm}
+              </span>
+            </Tooltip>
+          )}
           {isDestroyed && (
             <span className="text-[10px] text-red-500 border border-red-900 rounded px-1 font-display">DEST</span>
           )}
@@ -102,17 +110,28 @@ export function ShipBentoCard({ ship }) {
             <span className="text-slate-300">{ship.currentArmour}</span>
           </div>
         </Tooltip>
-        {ship.evasionSpent > 0 && (
-          <Tooltip content={`${ship.evasionSpent} TAC Speed reserved for evasion`}>
-            <div className="flex flex-col">
-              <span className="text-[10px] text-slate-500 font-display tracking-widest">EVA</span>
-              <span className="text-purple-300">{ship.evasionSpent}</span>
-            </div>
-          </Tooltip>
-        )}
+        <Tooltip content="Signature — DM bonus for enemy Electronics(sensors) checks // 2300AD B3 p.57">
+          <div className="flex flex-col">
+            <span className="text-[10px] text-slate-500 font-display tracking-widest">SIG</span>
+            <span className="text-slate-300">{ship.signature ?? ship.profile?.signature ?? 2}</span>
+          </div>
+        </Tooltip>
       </div>
 
-      {/* Critical hit tracks */}
+      {/* Surface fixture hits (amber) */}
+      {activeSurface.length > 0 && (
+        <div className="px-3 pb-1 flex flex-wrap gap-1">
+          {activeSurface.map(([sys, hits]) => (
+            <Tooltip key={sys} content={`${SURFACE_FIXTURE_SYSTEM_LABELS[sys]}: ${hits} hit${hits !== 1 ? 's' : ''}`}>
+              <span className="text-[10px] font-mono border border-amber-800/50 text-amber-400 rounded px-1">
+                {SURFACE_FIXTURE_SYSTEM_LABELS[sys]?.slice(0, 3).toUpperCase()} ×{hits}
+              </span>
+            </Tooltip>
+          ))}
+        </div>
+      )}
+
+      {/* Internal critical hit tracks (red) */}
       {activeCrits.length > 0 && (
         <div className="px-3 pb-1.5 flex flex-wrap gap-1">
           {activeCrits.map(([sys, sev]) => (
