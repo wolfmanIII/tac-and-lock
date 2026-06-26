@@ -1,15 +1,35 @@
 /**
  * BattleView — scrollable battle content layer.
  * HUD / PhaseTracker / BattleLog / ContextMenu are absolute overlays rendered by App.jsx.
+ * Layout mirrors thrust-and-drift BasicBattleView: DISTANCES at top, ships grouped by faction.
  */
 
+import { useCallback, useMemo } from 'react'
 import { useBattleStore } from '../../store/battleStore.js'
 import { useUIStore } from '../../store/uiStore.js'
 import { pairKey } from '../../utils/rangeBands.js'
+import { RANGE_BAND_ORDER } from '../../data/rangeBands.js'
+import { FACTION_COLOR } from '../../data/factions.js'
 import { ShipBentoCard } from './ShipBentoCard.jsx'
 import { MissileTracker } from './MissileTracker.jsx'
 
-const BAND_COLOR = {
+// ── Faction constants ─────────────────────────────────────────────────────────
+
+const FACTION_LABELS = {
+  players: 'GIOCATORI',
+  npc:     'NPC',
+  neutral: 'NEUTRALI',
+}
+
+const FACTION_HEADER_CLASS = {
+  players: 'text-(--neon-cyan) border-(--neon-cyan)/30',
+  npc:     'text-red-400 border-red-400/30',
+  neutral: 'text-slate-400 border-slate-600',
+}
+
+const BAND_LABEL = { VeryLong: 'Very Long' }
+
+const BAND_VALUE_COLOR = {
   Adjacent: 'text-red-400',
   Close:    'text-orange-400',
   Short:    'text-amber-400',
@@ -19,100 +39,158 @@ const BAND_COLOR = {
   Distant:  'text-slate-500',
 }
 
-function bandLabel(id) {
-  return id === 'VeryLong' ? 'Very Long' : id
-}
+// ── RangeBandRow ──────────────────────────────────────────────────────────────
 
-function RangeBandPanel() {
-  const ships      = useBattleStore((s) => s.ships)
-  const rangeBands = useBattleStore((s) => s.rangeBands)
-  const { openModal } = useUIStore()
-
-  const pairs = []
-  for (let i = 0; i < ships.length; i++) {
-    for (let j = i + 1; j < ships.length; j++) {
-      const a = ships[i], b = ships[j]
-      const band = rangeBands[pairKey(a.id, b.id)] ?? 'Long'
-      pairs.push({ a, b, band })
-    }
-  }
-
-  if (pairs.length === 0) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center gap-6 text-center px-8 py-16">
-        <svg width="96" height="96" viewBox="0 0 100 100" className="opacity-20" aria-hidden="true">
-          <circle cx="50" cy="50" r="38" fill="none" stroke="#0891b2" strokeWidth="0.8" />
-          <circle cx="50" cy="50" r="24" fill="none" stroke="#0891b2" strokeWidth="0.8" />
-          <circle cx="50" cy="50" r="4"  fill="none" stroke="#0891b2" strokeWidth="0.8" />
-          <line x1="12" y1="50" x2="26" y2="50" stroke="#0891b2" strokeWidth="0.8" />
-          <line x1="74" y1="50" x2="88" y2="50" stroke="#0891b2" strokeWidth="0.8" />
-          <line x1="50" y1="12" x2="50" y2="26" stroke="#0891b2" strokeWidth="0.8" />
-          <line x1="50" y1="74" x2="50" y2="88" stroke="#0891b2" strokeWidth="0.8" />
-        </svg>
-        <div>
-          <p className="font-display text-xs text-slate-500 tracking-widest">NO RANGE BANDS</p>
-          <p className="font-mono text-xs text-slate-600 mt-1">Add ≥ 2 ships to display contacts.</p>
-        </div>
-      </div>
-    )
-  }
+/**
+ * @param {{ ship1: object, ship2: object, band: string, onSet: (band: string) => void, onMnv: () => void }} props
+ */
+function RangeBandRow({ ship1, ship2, band, onSet, onMnv }) {
+  const idx = RANGE_BAND_ORDER.indexOf(band)
 
   return (
-    <div className="flex-1 p-4 space-y-2">
-      <p className="text-[10px] font-display text-slate-500 tracking-widest mb-3">TACTICAL CONTACTS</p>
-      {pairs.map(({ a, b, band }) => (
+    <div className="flex items-center gap-2 py-1">
+      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: FACTION_COLOR[ship1.faction] ?? '#94a3b8' }} />
+      <span className="font-mono text-xs text-slate-300 truncate max-w-24">{ship1.profile?.name ?? ship1.id}</span>
+      <span className="text-slate-500 mx-0.5">↔</span>
+      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: FACTION_COLOR[ship2.faction] ?? '#94a3b8' }} />
+      <span className="font-mono text-xs text-slate-300 truncate max-w-24">{ship2.profile?.name ?? ship2.id}</span>
+
+      <button
+        onClick={onMnv}
+        className={`ml-auto font-display text-xs tracking-widest shrink-0 w-20 text-right hover:underline ${BAND_VALUE_COLOR[band] ?? 'text-slate-300'}`}
+        title="Open Manoeuvre modal"
+      >
+        {BAND_LABEL[band] ?? band}
+      </button>
+
+      <div className="flex gap-1 shrink-0">
         <button
-          key={`${a.id}-${b.id}`}
-          className="w-full flex items-center gap-3 px-3 py-2 bg-slate-900/60 border border-slate-800
-            hover:border-slate-600 rounded text-left transition-colors group"
-          onClick={() => openModal('manoeuvre', { shipAId: a.id, shipBId: b.id })}
-        >
-          <span className="flex-1 text-xs font-mono text-slate-300 truncate">{a.profile?.name ?? a.id}</span>
-          <span className="text-slate-600 text-xs">↔</span>
-          <span className="flex-1 text-xs font-mono text-slate-300 truncate text-right">{b.profile?.name ?? b.id}</span>
-          <span className={`text-xs font-display tracking-widest shrink-0 w-20 text-right ${BAND_COLOR[band] ?? 'text-slate-300'}`}>
-            {bandLabel(band)}
-          </span>
-          <span className="text-slate-700 group-hover:text-slate-400 text-xs">✎</span>
-        </button>
-      ))}
+          disabled={idx <= 0}
+          onClick={() => onSet(RANGE_BAND_ORDER[idx - 1])}
+          title="Closer (GM override)"
+          className="w-5 h-5 flex items-center justify-center border border-slate-700 text-slate-400 rounded text-xs
+            hover:border-slate-500 hover:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >▼</button>
+        <button
+          disabled={idx >= RANGE_BAND_ORDER.length - 1}
+          onClick={() => onSet(RANGE_BAND_ORDER[idx + 1])}
+          title="Further (GM override)"
+          className="w-5 h-5 flex items-center justify-center border border-slate-700 text-slate-400 rounded text-xs
+            hover:border-slate-500 hover:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >▲</button>
+      </div>
     </div>
   )
 }
 
+// ── BattleView ────────────────────────────────────────────────────────────────
+
 export default function BattleView() {
-  const ships     = useBattleStore((s) => s.ships)
-  const { openModal } = useUIStore()
+  const ships           = useBattleStore((s) => s.ships)
+  const missiles        = useBattleStore((s) => s.missiles)
+  const rangeBands      = useBattleStore((s) => s.rangeBands)
+  const setRangeBand    = useBattleStore((s) => s.setRangeBand)
+  const { openModal, showContextMenu } = useUIStore()
+
+  const handleContainerCtx = useCallback((e) => {
+    e.preventDefault()
+    showContextMenu(e.clientX, e.clientY, null)
+  }, [showContextMenu])
+
+  // All cross-faction pairs that have a registered range band
+  const trackedPairs = useMemo(() => {
+    const pairs = []
+    const seen  = new Set()
+    for (const s1 of ships) {
+      for (const s2 of ships) {
+        if (s1.id === s2.id) continue
+        const key = pairKey(s1.id, s2.id)
+        if (seen.has(key)) continue
+        seen.add(key)
+        const band = rangeBands[key]
+        if (band) pairs.push({ s1, s2, band, key })
+      }
+    }
+    return pairs
+  }, [ships, rangeBands])
+
+  // Ships grouped by faction
+  const byFaction = useMemo(() =>
+    ships.reduce((acc, ship) => {
+      const f = ship.faction ?? 'neutral'
+      if (!acc[f]) acc[f] = []
+      acc[f].push(ship)
+      return acc
+    }, {}),
+  [ships])
 
   return (
-    <div className="w-full h-full overflow-y-auto">
-      <MissileTracker />
-
-      <div className="flex min-h-full">
-        {/* Ship bento cards — left column */}
-        <div className="w-72 shrink-0 flex flex-col border-r border-slate-800 min-h-full">
-          <div className="px-3 pt-3 pb-2 shrink-0 flex items-center justify-between border-b border-slate-800">
-            <span className="text-[10px] font-display text-slate-500 tracking-widest">
-              VESSELS ({ships.length})
-            </span>
-            <button
-              className="text-[10px] font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 px-2 py-0.5 rounded hover:bg-(--neon-cyan)/10 transition-colors"
-              onClick={() => openModal('ship-profile')}
-            >
-              + ADD
-            </button>
-          </div>
-          <div className="flex-1 p-3 space-y-2">
-            {ships.length === 0 ? (
-              <p className="text-slate-600 text-xs font-mono text-center mt-8">No ships in battle.</p>
-            ) : (
-              ships.map((ship) => <ShipBentoCard key={ship.id} ship={ship} />)
-            )}
+    <div
+      className="w-full h-full overflow-y-auto p-6"
+      onContextMenu={handleContainerCtx}
+    >
+      {ships.length === 0 && (
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <svg width="80" height="80" viewBox="0 0 100 100" className="opacity-20 mx-auto mb-4" aria-hidden="true">
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#0891b2" strokeWidth="0.8" />
+              <circle cx="50" cy="50" r="24" fill="none" stroke="#0891b2" strokeWidth="0.8" />
+              <circle cx="50" cy="50" r="4"  fill="none" stroke="#0891b2" strokeWidth="0.8" />
+              <line x1="12" y1="50" x2="26" y2="50" stroke="#0891b2" strokeWidth="0.8" />
+              <line x1="74" y1="50" x2="88" y2="50" stroke="#0891b2" strokeWidth="0.8" />
+              <line x1="50" y1="12" x2="50" y2="26" stroke="#0891b2" strokeWidth="0.8" />
+              <line x1="50" y1="74" x2="50" y2="88" stroke="#0891b2" strokeWidth="0.8" />
+            </svg>
+            <p className="font-display text-xs text-slate-500 tracking-widest">NO VESSELS</p>
+            <p className="font-mono text-xs text-slate-600 mt-1">Add ships from the dashboard to begin.</p>
           </div>
         </div>
+      )}
 
-        {/* Range band panel — center */}
-        <RangeBandPanel />
+      <div className="max-w-4xl mx-auto space-y-6">
+
+        {/* Missile tracker */}
+        {missiles.length > 0 && <MissileTracker />}
+
+        {/* DISTANCES — range band matrix */}
+        {trackedPairs.length > 0 && (
+          <div>
+            <h2 className="font-display text-xs tracking-widest mb-3 pb-1.5 border-b text-slate-400 border-slate-700">
+              DISTANCES
+            </h2>
+            <div className="divide-y divide-slate-800">
+              {trackedPairs.map(({ s1, s2, band, key }) => (
+                <RangeBandRow
+                  key={key}
+                  ship1={s1}
+                  ship2={s2}
+                  band={band}
+                  onSet={(newBand) => setRangeBand(s1.id, s2.id, newBand)}
+                  onMnv={() => openModal('manoeuvre', { shipAId: s1.id, shipBId: s2.id })}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Ships by faction */}
+        {Object.entries(byFaction).map(([faction, factionShips]) => (
+          <div key={faction}>
+            <h2 className={`font-display text-xs tracking-widest mb-3 pb-1.5 border-b ${FACTION_HEADER_CLASS[faction] ?? FACTION_HEADER_CLASS.neutral}`}>
+              {FACTION_LABELS[faction] ?? faction.toUpperCase()}
+              <span className="ml-2 text-slate-400">({factionShips.length})</span>
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {factionShips.map((ship) => (
+                <ShipBentoCard
+                  key={ship.id}
+                  ship={ship}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+
       </div>
     </div>
   )

@@ -17,6 +17,7 @@ export function ContextMenu() {
 
   if (!contextMenu) return null
   const { x, y, shipId } = contextMenu
+  if (!shipId) return null
 
   const items = [
     {

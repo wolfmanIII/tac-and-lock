@@ -36,9 +36,8 @@ function TacSpeedBar({ available, total }) {
 }
 
 export function ShipBentoCard({ ship }) {
-  const { openModal, showContextMenu, selectedShipId, selectShip } = useUIStore()
+  const { openModal, showContextMenu } = useUIStore()
   const phase = useBattleStore((s) => s.phase)
-  const isSelected = selectedShipId === ship.id
 
   const factionColor = FACTION_COLOR[ship.faction] ?? '#94a3b8'
   const activeCrits  = Object.entries(ship.criticalTracks ?? {}).filter(([, sev]) => sev > 0)
@@ -46,25 +45,27 @@ export function ShipBentoCard({ ship }) {
 
   function onContextMenu(e) {
     e.preventDefault()
+    e.stopPropagation()
     showContextMenu(e.clientX, e.clientY, ship.id)
   }
 
   return (
     <div
-      className={`relative rounded border transition-all duration-150 cursor-pointer select-none
-        ${isDestroyed ? 'opacity-40 border-slate-800 bg-slate-900/50' : 'bg-slate-900 border-slate-700'}
-        ${isSelected ? 'border-sky-500 shadow-[0_0_0_1px_rgba(125,211,252,0.3)]' : 'hover:border-slate-500'}`}
-      style={{ borderLeftColor: factionColor, borderLeftWidth: 3 }}
-      onClick={() => selectShip(isSelected ? null : ship.id)}
+      className={`bg-slate-900 border rounded-lg cursor-context-menu transition-colors select-none ${
+        isDestroyed
+          ? 'border-red-900/50 opacity-40'
+          : 'border-slate-700 hover:border-slate-600'
+      }`}
       onContextMenu={onContextMenu}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-3 pt-2 pb-1 gap-2">
-        <div className="min-w-0">
-          <p className="font-display text-sm text-slate-100 truncate">{ship.profile?.name ?? ship.id}</p>
+      <div className="flex items-center gap-2 px-3 pt-3 pb-2">
+        <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: factionColor }} />
+        <div className="min-w-0 flex-1">
+          <p className="font-mono text-sm text-slate-200 font-bold truncate">{ship.profile?.name ?? ship.id}</p>
           <p className="text-[10px] font-mono text-slate-500 truncate">{ship.profile?.class}</p>
         </div>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-1 shrink-0 flex-wrap justify-end">
           {ship.sensorLocked && (
             <Tooltip content="Sensor locked — attackers gain DM bonus">
               <span className="text-[10px] text-amber-400 border border-amber-800 rounded px-1">LOCK</span>

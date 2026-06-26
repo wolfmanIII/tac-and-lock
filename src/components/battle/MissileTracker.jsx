@@ -12,9 +12,11 @@ export function MissileTracker() {
   if (missiles.length === 0 && pendingImpacts.length === 0) return null
 
   return (
-    <div className="px-3 py-2 border-b border-slate-800 bg-slate-950/50">
-      <p className="text-[10px] font-display text-slate-500 tracking-widest mb-1">MISSILES IN FLIGHT</p>
-      <div className="flex flex-wrap gap-2">
+    <div>
+      <h2 className="font-display text-xs tracking-widest mb-3 pb-1.5 border-b text-amber-400 border-amber-400/30">
+        MISSILES IN FLIGHT
+      </h2>
+      <div className="flex flex-wrap gap-2 mb-2">
         {missiles.filter((m) => !m.arrived).map((m) => (
           <div key={m.id} className="flex items-center gap-1.5 text-xs font-mono bg-slate-900 border border-amber-900/50 rounded px-2 py-0.5">
             <span className="text-amber-400">🚀</span>
