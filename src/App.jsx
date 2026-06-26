@@ -21,6 +21,7 @@ import { MissileImpactModal }  from './components/modals/MissileImpactModal.jsx'
 import { ShipDetailModal }     from './components/modals/ShipDetailModal.jsx'
 import { ShipProfileModal }    from './components/modals/ShipProfileModal.jsx'
 import { CrewAssignmentModal } from './components/modals/CrewAssignmentModal.jsx'
+import { AddShipModal }        from './components/modals/AddShipModal.jsx'
 
 /** Maps modal ID → component. Extend here without touching render logic. */
 const MODAL_MAP = {
@@ -34,6 +35,7 @@ const MODAL_MAP = {
   'ship-detail':      ShipDetailModal,
   'ship-profile':     ShipProfileModal,
   'crew-assignment':  CrewAssignmentModal,
+  'add-ship':         AddShipModal,
 }
 
 const WIDE_MODALS = new Set(['ship-profile', 'ship-detail', 'crew-assignment', 'action'])

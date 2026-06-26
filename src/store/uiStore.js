@@ -43,7 +43,7 @@ export const useUIStore = create((set) => ({
 
   // === CONTEXT MENU ===
   contextMenu:     null,
-  showContextMenu: (x, y, shipId) => { console.log('[CTX] store update', { x, y, shipId }); set({ contextMenu: { x, y, shipId } }) },
+  showContextMenu: (x, y, shipId) => set({ contextMenu: { x, y, shipId } }),
   hideContextMenu: ()             => set({ contextMenu: null }),
 
   // === AUDIO ===
