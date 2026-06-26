@@ -4,6 +4,13 @@ import { pairKey, resolveBasicBandMovement } from '../utils/rangeBands.js'
 import { FACTION_COLOR } from '../data/factions.js'
 import { advanceMissileOneRound, makeMissileSalvo } from '../utils/missiles.js'
 import { exportBattle, importBattle } from '../utils/io.js'
+import { rollInitiative } from '../utils/combat.js'
+
+/** Phase sequence. Drives all transitions — no special cases needed. // 2300AD B3 p.53 */
+const PHASE_ORDER = ['setup', 'initiative', 'manoeuvre', 'attack', 'actions']
+
+/** Phases during which actor turns cycle through initiativeOrder. */
+const ACTOR_TURN_PHASES = new Set(['manoeuvre', 'attack', 'actions'])
 
 // === HELPERS ===
 
@@ -66,10 +73,14 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     criticalTracks:     { ...(profile.criticalTracks ?? {}) },
     crew:               structuredClone(profile.crew ?? []),
     crewAssignments:    { ...(profile.crewAssignments ?? {}) },
-    sensorLocked:       false,  // this ship has a sensor lock on it
-    sensorLockTarget:   null,   // ship ID this ship has locked
-    ewTarget:           null,   // ship ID this ship is jamming
-    isDestroyed:        false,
+    sensorLocked:            false,
+    sensorLockTarget:        null,
+    ewTarget:                null,
+    isDestroyed:             false,
+    initiative:              0,
+    initiativeBreakdown:     null,
+    initiativeBonusNextRound: 0,
+    hasActedThisPhase:       false,
   }
 }
 
@@ -101,30 +112,46 @@ export const useBattleStore = create((set, get) => {
     // Advance all in-flight missiles by one round
     const advanced   = s.missiles.map((m) => advanceMissileOneRound(m))
     const arrived    = advanced.filter((m) => m.arrived)
-    const stillFying = advanced.filter((m) => !m.arrived)
+    const stillFlying = advanced.filter((m) => !m.arrived)
 
-    // Reset per-round ship state
-    const ships = s.ships.map((sh) => ({
-      ...sh,
-      tacSpeedAvailable: sh.currentTacSpeed,
-      evasionSpent:      0,
-      sensorLockTarget:  null,
-      sensorLocked:      false,
-      ewTarget:          null,
-    }))
+    // Apply captain leadership bonuses, reset per-round ship state. // 2300AD B3 p.53
+    const anyBonus = s.ships.some((sh) => (sh.initiativeBonusNextRound ?? 0) !== 0)
+    const ships = s.ships.map((sh) => {
+      const bonus = sh.initiativeBonusNextRound ?? 0
+      return {
+        ...sh,
+        tacSpeedAvailable:        sh.currentTacSpeed,
+        evasionSpent:             0,
+        sensorLockTarget:         null,
+        sensorLocked:             false,
+        ewTarget:                 null,
+        hasActedThisPhase:        false,
+        initiative:               sh.initiative + bonus,
+        initiativeBonusNextRound: 0,
+      }
+    })
+
+    // Re-sort initiative if any captain used "Improve Initiative" last round. // 2300AD B3 p.53
+    const newInitiativeOrder = anyBonus && s.initiativeOrder.length > 0
+      ? [...s.initiativeOrder].sort((a, b) => {
+          const ia = ships.find((sh) => sh.id === a)?.initiative ?? 0
+          const ib = ships.find((sh) => sh.id === b)?.initiative ?? 0
+          return ib - ia
+        })
+      : s.initiativeOrder
 
     const log = [
       ...s.log,
       makeLogEntry({
         round: nextRound,
-        phase: 'manoeuvre',
+        phase: 'initiative',
         type:  'system',
         message: `── Round ${nextRound} begins ──`,
       }),
       ...(arrived.length > 0
         ? [makeLogEntry({
             round: nextRound,
-            phase: 'manoeuvre',
+            phase: 'initiative',
             type:  'system',
             message: `⚠ ${arrived.length} missile salvo(s) arriving this round.`,
           })]
@@ -133,10 +160,11 @@ export const useBattleStore = create((set, get) => {
 
     return {
       round:                 nextRound,
-      phase:                 'manoeuvre',
+      phase:                 'initiative',
       currentActorIndex:     0,
       ships,
-      missiles:              stillFying,
+      initiativeOrder:       newInitiativeOrder,
+      missiles:              stillFlying,
       pendingMissileImpacts: [...s.pendingMissileImpacts, ...arrived],
       log,
     }
@@ -245,47 +273,116 @@ export const useBattleStore = create((set, get) => {
     // === INITIATIVE ===
 
     /**
-     * Set the initiative order for the round.
-     * @param {string[]} orderedShipIds
+     * Roll initiative for all ships and set the order. // 2300AD B3 p.54
+     * Opposed Tactics(naval) check (INT) by the Captain.
+     * Formula: 2D6 + Tactics(naval) + INT DM
+     * Player ships accept manual dice overrides; NPC ships auto-roll.
+     * @param {Record<string, { dice: number[] }>} [diceOverrides] — per-shipId manual dice (player ships)
      */
-    setInitiativeOrder: wh((orderedShipIds) => {
-      const { log, round, phase } = get()
-      const names = orderedShipIds
-        .map((id) => get().ships.find((s) => s.id === id)?.profile.name ?? id)
-        .join(' > ')
-      set(() => ({
-        initiativeOrder:   orderedShipIds,
+    rollAllInitiative: wh((diceOverrides = {}) => {
+      const { ships, round } = get()
+
+      const rolled = ships.map((ship) => {
+        const captainId    = ship.crewAssignments?.captain ?? null
+        const captain      = captainId ? ship.crew.find((c) => c.id === captainId) : null
+        const tacticsNaval = captain?.skills.tactics   ?? 0
+        const captainInt   = captain?.characteristics.INT ?? 7
+
+        const result = rollInitiative(
+          tacticsNaval,
+          captainInt,
+          diceOverrides[ship.id] ?? null,
+        )
+        return { id: ship.id, initiative: result.total, result }
+      })
+
+      const sorted = [...rolled].sort((a, b) => b.initiative - a.initiative)
+
+      set((s) => ({
+        ships: s.ships.map((sh) => {
+          const r = rolled.find((r) => r.id === sh.id)
+          return r ? { ...sh, initiative: r.initiative, initiativeBreakdown: r.result.breakdown } : sh
+        }),
+        initiativeOrder:   sorted.map((r) => r.id),
         currentActorIndex: 0,
-        phase:             'manoeuvre',
-        log: [...log, makeLogEntry({
-          round, phase, type: 'system',
-          message: `Initiative: ${names}`,
-        })],
+        log: [
+          ...s.log,
+          ...rolled.map((r) => makeLogEntry({
+            round,
+            phase: 'initiative',
+            type:  'system',
+            message: `Initiative ${s.ships.find((sh) => sh.id === r.id)?.profile.name}: ${r.initiative}`,
+            shipId: r.id,
+          })),
+        ],
       }))
     }),
+
+    /**
+     * Add a one-time initiative bonus to a ship (Captain Leadership action). // 2300AD B3 p.53
+     * Applied at the start of the next round via buildNextRoundState.
+     * @param {string} shipId
+     * @param {number} bonus
+     */
+    addInitiativeBonus: (shipId, bonus) => {
+      set((s) => ({
+        ships: s.ships.map((sh) =>
+          sh.id !== shipId ? sh : {
+            ...sh,
+            initiativeBonusNextRound: (sh.initiativeBonusNextRound ?? 0) + bonus,
+          },
+        ),
+      }))
+    },
 
     // === PHASE ===
 
     /**
-     * Advance to the next phase, or start the next round after Actions.
+     * Advance to the next phase via PHASE_ORDER. // 2300AD B3 p.53
+     * Actor-turn phases reset hasActedThisPhase. End of actions → next round.
      */
     advancePhase: wh(() => {
       const { phase } = get()
-      const NEXT = { setup: 'manoeuvre', manoeuvre: 'attack', attack: 'actions' }
+      const idx = PHASE_ORDER.indexOf(phase)
 
-      if (phase === 'actions') {
-        // Start next round
+      // End of actions (last phase) → start next round
+      if (idx === -1 || idx === PHASE_ORDER.length - 1) {
         set((s) => buildNextRoundState(s))
         return
       }
 
-      const next = NEXT[phase] ?? 'manoeuvre'
+      const nextPhase = PHASE_ORDER[idx + 1]
       set((s) => ({
-        phase: next,
+        phase:             nextPhase,
+        currentActorIndex: 0,
+        ships: s.ships.map((sh) => ({ ...sh, hasActedThisPhase: false })),
         log: [...s.log, makeLogEntry({
-          round: s.round, phase: next, type: 'system',
-          message: `Phase: ${next.toUpperCase()}`,
+          round: s.round, phase: nextPhase, type: 'system',
+          message: `Phase: ${nextPhase.toUpperCase()}`,
         })],
+      }))
+    }),
+
+    /**
+     * Mark the current actor as having acted; advance to the next actor,
+     * skipping destroyed ships. // 2300AD B3 p.53
+     */
+    advanceActor: wh(() => {
+      const { initiativeOrder, currentActorIndex, ships } = get()
+      const shipId = initiativeOrder[currentActorIndex]
+
+      let next = currentActorIndex + 1
+      while (next < initiativeOrder.length) {
+        const nextShip = ships.find((s) => s.id === initiativeOrder[next])
+        if (!nextShip?.isDestroyed) break
+        next++
+      }
+
+      set((s) => ({
+        currentActorIndex: next,
+        ships: s.ships.map((sh) =>
+          sh.id === shipId ? { ...sh, hasActedThisPhase: true } : sh,
+        ),
       }))
     }),
 
