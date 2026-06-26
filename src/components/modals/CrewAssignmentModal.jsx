@@ -1,7 +1,7 @@
 import { useState } from 'react'
+import { uuidv7 } from 'uuid'
 import { useBattleStore } from '../../store/battleStore.js'
-import { blankCrewMember, buildDefaultAssignments } from '../../utils/crew.js'
-import { CREW_SKILLS } from '../../utils/crew.js'
+import { blankCrewMember, buildDefaultAssignments, CREW_SKILLS } from '../../utils/crew.js'
 
 const ROLES = Object.keys(CREW_SKILLS)
 
@@ -14,11 +14,11 @@ export function CrewAssignmentModal({ payload, onClose }) {
   const initialCrew = ship?.crew ?? []
   const initialAssignments = ship?.assignments ?? buildDefaultAssignments(initialCrew)
 
-  const [crew,        setCrew]        = useState(initialCrew.length ? [...initialCrew] : [blankCrewMember()])
+  const [crew,        setCrew]        = useState(initialCrew.length ? [...initialCrew] : [blankCrewMember(uuidv7())])
   const [assignments, setAssignments] = useState({ ...initialAssignments })
 
   function addCrewMember() {
-    setCrew((c) => [...c, blankCrewMember()])
+    setCrew((c) => [...c, blankCrewMember(uuidv7())])
   }
 
   function updateMember(i, field, value) {
@@ -89,7 +89,7 @@ export function CrewAssignmentModal({ payload, onClose }) {
               </div>
               {/* Skills */}
               <div className="grid grid-cols-3 gap-2">
-                {['pilot', 'gunnery', 'engineer', 'electronics', 'tactics', 'leadership', 'medic'].map((sk) => (
+                {['pilot', 'gunner', 'sensors', 'engineer', 'tactics', 'leadership', 'mechanic', 'gunCombat', 'melee', 'countermeasures'].map((sk) => (
                   <div key={sk} className="flex items-center gap-1">
                     <label className="text-[9px] font-display text-slate-500 tracking-widest capitalize w-16 truncate">{sk}</label>
                     <input
