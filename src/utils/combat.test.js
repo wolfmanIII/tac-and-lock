@@ -1,19 +1,19 @@
 /**
  * Tests for 2300AD space combat mechanics.
- * // 2300AD B3 p.52–62 (primary); Trav2022 CRB p.158–159 (crits)
+ * // 2300AD B3 p.52–62 (primary); Trav2022 CRB p.158–159 (internal crits)
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   parseDiceNotation,
   getRangeDM,
-  getTargetSizeDM,
-  getEvasiveDM,
-  getGunnerDexDM,
+  getCharacteristicDM,
   computeAttackDMs,
   rollAttack,
   rollInitiative,
   rollDamage,
+  isSurfaceFixtureDamage,
+  isInternalCriticalHit,
   isCriticalHit,
   getNextSeverity,
   rollSandcasterAbsorption,
@@ -43,50 +43,26 @@ describe('parseDiceNotation', () => {
   })
 })
 
-// === getTargetSizeDM ===
-// // Trav2022 CRB p.163
+// === getCharacteristicDM ===
+// Traveller standard: 0-2 → −2, 3-5 → −1, 6-8 → 0, 9-11 → +1, 12-14 → +2, 15+ → +3
 
-describe('getTargetSizeDM', () => {
+describe('getCharacteristicDM', () => {
   const CASES = [
-    [0,      -2],
-    [50,     -2],
-    [99,     -2],
-    [100,     0],
-    [999,     0],
-    [1000,    1],
-    [9999,    1],
-    [10000,   2],
-    [99999,   2],
-    [100000,  4],
-    [999999,  4],
+    [0,  -2],
+    [2,  -2],
+    [3,  -1],
+    [5,  -1],
+    [6,   0],
+    [8,   0],
+    [9,   1],
+    [11,  1],
+    [12,  2],
+    [14,  2],
+    [15,  3],
   ]
 
-  it.each(CASES)('%i tons → DM %i', (tonnage, dm) => {
-    expect(getTargetSizeDM(tonnage)).toBe(dm)
-  })
-})
-
-// === getEvasiveDM ===
-// // Trav2022 CRB p.164 — penalty = -tacSpeedSpent
-
-describe('getEvasiveDM', () => {
-  it('0 TAC Speed spent → 0 DM', () => {
-    expect(Math.abs(getEvasiveDM(0))).toBe(0)
-  })
-
-  it('negative input clamped to 0', () => {
-    expect(Math.abs(getEvasiveDM(-2))).toBe(0)
-  })
-
-  const CASES = [
-    [1, -1],
-    [2, -2],
-    [5, -5],
-    [10, -10],
-  ]
-
-  it.each(CASES)('%i TAC Speed → DM %i', (spent, dm) => {
-    expect(getEvasiveDM(spent)).toBe(dm)
+  it.each(CASES)('stat %i → DM %i', (stat, dm) => {
+    expect(getCharacteristicDM(stat)).toBe(dm)
   })
 })
 
@@ -122,35 +98,11 @@ describe('getRangeDM', () => {
   })
 
   it('unknown weapon falls back to default range DM', () => {
-    // fallback: RANGE_BAND_DEFAULT_ATTACK_DM or -8
     expect(typeof getRangeDM('nonexistent', 'Close')).toBe('number')
   })
 })
 
-// === getGunnerDexDM ===
-// wrapper around getCharDM — test via known breakpoints // Trav2022 CRB p.6
-
-describe('getGunnerDexDM', () => {
-  const CASES = [
-    [0,  -2],
-    [2,  -2],
-    [3,  -1],
-    [5,  -1],
-    [6,   0],
-    [8,   0],
-    [9,   1],
-    [11,  1],
-    [12,  2],
-    [14,  2],
-    [15,  3],
-  ]
-
-  it.each(CASES)('DEX %i → DM %i', (dex, dm) => {
-    expect(getGunnerDexDM(dex)).toBe(dm)
-  })
-})
-
-// === computeAttackDMs ===
+// === computeAttackDMs — Firing Solution Step 3 // 2300AD B3 p.56 ===
 
 describe('computeAttackDMs', () => {
   it('returns { dms, total }', () => {
@@ -161,19 +113,19 @@ describe('computeAttackDMs', () => {
 
   it('total equals sum of all DM components', () => {
     const r = computeAttackDMs({
-      gunnerSkill:   2,
-      weaponId:      'll98',
-      rangeBand:     'Close',
-      fireControlDm: 1,
-      sensorLockDm:  0,
-      ewDm:          -1,
-      evasiveDm:     -2,
-      gunnerDexDm:   1,
-      targetSizeDm:  0,
-      otherDm:       0,
+      gunnerSkill:     2,
+      gunnerIntDm:     1,
+      weaponId:        'll98',
+      rangeBand:       'Close',
+      fireControlDm:   2,   // Fire Control/2
+      carryEffect:     1,   // carried from Pilot check
+      captainAssistDm: 0,
+      evasionDm:       -2,
+      ewDm:            -1,
+      otherDm:         0,
     })
-    // rangeDm for ll98@Close = 0
-    expect(r.total).toBe(2 + 0 + 1 + 0 + (-1) + (-2) + 1 + 0 + 0)
+    // rangeDm@Close = 0
+    expect(r.total).toBe(2 + 1 + 0 + 2 + 1 + 0 + (-2) + (-1) + 0)
   })
 
   it('includes rangeDm from weapon definition', () => {
@@ -184,6 +136,12 @@ describe('computeAttackDMs', () => {
   it('all optional DMs default to 0', () => {
     const r = computeAttackDMs({ gunnerSkill: 3, weaponId: 'll98', rangeBand: 'Close' })
     expect(r.total).toBe(3 + 0) // gunnerSkill + rangeDm(Close=0)
+  })
+
+  it('carryEffect carries positive Pilot check Effect to Gunner', () => {
+    const r = computeAttackDMs({ gunnerSkill: 1, weaponId: 'll98', rangeBand: 'Close', carryEffect: 3 })
+    expect(r.total).toBe(1 + 0 + 3) // gunnerSkill + rangeDm + carryEffect
+    expect(r.dms.carryEffect).toBe(3)
   })
 })
 
@@ -219,10 +177,10 @@ describe('rollAttack', () => {
     expect(r.effect).toBe(0)
   })
 
-  it('critical when effect >= 6', () => {
+  it('effect >= 6 with damage is an internal crit // 2300AD B3 p.58', () => {
     // base = 8, totalDm = 8 → total = 16, effect = 6
     const r = rollAttack(8)
-    expect(isCriticalHit(r.effect, 1, 100)).toBe(true)
+    expect(isInternalCriticalHit(r.effect, 5, 100)).toBe(true)
   })
 
   it('miss when DMs push total below 10', () => {
@@ -284,30 +242,59 @@ describe('rollInitiative', () => {
   })
 })
 
-// === isCriticalHit ===
-// // Trav2022 CRB p.162 (adapted); simplified rule in combat.js
+// === isSurfaceFixtureDamage — 2300AD B3 p.58 ===
+// Any hit with Effect >= 3 triggers a Surface Fixture roll, even non-penetrating
 
-describe('isCriticalHit', () => {
-  it('effect >= 6 is a critical regardless of damage', () => {
-    expect(isCriticalHit(6,  0, 100)).toBe(true)
-    expect(isCriticalHit(7,  0, 100)).toBe(true)
-    expect(isCriticalHit(10, 0, 100)).toBe(true)
+describe('isSurfaceFixtureDamage', () => {
+  it('effect >= 3 → surface fixture triggered', () => {
+    expect(isSurfaceFixtureDamage(3)).toBe(true)
+    expect(isSurfaceFixtureDamage(4)).toBe(true)
+    expect(isSurfaceFixtureDamage(10)).toBe(true)
   })
 
-  it('effect < 6 is not a critical unless damage >= hullCurrent', () => {
-    expect(isCriticalHit(5, 5, 20)).toBe(false)
-    expect(isCriticalHit(0, 0, 20)).toBe(false)
+  it('effect < 3 → no surface fixture', () => {
+    expect(isSurfaceFixtureDamage(2)).toBe(false)
+    expect(isSurfaceFixtureDamage(0)).toBe(false)
+    expect(isSurfaceFixtureDamage(-1)).toBe(false)
+    expect(isSurfaceFixtureDamage(-5)).toBe(false)
+  })
+})
+
+// === isInternalCriticalHit — 2300AD B3 p.58 ===
+// Effect >= 6 AND net damage > 0, OR hull drops to 0
+
+describe('isInternalCriticalHit', () => {
+  it('effect >= 6 with net damage > 0 → internal crit', () => {
+    expect(isInternalCriticalHit(6,  1, 100)).toBe(true)
+    expect(isInternalCriticalHit(7,  5, 100)).toBe(true)
+    expect(isInternalCriticalHit(10, 1, 100)).toBe(true)
   })
 
-  it('net damage >= hullCurrent triggers a critical at any effect', () => {
-    expect(isCriticalHit(2, 20, 20)).toBe(true)
-    expect(isCriticalHit(-1, 5, 5)).toBe(true)
-    expect(isCriticalHit(0, 100, 10)).toBe(true)
+  it('effect >= 6 but zero net damage → NOT internal crit (no penetration)', () => {
+    expect(isInternalCriticalHit(6,  0, 100)).toBe(false)
+    expect(isInternalCriticalHit(10, 0, 100)).toBe(false)
   })
 
-  it('damage < hullCurrent and effect < 6 = not critical', () => {
-    expect(isCriticalHit(5, 19, 20)).toBe(false)
-    expect(isCriticalHit(4, 1, 15)).toBe(false)
+  it('net damage >= hullCurrent → internal crit regardless of effect', () => {
+    expect(isInternalCriticalHit(2, 20, 20)).toBe(true)
+    expect(isInternalCriticalHit(-1, 5, 5)).toBe(true)
+    expect(isInternalCriticalHit(0, 100, 10)).toBe(true)
+  })
+
+  it('effect < 6 and damage < hullCurrent → not a crit', () => {
+    expect(isInternalCriticalHit(5, 19, 20)).toBe(false)
+    expect(isInternalCriticalHit(4, 1, 15)).toBe(false)
+    expect(isInternalCriticalHit(0, 0, 20)).toBe(false)
+  })
+})
+
+// === isCriticalHit (deprecated alias for isInternalCriticalHit) ===
+
+describe('isCriticalHit (deprecated alias)', () => {
+  it('delegates to isInternalCriticalHit', () => {
+    expect(isCriticalHit(6, 1, 100)).toBe(isInternalCriticalHit(6, 1, 100))
+    expect(isCriticalHit(2, 20, 20)).toBe(isInternalCriticalHit(2, 20, 20))
+    expect(isCriticalHit(5, 5, 20)).toBe(isInternalCriticalHit(5, 5, 20))
   })
 })
 
@@ -372,7 +359,6 @@ describe('rollDamage', () => {
 
   it('particle_barbette ignores armour (Radiation trait → AP∞)', () => {
     const r = rollDamage('particle_barbette', 1, 20)
-    // effective armour → 0, net = gross
     expect(r.armour).toBe(0)
     expect(r.net).toBe(r.gross)
   })

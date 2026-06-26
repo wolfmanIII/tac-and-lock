@@ -1,5 +1,6 @@
-// Trav2022 CRB pp.159–175 — Space combat mechanics.
-// 2300AD: TAC Speed replaces Thrust; Stutterwarp replaces M-Drive/J-Drive.
+// 2300AD B3 p.52–62 — Space combat mechanics (primary source).
+// Trav2022 CRB p.158–159: internal critical hit location table (with B3 substitutions).
+// When B3 and CRB diverge, B3 wins.
 
 import { roll2D6, getCharDM } from './dice.js'
 import { WEAPONS } from '../data/weapons.js'
@@ -47,80 +48,54 @@ export function getRangeDM(weaponId, rangeBand) {
 // === CHARACTERISTIC DM ===
 
 /**
- * DM bonus for a gunner's DEX in attack rolls. // Trav2022 CRB p.6
- * @param {number} dex
+ * DM for a characteristic value (used for any stat as gunner/sensor/pilot).
+ * @param {number} stat
  * @returns {number}
  */
-export function getGunnerDexDM(dex) {
-  return getCharDM(dex)
-}
-
-// === TARGET SIZE DM ===
-
-/**
- * DM for target ship size. Larger ships are easier to hit. // Trav2022 CRB p.163
- * @param {number} tonnage
- * @returns {number}
- */
-export function getTargetSizeDM(tonnage) {
-  if (tonnage < 100)    return -2
-  if (tonnage < 1000)   return 0
-  if (tonnage < 10000)  return 1
-  if (tonnage < 100000) return 2
-  return 4
-}
-
-// === EVASIVE ACTION DM ===
-
-/**
- * DM applied against incoming attacks when a ship declares evasive action.
- * The penalty is equal to the TAC Speed spent on evasion. // Trav2022 CRB p.164
- * @param {number} tacSpeedSpent — TAC Speed allocated to evasion this round
- * @returns {number} negative DM (attacker penalty)
- */
-export function getEvasiveDM(tacSpeedSpent) {
-  return -Math.max(0, tacSpeedSpent)
+export function getCharacteristicDM(stat) {
+  return getCharDM(stat)
 }
 
 // === ATTACK ROLL ===
 
 /**
- * Collect all DMs for an attack roll and return a breakdown.
+ * Collect all DMs for the Gunner check (Step 3 of the Firing Solution). // 2300AD B3 p.56
+ * carryEffect is the positive Effect from Step 2 (Pilot check); negative Effect is discarded.
  * @param {{
  *   gunnerSkill: number,
+ *   gunnerIntDm: number,      — Gunner's INT DM (Gunner check uses INT // B3 p.56)
  *   weaponId: string,
  *   rangeBand: string,
- *   fireControlDm?: number,   — from Fire Control software
- *   sensorLockDm?: number,    — from Sensor Lock action
- *   ewDm?: number,            — from Electronic Warfare (negative)
- *   evasiveDm?: number,       — from target's evasive action (negative)
- *   gunnerDexDm?: number,
- *   targetSizeDm?: number,
+ *   fireControlDm?: number,   — Fire Control software rating (+1/level // B3 p.44)
+ *   carryEffect?: number,     — positive Effect carried from Pilot check (Step 2)
+ *   captainAssistDm?: number, — Captain Tactics(naval) assist (+Effect if success // B3 p.56)
+ *   evasionDm?: number,       — target evasion DM (opposed Pilot check Effect // B3 p.55)
+ *   ewDm?: number,            — Electronic Warfare DM (negative)
  *   otherDm?: number,
  * }} params
  * @returns {{ dms: Record<string, number>, total: number }}
  */
 export function computeAttackDMs({
   gunnerSkill,
+  gunnerIntDm     = 0,
   weaponId,
   rangeBand,
   fireControlDm   = 0,
-  sensorLockDm    = 0,
+  carryEffect     = 0,
+  captainAssistDm = 0,
+  evasionDm       = 0,
   ewDm            = 0,
-  evasiveDm       = 0,
-  gunnerDexDm     = 0,
-  targetSizeDm    = 0,
   otherDm         = 0,
 }) {
   const dms = {
     gunnerSkill,
-    rangeDm:       getRangeDM(weaponId, rangeBand),
+    gunnerIntDm,
+    rangeDm:        getRangeDM(weaponId, rangeBand),
     fireControlDm,
-    sensorLockDm,
+    carryEffect,
+    captainAssistDm,
+    evasionDm,
     ewDm,
-    evasiveDm,
-    gunnerDexDm,
-    targetSizeDm,
     otherDm,
   }
   const total = Object.values(dms).reduce((a, b) => a + b, 0)
@@ -195,21 +170,34 @@ export function rollDamage(weaponId, weaponCount = 1, armour = 0) {
   return { rolls, bonus, gross, armour: effectiveArmour, net }
 }
 
-// === CRITICAL HITS ===
+// === CRITICAL HITS — 2300AD B3 p.58 ===
 
 /**
- * Check whether a hit qualifies as a critical hit.
- * In Traveller 2022, a critical hit occurs when a single hit brings the ship's
- * Hull to 0 or below, or when effect ≥ 6. // Trav2022 CRB p.162
- *
- * Simplified rule applied here: effect ≥ 6 on the attack roll, OR net damage ≥ hullCurrent.
- * @param {number} attackEffect — effect from the attack roll
- * @param {number} netDamage
- * @param {number} hullCurrent — ship's current hull points before this hit
+ * Surface Fixture Damage check. // 2300AD B3 p.58
+ * Any hit with Effect ≥ 3 triggers a roll on the Surface Fixture table,
+ * even if the hit does not penetrate armour.
+ * @param {number} attackEffect
  * @returns {boolean}
  */
+export function isSurfaceFixtureDamage(attackEffect) {
+  return attackEffect >= 3
+}
+
+/**
+ * Internal Critical Hit check. // 2300AD B3 p.58
+ * Effect ≥ 6 with net damage > 0 (penetrating hit), OR hull drops to 0.
+ * @param {number} attackEffect
+ * @param {number} netDamage — damage after armour reduction
+ * @param {number} hullCurrent — ship hull points BEFORE this hit
+ * @returns {boolean}
+ */
+export function isInternalCriticalHit(attackEffect, netDamage, hullCurrent) {
+  return (attackEffect >= 6 && netDamage > 0) || netDamage >= hullCurrent
+}
+
+/** @deprecated Use isInternalCriticalHit instead. */
 export function isCriticalHit(attackEffect, netDamage, hullCurrent) {
-  return attackEffect >= 6 || netDamage >= hullCurrent
+  return isInternalCriticalHit(attackEffect, netDamage, hullCurrent)
 }
 
 /**
