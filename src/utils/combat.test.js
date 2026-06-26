@@ -238,35 +238,49 @@ describe('rollAttack', () => {
   })
 })
 
-// === rollInitiative ===
+// === rollInitiative — 2300AD B3 p.54 ===
+// Opposed Tactics(naval) check (INT): 2D6 + Tactics(naval) + INT DM
 
 describe('rollInitiative', () => {
   beforeEach(() => vi.spyOn(Math, 'random').mockReturnValue(0.5))
   afterEach(() => vi.restoreAllMocks())
 
-  it('total = 2D6 + pilotSkill + charDm(pilotDex) + tacSpeed', () => {
-    // base=8, pilotSkill=2, charDm(7)=0, tacSpeed=3 → total=13
-    const r = rollInitiative(3, 2, 7)
-    expect(r.total).toBe(13)
+  it('total = 2D6 + tacticsNaval + INT DM', () => {
+    // base=8 (random 0.5 → each d6=4), tactics=2, INT=7→DM0 → total=10
+    const r = rollInitiative(2, 7)
+    expect(r.total).toBe(10)
   })
 
-  it('includes pilotSkill, charDm, tacSpeed in result', () => {
-    const r = rollInitiative(2, 1, 7)
-    expect(r.pilotSkill).toBe(1)
-    expect(r.tacSpeed).toBe(2)
-    expect(r.charDm).toBe(0) // DEX 7 → charDM 0
+  it('includes tacticsNaval, intDm in result', () => {
+    const r = rollInitiative(3, 7)
+    expect(r.tacticsNaval).toBe(3)
+    expect(r.intDm).toBe(0) // INT 7 → DM+0
+    expect(r.total).toBe(8 + 3 + 0)
   })
 
-  it('pilotDex defaults to 7 (charDm 0)', () => {
-    const r = rollInitiative(1, 1)
-    expect(r.charDm).toBe(0)
-    expect(r.total).toBe(8 + 1 + 0 + 1)
+  it('captainInt defaults to 7 (intDm 0)', () => {
+    const r = rollInitiative(1)
+    expect(r.intDm).toBe(0)
+    expect(r.total).toBe(8 + 1 + 0)
   })
 
-  it('high DEX gives positive charDm', () => {
-    const r = rollInitiative(1, 1, 12)
-    expect(r.charDm).toBe(2) // DEX 12 → +2
-    expect(r.total).toBe(8 + 1 + 2 + 1)
+  it('high INT gives positive intDm', () => {
+    // INT 11 → DM+1
+    const r = rollInitiative(1, 11)
+    expect(r.intDm).toBe(1)
+    expect(r.total).toBe(8 + 1 + 1)
+  })
+
+  it('no tactics skill (0) still rolls correctly', () => {
+    const r = rollInitiative(0, 7)
+    expect(r.total).toBe(8)
+  })
+
+  it('diceOverride bypasses random roll', () => {
+    const r = rollInitiative(2, 7, { dice: [5, 6] })
+    expect(r.dice).toEqual([5, 6])
+    expect(r.base).toBe(11)
+    expect(r.total).toBe(11 + 2 + 0)
   })
 })
 

@@ -8,24 +8,25 @@ import { RANGE_BAND_DEFAULT_ATTACK_DM } from '../data/rangeBands.js'
 // === INITIATIVE ===
 
 /**
- * Roll initiative for a ship. // Trav2022 CRB p.161
- * Formula: 2D6 + Pilot skill + TAC Speed
- * @param {number} tacSpeed
- * @param {number} pilotSkill
- * @param {number} [pilotDex]  — Pilot's DEX characteristic (optional)
- * @returns {{ dice: number[], base: number, pilotSkill: number, charDm: number, tacSpeed: number, total: number }}
+ * Roll initiative for a ship. // 2300AD B3 p.54
+ * Opposed Tactics(naval) check (INT) by the Captain.
+ * Formula: 2D6 + Tactics(naval) + INT DM
+ * @param {number} tacticsNaval — Captain's Tactics(naval) skill (0 if no captain assigned)
+ * @param {number} [captainInt] — Captain's INT characteristic (default 7 = DM+0)
+ * @param {{ dice: number[] } | null} [diceOverride] — pre-rolled dice (manual player entry)
  */
-export function rollInitiative(tacSpeed, pilotSkill, pilotDex = 7) {
-  const dice   = roll2D6()
-  const base   = dice[0] + dice[1]
-  const charDm = getCharDM(pilotDex)
+export function rollInitiative(tacticsNaval, captainInt = 7, diceOverride = null) {
+  const dice  = diceOverride?.dice ?? roll2D6()
+  const base  = dice[0] + dice[1]
+  const intDm = getCharDM(captainInt)
   return {
     dice,
     base,
-    pilotSkill,
-    charDm,
-    tacSpeed,
-    total: base + pilotSkill + charDm + tacSpeed,
+    tacticsNaval,
+    intDm,
+    captainInt,
+    total: base + tacticsNaval + intDm,
+    breakdown: { roll: base, tacticsNaval, intDm },
   }
 }
 
