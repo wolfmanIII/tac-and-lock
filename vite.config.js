@@ -10,6 +10,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    include: ['src/**/*.test.{js,jsx}'],
+    exclude: ['e2e/**', 'node_modules/**'],
     setupFiles: ['./src/test-setup.js'],
     coverage: {
       provider: 'v8',
