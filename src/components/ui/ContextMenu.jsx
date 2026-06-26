@@ -15,6 +15,7 @@ export function ContextMenu() {
     return () => document.removeEventListener('mousedown', onDown)
   }, [contextMenu, hideContextMenu])
 
+  console.log('[CTX] ContextMenu render', contextMenu)
   if (!contextMenu) return null
   const { x, y, shipId } = contextMenu
   if (!shipId) return null

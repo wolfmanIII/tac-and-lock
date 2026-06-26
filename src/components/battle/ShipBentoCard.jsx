@@ -46,6 +46,7 @@ export function ShipBentoCard({ ship }) {
   function onContextMenu(e) {
     e.preventDefault()
     e.stopPropagation()
+    console.log('[CTX] card right-clicked', ship.id, e.clientX, e.clientY)
     showContextMenu(e.clientX, e.clientY, ship.id)
   }
 
