@@ -2,17 +2,21 @@ import { useEffect, useRef } from 'react'
 import { useUIStore } from '../../store/uiStore.js'
 import { useBattleStore } from '../../store/battleStore.js'
 
-function MenuItem({ icon, label, onClick, danger = false }) {
+function MenuItem({ icon, label, onClick, danger = false, disabled = false, hint = '' }) {
   return (
     <button
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      title={disabled && hint ? hint : undefined}
       className={`w-full flex items-center gap-2 px-3 py-1.5 text-left font-mono text-xs transition-colors ${
-        danger
-          ? 'text-red-400 hover:bg-red-950/50'
-          : 'text-slate-300 hover:bg-slate-700/60 hover:text-slate-100'
+        disabled
+          ? 'text-slate-600 cursor-not-allowed'
+          : danger
+            ? 'text-red-400 hover:bg-red-950/50'
+            : 'text-slate-300 hover:bg-slate-700/60 hover:text-slate-100'
       }`}
     >
-      <span className="w-4 text-center shrink-0">{icon}</span>
+      <span className={`w-4 text-center shrink-0 ${disabled ? 'opacity-40' : ''}`}>{icon}</span>
       {label}
     </button>
   )
@@ -49,9 +53,27 @@ function BackgroundMenu({ x, y, menuRef, close }) {
 }
 
 function ShipMenu({ x, y, menuRef, shipId, close }) {
-  const openModal = useUIStore((s) => s.openModal)
-  const ships     = useBattleStore((s) => s.ships)
-  const ship      = ships.find((s) => s.id === shipId)
+  const openModal         = useUIStore((s) => s.openModal)
+  const ships             = useBattleStore((s) => s.ships)
+  const phase             = useBattleStore((s) => s.phase)
+  const initiativeOrder   = useBattleStore((s) => s.initiativeOrder)
+  const currentActorIndex = useBattleStore((s) => s.currentActorIndex)
+  const ship = ships.find((s) => s.id === shipId)
+
+  const isCurrentActor = initiativeOrder[currentActorIndex] === shipId
+  const hasActed       = ship?.hasActedThisPhase ?? false
+
+  const canAttack = phase === 'attack'  && isCurrentActor && !hasActed
+  const canAction = phase === 'actions' && isCurrentActor && !hasActed
+
+  const attackHint  = phase !== 'attack'  ? 'Solo nella fase Attack'
+                    : !isCurrentActor     ? 'Non è il turno di questa nave'
+                    : hasActed            ? 'Ha già agito in questa fase'
+                    : ''
+  const actionHint  = phase !== 'actions' ? 'Solo nella fase Actions'
+                    : !isCurrentActor     ? 'Non è il turno di questa nave'
+                    : hasActed            ? 'Ha già agito in questa fase'
+                    : ''
 
   return (
     <MenuShell x={x} y={y} menuRef={menuRef}>
@@ -62,9 +84,12 @@ function ShipMenu({ x, y, menuRef, shipId, close }) {
         </div>
       )}
       <MenuItem icon="📊" label="Ship sheet"         onClick={() => { openModal('ship-detail',     { shipId }); close() }} />
-      <MenuItem icon="🎯" label="Attack…"            onClick={() => { openModal('attack',          { attackerId: shipId }); close() }} />
-      <MenuItem icon="🚀" label="Launch missiles…"   onClick={() => { openModal('missile-launch',  { attackerId: shipId }); close() }} />
-      <MenuItem icon="⚡" label="Crew action…"       onClick={() => { openModal('action',          { shipId }); close() }} />
+      <MenuItem icon="🎯" label="Attack…"            onClick={() => { openModal('attack',          { attackerId: shipId }); close() }}
+        disabled={!canAttack} hint={attackHint} />
+      <MenuItem icon="🚀" label="Launch missiles…"   onClick={() => { openModal('missile-launch',  { attackerId: shipId }); close() }}
+        disabled={!canAttack} hint={attackHint} />
+      <MenuItem icon="⚡" label="Crew action…"       onClick={() => { openModal('action',          { shipId }); close() }}
+        disabled={!canAction} hint={actionHint} />
       <MenuItem icon="👥" label="Assign crew…"       onClick={() => { openModal('crew-assignment', { shipId }); close() }} />
       <MenuDivider />
       <MenuItem icon="🗑" label="Remove from battle" danger onClick={() => { useBattleStore.getState().removeShip(shipId); close() }} />
