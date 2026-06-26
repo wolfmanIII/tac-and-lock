@@ -1,4 +1,4 @@
-// Trav2022 CRB p.161 — Ship crew roles and skill resolution.
+// 2300AD B3 p.53 — Ship crew roles and skill resolution.
 
 /**
  * Canonical crew roles and the primary skill used in combat for each.
@@ -109,6 +109,38 @@ export function getAssignedSkill(role, assignments, crewList) {
  */
 export function getEffectiveSkill(role, assignments, crewList) {
   return getAssignedSkill(role, assignments, crewList)
+}
+
+/**
+ * The primary characteristic used by each crew role in 2300AD combat checks. // 2300AD B3 p.53–56
+ * Sensor Op: INT (Electronics sensors check). Pilot: DEX (Pilot check). Gunner: INT (Gunner check).
+ * Captain: INT (Tactics naval check). Engineer: INT (Engineer power/stutterwarp check).
+ */
+export const ROLE_PRIMARY_CHARACTERISTIC = {
+  pilot:           'DEX', // Firing Solution Step 2 // B3 p.56
+  captain:         'INT', // Initiative + Tactics assist // B3 p.54, p.56
+  engineer:        'INT', // Engineer power assists // B3 p.56
+  sensor_operator: 'INT', // Firing Solution Step 1 // B3 p.56
+  gunner_turret:   'INT', // Firing Solution Step 3; Point Defence uses DEX // B3 p.56, p.55
+  gunner_bay:      'INT', // same as turret gunner
+  marine:          'STR', // boarding actions
+}
+
+/**
+ * Return the characteristic value of the crew member assigned to a given role.
+ * Falls back to 7 (DM+0) when no crew is assigned.
+ * @param {string} role
+ * @param {Record<string, string | null>} assignments — role → crew ID
+ * @param {import('./crew.js').CrewMember[]} crewList
+ * @param {string} [characteristic] — override to query a specific stat (default: role's primary)
+ * @returns {number}
+ */
+export function getAssignedCharacteristic(role, assignments, crewList, characteristic) {
+  const stat = characteristic ?? ROLE_PRIMARY_CHARACTERISTIC[role] ?? 'INT'
+  const assignedId = assignments[role]
+  if (!assignedId) return 7
+  const crew = crewList.find((c) => c.id === assignedId)
+  return crew?.characteristics?.[stat] ?? 7
 }
 
 /**

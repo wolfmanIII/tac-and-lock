@@ -1,8 +1,11 @@
 // 2300AD ship profiles extracted from 2300AD Book 3: Vehicles and Spacecraft.
 // Hull Points, Armour, Tac Speed, Sensors taken verbatim from stat blocks.
+// Signature: base value from B3 stat block // 2300AD B3 p.57. GM should verify against actual stat block.
 // Sensor combat DM: approximated from sensor type names — explicit DM values
 // are in 2300AD B3 p.46 (Sensor Operations), not reproduced here.
 // Weapon range DMs for 2300AD-specific weapons are approximated (see weapons.js).
+
+export { blankSurfaceFixtureTracks } from './criticalHits.js'
 
 /**
  * Fresh critical-hit track state (all systems undamaged).
@@ -48,11 +51,13 @@ function blankCrew() {
  *   currentHull: number,
  *   armour: number,
  *   tacSpeed: number,
+ *   signature: number,              — base Signature for enemy Electronics(sensors) checks // 2300AD B3 p.57
  *   sensors: { type: string, dm: number },
  *   computer: { model: string, bandwidth: number },
  *   weapons: { weaponId: string, count: number, label: string }[],
  *   software: string[],
  *   criticalTracks: Record<string, number>,
+ *   surfaceFixtureTracks: Record<string, number>,
  *   crew: any[],
  *   crewAssignments: Record<string, string | null>,
  *   notes: string,
@@ -73,12 +78,14 @@ export const DEFAULT_PROFILES = [
     hullPoints: 10,
     currentHull: 10,
     armour: 0,
-    tacSpeed: 1,   // Stutterwarp: 1.41 ly/day, Tac Speed: 1
+    tacSpeed: 1,       // Stutterwarp: 1.41 ly/day, Tac Speed: 1
+    signature: 2,      // small civilian, retractable radiators // 2300AD B3 p.57
     sensors: { type: 'Basic Military, Basic Survey, DSS, GADS, Telescope', dm: 3 },
     computer: { model: 'Computer/10', bandwidth: 10 },
-    weapons: [],   // 1 hardpoint available, unarmed by default
+    weapons: [],       // 1 hardpoint available, unarmed by default
     software: ['operations', 'stutterwarp_control'],
     criticalTracks: blankCriticalTracks(),
+    surfaceFixtureTracks: blankSurfaceFixtureTracks(),
     crew: [],
     crewAssignments: blankCrew(),
     notes: 'Survey scout. Stutterwarp 1.41 ly/day. Extensive sensor suite. 1 unarmed hardpoint. Often modified. // 2300AD B3 p.86',
@@ -94,12 +101,14 @@ export const DEFAULT_PROFILES = [
     hullPoints: 20,
     currentHull: 20,
     armour: 0,
-    tacSpeed: 1,   // Stutterwarp: 1.29 ly/day, Tac Speed: 1
+    tacSpeed: 1,       // Stutterwarp: 1.29 ly/day, Tac Speed: 1
+    signature: 2,      // small civilian courier // 2300AD B3 p.57
     sensors: { type: 'Basic Nav Array, DSS', dm: 1 },
     computer: { model: 'Computer/10', bandwidth: 10 },
-    weapons: [],   // unarmed
+    weapons: [],       // unarmed
     software: ['operations', 'stutterwarp_control'],
     criticalTracks: blankCriticalTracks(),
+    surfaceFixtureTracks: blankSurfaceFixtureTracks(),
     crew: [],
     crewAssignments: blankCrew(),
     notes: 'Multi-role courier and light freighter. Interface-capable. Unarmed. Common across French Arm. // 2300AD B3 p.88',
@@ -115,12 +124,14 @@ export const DEFAULT_PROFILES = [
     hullPoints: 22,
     currentHull: 22,
     armour: 0,
-    tacSpeed: 1,   // Stutterwarp: 1.32 ly/day, Tac Speed: 1
+    tacSpeed: 1,       // Stutterwarp: 1.32 ly/day, Tac Speed: 1
+    signature: 3,      // yacht with solar panels (extended = +2 signature) // 2300AD B3 p.57
     sensors: { type: 'Basic Nav Array, DSS, GADS, Telescope', dm: 2 },
     computer: { model: 'Computer/20', bandwidth: 20 },
-    weapons: [],   // unarmed luxury yacht
+    weapons: [],       // unarmed luxury yacht
     software: ['operations', 'auto_repair_1', 'stutterwarp_control'],
     criticalTracks: blankCriticalTracks(),
+    surfaceFixtureTracks: blankSurfaceFixtureTracks(),
     crew: [],
     crewAssignments: blankCrew(),
     notes: 'Luxury private starship. Spin gravity. Carries Turmfalke lander. Fuel-cell powered, can refuel via solar array. // 2300AD B3 p.91',
@@ -136,12 +147,14 @@ export const DEFAULT_PROFILES = [
     hullPoints: 100,
     currentHull: 100,
     armour: 0,
-    tacSpeed: 1,   // Stutterwarp: 1.1 ly/day, Tac Speed: 1
+    tacSpeed: 1,       // Stutterwarp: 1.1 ly/day, Tac Speed: 1
+    signature: 4,      // large civilian freighter, large radiator surface // 2300AD B3 p.57
     sensors: { type: 'Basic Nav Array, DSS', dm: 1 },
     computer: { model: 'Computer/15', bandwidth: 15 },
-    weapons: [],   // 4 hardpoints available, unarmed by default
+    weapons: [],       // 4 hardpoints available, unarmed by default
     software: ['operations', 'auto_repair_1', 'stutterwarp_control'],
     criticalTracks: blankCriticalTracks(),
+    surfaceFixtureTracks: blankSurfaceFixtureTracks(),
     crew: [],
     crewAssignments: blankCrew(),
     notes: 'Large bulk freighter. 4 unarmed hardpoints. Rotating habitat ring for crew comfort. 503t cargo. // 2300AD B3 p.94',
@@ -159,7 +172,8 @@ export const DEFAULT_PROFILES = [
     hullPoints: 7,
     currentHull: 7,
     armour: 8,
-    tacSpeed: 3,   // Stutterwarp: 3.29 ly/day, Tac Speed: 3
+    tacSpeed: 3,       // Stutterwarp: 3.29 ly/day, Tac Speed: 3
+    signature: 4,      // military fighter, discharge vanes available // 2300AD B3 p.57
     sensors: { type: 'Advanced Military, Basic Military', dm: 4 },
     computer: { model: 'Computer/30fib', bandwidth: 30 },
     weapons: [
@@ -168,6 +182,7 @@ export const DEFAULT_PROFILES = [
     ],
     software: ['operations', 'fire_control_2', 'auto_repair_1', 'stutterwarp_control'],
     criticalTracks: blankCriticalTracks(),
+    surfaceFixtureTracks: blankSurfaceFixtureTracks(),
     crew: [],
     crewAssignments: blankCrew(),
     notes: 'Ship-killer fighter. Two-pilot crew. Heavily armoured. Discharge Vanes for stealth. France/UK/Texas/Freihafen service. // 2300AD B3 p.78',
@@ -183,7 +198,8 @@ export const DEFAULT_PROFILES = [
     hullPoints: 8,
     currentHull: 8,
     armour: 4,
-    tacSpeed: 2,   // Stutterwarp: 1.98 ly/day, Tac Speed: 2
+    tacSpeed: 2,       // Stutterwarp: 1.98 ly/day, Tac Speed: 2
+    signature: 3,      // small patrol craft // 2300AD B3 p.57
     sensors: { type: 'Basic Military, DSS, GADS', dm: 3 },
     computer: { model: 'Computer/15fib', bandwidth: 15 },
     weapons: [
@@ -192,6 +208,7 @@ export const DEFAULT_PROFILES = [
     ],
     software: ['operations', 'fire_control_2', 'stutterwarp_control'],
     criticalTracks: blankCriticalTracks(),
+    surfaceFixtureTracks: blankSurfaceFixtureTracks(),
     crew: [],
     crewAssignments: blankCrew(),
     notes: 'Customs/patrol craft. Orbital Quarantine Command. Breaching tube + grapple arm for boarding ops. // 2300AD B3 p.80',
@@ -207,7 +224,8 @@ export const DEFAULT_PROFILES = [
     hullPoints: 30,
     currentHull: 30,
     armour: 4,
-    tacSpeed: 3,   // Stutterwarp: 2.65 ly/day, Tac Speed: 3
+    tacSpeed: 3,       // Stutterwarp: 2.65 ly/day, Tac Speed: 3
+    signature: 5,      // medium military frigate // 2300AD B3 p.57
     sensors: { type: 'Basic Military, DSS, GADS, Basic Survey', dm: 3 },
     computer: { model: 'Computer/20', bandwidth: 20 },
     weapons: [
@@ -219,6 +237,7 @@ export const DEFAULT_PROFILES = [
     ],
     software: ['operations', 'fire_control_2', 'auto_repair_1', 'stutterwarp_control'],
     criticalTracks: blankCriticalTracks(),
+    surfaceFixtureTracks: blankSurfaceFixtureTracks(),
     crew: [],
     crewAssignments: blankCrew(),
     notes: 'Most common colonial warship. Interface-capable VTOL. 2 Combat Drones (Ritage-1). Azania/France/Canada/Texas/Ukraine service. // 2300AD B3 p.104',
@@ -236,7 +255,8 @@ export const DEFAULT_PROFILES = [
     hullPoints: 12,
     currentHull: 12,
     armour: 4,
-    tacSpeed: 2,   // Stutterwarp: 1.67 ly/day, Tac Speed: 2
+    tacSpeed: 2,       // Stutterwarp: 1.67 ly/day, Tac Speed: 2
+    signature: 3,      // base value — Stealth reduces by 4 (to -1 effective) // 2300AD B3 p.57
     sensors: { type: "Kaefer 'Steel Yard' (Basic Military + Basic Survey, DSS)", dm: 3 },
     computer: { model: 'Computer/15', bandwidth: 15 },
     weapons: [
@@ -246,6 +266,7 @@ export const DEFAULT_PROFILES = [
     ],
     software: ['operations', 'fire_control_1', 'stutterwarp_control'],
     criticalTracks: blankCriticalTracks(),
+    surfaceFixtureTracks: blankSurfaceFixtureTracks(),
     crew: [],
     crewAssignments: blankCrew(),
     notes: 'Kaefer spy/scout craft. Stealth + Heat Sinks. 2 Whiskey Combat Drones. Detonates when capture is imminent. // 2300AD B3 p.107',

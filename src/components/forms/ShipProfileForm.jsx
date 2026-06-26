@@ -11,7 +11,7 @@ import { WEAPONS, WEAPON_IDS } from '../../data/weapons.js'
 import { FACTIONS } from '../../data/factions.js'
 import { SOFTWARE, SOFTWARE_IDS } from '../../data/software.js'
 import { blankCrewMember } from '../../utils/crew.js'
-import { blankCriticalTracks } from '../../data/defaultProfiles.js'
+import { blankCriticalTracks, blankSurfaceFixtureTracks } from '../../data/defaultProfiles.js'
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -27,25 +27,34 @@ function blankProfile() {
   return {
     name: '', class: '', tonnage: 100, faction: 'neutral',
     hullPoints: 20, currentHull: 20, armour: 0, tacSpeed: 1,
+    signature: 2,   // base Signature for enemy Electronics(sensors) // 2300AD B3 p.57
     sensors: { type: '', dm: 0 },
     computer: { model: '', bandwidth: 0 },
     weapons: [], software: [], crew: [],
     crewAssignments: blankCrew(),
     criticalTracks: blankCriticalTracks(),
+    surfaceFixtureTracks: blankSurfaceFixtureTracks(),
     notes: '',
   }
 }
 
 function initProfile(existing) {
   if (!existing) return blankProfile()
+  const blank = blankProfile()
   return {
-    ...blankProfile(),
+    ...blank,
     ...existing,
-    sensors: { ...existing.sensors },
-    computer: { ...existing.computer },
-    weapons: (existing.weapons ?? []).map((w) => ({ ...w })),
-    software: [...(existing.software ?? [])],
-    crew: (existing.crew ?? []).map((m) => ({ ...m, skills: { ...m.skills } })),
+    sensors:              { ...existing.sensors },
+    computer:             { ...existing.computer },
+    weapons:              (existing.weapons ?? []).map((w) => ({ ...w })),
+    software:             [...(existing.software ?? [])],
+    crew:                 (existing.crew ?? []).map((m) => ({
+      ...m,
+      skills:          { ...m.skills },
+      characteristics: { ...blank.crew?.characteristics, ...(m.characteristics ?? {}) },
+    })),
+    criticalTracks:       { ...blank.criticalTracks,       ...(existing.criticalTracks ?? {}) },
+    surfaceFixtureTracks: { ...blank.surfaceFixtureTracks,  ...(existing.surfaceFixtureTracks ?? {}) },
   }
 }
 
@@ -81,6 +90,7 @@ function TextField({ label, value, onChange, placeholder = '' }) {
 }
 
 const CREW_SKILL_KEYS = ['pilot', 'gunner', 'sensors', 'engineer', 'tactics', 'leadership', 'mechanic', 'gunCombat']
+const CHAR_KEYS       = ['STR', 'DEX', 'END', 'INT', 'EDU', 'SOC']
 
 function CrewMemberRow({ member, onChange, onRemove }) {
   return (
@@ -94,20 +104,41 @@ function CrewMemberRow({ member, onChange, onRemove }) {
         <button type="button" onClick={onRemove}
           className="text-slate-400 hover:text-red-400 font-mono text-sm leading-none transition-colors shrink-0 px-1">✕</button>
       </div>
-      <div className="grid grid-cols-4 gap-1.5">
-        {CREW_SKILL_KEYS.map((sk) => (
-          <label key={sk} className="flex flex-col gap-0.5">
-            <span className="font-mono text-[9px] text-slate-500 tracking-wide uppercase">{sk}</span>
-            <input
-              type="number" min={0} max={5} value={member.skills?.[sk] ?? 0}
-              onChange={(e) => onChange({
-                ...member,
-                skills: { ...member.skills, [sk]: Math.max(0, Math.min(5, Number(e.target.value) || 0)) },
-              })}
-              className="w-full bg-slate-700 border border-slate-600 text-slate-200 font-mono text-xs rounded px-1.5 py-1 focus:outline-none focus:border-(--neon-cyan)/60"
-            />
-          </label>
-        ))}
+      <div>
+        <p className="font-mono text-[9px] text-slate-500 tracking-widest uppercase mb-1">Skills</p>
+        <div className="grid grid-cols-4 gap-1.5">
+          {CREW_SKILL_KEYS.map((sk) => (
+            <label key={sk} className="flex flex-col gap-0.5">
+              <span className="font-mono text-[9px] text-slate-500 tracking-wide uppercase">{sk}</span>
+              <input
+                type="number" min={0} max={5} value={member.skills?.[sk] ?? 0}
+                onChange={(e) => onChange({
+                  ...member,
+                  skills: { ...member.skills, [sk]: Math.max(0, Math.min(5, Number(e.target.value) || 0)) },
+                })}
+                className="w-full bg-slate-700 border border-slate-600 text-slate-200 font-mono text-xs rounded px-1.5 py-1 focus:outline-none focus:border-(--neon-cyan)/60"
+              />
+            </label>
+          ))}
+        </div>
+      </div>
+      <div>
+        <p className="font-mono text-[9px] text-slate-500 tracking-widest uppercase mb-1">Characteristics (INT/DEX used in combat)</p>
+        <div className="grid grid-cols-6 gap-1.5">
+          {CHAR_KEYS.map((ch) => (
+            <label key={ch} className="flex flex-col gap-0.5">
+              <span className={`font-mono text-[9px] tracking-wide uppercase ${ch === 'INT' || ch === 'DEX' ? 'text-sky-400' : 'text-slate-500'}`}>{ch}</span>
+              <input
+                type="number" min={0} max={15} value={member.characteristics?.[ch] ?? 7}
+                onChange={(e) => onChange({
+                  ...member,
+                  characteristics: { ...member.characteristics, [ch]: Math.max(0, Math.min(15, Number(e.target.value) || 0)) },
+                })}
+                className="w-full bg-slate-700 border border-slate-600 text-slate-200 font-mono text-xs rounded px-1.5 py-1 focus:outline-none focus:border-(--neon-cyan)/60"
+              />
+            </label>
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -192,11 +223,13 @@ export function ShipProfileForm({ profileId, onSave, onCancel }) {
         {/* Combat stats */}
         <section className="space-y-3">
           <h3 className="font-mono text-xs text-slate-400 tracking-widest uppercase border-b border-slate-800 pb-1">Combat Stats</h3>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-4 gap-3">
             <NumField label="HULL POINTS *" value={form.hullPoints} onChange={(v) => set('hullPoints', v)} min={1} />
             <NumField label="ARMOUR"        value={form.armour}     onChange={(v) => set('armour', v)} />
             <NumField label="TAC SPEED"     value={form.tacSpeed}   onChange={(v) => set('tacSpeed', v)} min={1} max={12} />
+            <NumField label="SIGNATURE"     value={form.signature ?? 2} onChange={(v) => set('signature', v)} min={0} max={10} />
           </div>
+          <p className="font-mono text-[9px] text-slate-500">SIGNATURE: DM applied to enemy Electronics (sensors) checks // 2300AD B3 p.57</p>
         </section>
 
         {/* Sensors + Computer */}

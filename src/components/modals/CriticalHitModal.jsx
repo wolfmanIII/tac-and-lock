@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useBattleStore } from '../../store/battleStore.js'
-import { CRITICAL_LOCATION_TABLE, CRITICAL_HIT_EFFECTS, CRITICAL_HIT_SYSTEM_LABELS } from '../../data/criticalHits.js'
+import { INTERNAL_LOCATION_TABLE, CRITICAL_HIT_EFFECTS, CRITICAL_HIT_SYSTEM_LABELS } from '../../data/criticalHits.js'
 import { roll2D6 } from '../../utils/dice.js'
 
 export function CriticalHitModal({ payload, onClose }) {
@@ -14,7 +14,7 @@ export function CriticalHitModal({ payload, onClose }) {
   const [applied,      setApplied]      = useState(false)
 
   const roll = locationRoll ?? (manualRoll ? parseInt(manualRoll, 10) : null)
-  const system = roll !== null ? CRITICAL_LOCATION_TABLE[Math.min(12, Math.max(2, roll))] : null
+  const system = roll !== null ? INTERNAL_LOCATION_TABLE[Math.min(12, Math.max(2, roll))] : null
   const currentSev = ship?.criticalTracks?.[system] ?? 0
   const newSev = Math.min(6, currentSev + 1)
   const effect = system ? CRITICAL_HIT_EFFECTS[system]?.[newSev] : null
@@ -35,7 +35,7 @@ export function CriticalHitModal({ payload, onClose }) {
     <div className="p-6 space-y-4">
       <p className="font-display text-amber-400 text-sm tracking-widest">CRITICAL HIT</p>
       <p className="text-sm font-mono text-slate-300">{ship?.profile?.name ?? shipId}</p>
-      <p className="text-[10px] font-mono text-slate-500">Roll 2D6 on location table // Trav2022 CRB p.168</p>
+      <p className="text-[10px] font-mono text-slate-500">Internal Critical — roll 2D6 on location table // Trav2022 CRB p.158–159 + 2300AD substitutions</p>
 
       {/* Location roll */}
       <div className="flex items-center gap-3">
@@ -55,7 +55,7 @@ export function CriticalHitModal({ payload, onClose }) {
 
       {/* Location table (compact reference) */}
       <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 bg-slate-800/50 rounded p-3 text-[10px] font-mono">
-        {Object.entries(CRITICAL_LOCATION_TABLE).map(([d, sys]) => (
+        {Object.entries(INTERNAL_LOCATION_TABLE).map(([d, sys]) => (
           <div key={d} className={`flex gap-2 ${sys === system ? 'text-amber-400 font-bold' : 'text-slate-500'}`}>
             <span className="text-slate-600">{d}:</span>
             <span>{CRITICAL_HIT_SYSTEM_LABELS[sys] ?? sys}</span>
