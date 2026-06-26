@@ -5,12 +5,6 @@
 import { useState } from 'react'
 import { useBattleStore } from '../../store/battleStore.js'
 
-function factionColor(faction) {
-  if (faction === 'players') return '#60a5fa'
-  if (faction === 'npc')     return '#f87171'
-  return '#94a3b8'
-}
-
 export function PhaseTracker() {
   const [collapsed, setCollapsed] = useState(false)
 
@@ -42,7 +36,7 @@ export function PhaseTracker() {
               return (
                 <li key={id} className={`flex items-center gap-2 px-3 py-1 ${isActive ? 'bg-slate-700/60' : ''}`}>
                   <span className="text-slate-400 font-mono text-xs w-3">{isActive ? '●' : '○'}</span>
-                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: factionColor(ship.faction) }} />
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: ship.color ?? '#94a3b8' }} />
                   <span className={`font-mono text-xs truncate ${isActive ? 'text-(--neon-cyan)' : 'text-slate-400'}`}>
                     {ship.profile?.name ?? ship.id}
                   </span>
