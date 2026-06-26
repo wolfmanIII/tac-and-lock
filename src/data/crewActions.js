@@ -1,4 +1,4 @@
-// Trav2022 CRB p.165–166 — Crew actions in combat.
+// 2300AD B3 p.55–56 — Crew actions in combat.
 // Actions Phase unless marked as Reaction (executed during Attack Step).
 
 /**
@@ -23,10 +23,10 @@ export const CREW_ACTIONS = {
       label: 'Evasive Action',
       phase: 'manoeuvre',
       reaction: false,
-      skill: 'Pilot',
-      difficulty: 0, // no check — costs TAC Speed
-      difficultyLabel: 'TAC Speed cost',
-      description: 'Spend 1+ TAC Speed to gain evasion DM against incoming attacks this round. Each point spent grants DM-1 to all attacks targeting this ship.',
+      skill: 'Pilot (DEX)',
+      difficulty: 10,
+      difficultyLabel: 'Opposed (10+)',
+      description: 'Opposed Pilot (DEX) check vs 10. Effect 1–4 → DM−1 to incoming attacks; Effect 5+ → DM−2; Effect ≤−5 → enemy gains DM+1. // 2300AD B3 p.55',
       requiresTarget: false,
     },
   ],
@@ -134,10 +134,10 @@ export const CREW_ACTIONS = {
       label: 'Point Defence',
       phase: 'attack',
       reaction: true,
-      skill: 'Gunner (turret)',
-      difficulty: 8,
-      difficultyLabel: 'Average (8+)',
-      description: 'Reaction: shoot down an incoming missile salvo. Each success reduces salvo size by 1. Sandcasters and pulse lasers are most effective.',
+      skill: 'Gunner (turret) DEX',
+      difficulty: 10,
+      difficultyLabel: 'Difficult (10+)',
+      description: 'Reaction: Gunner (turret) Difficult (10+) DEX. Each success reduces salvo size by 1. Weapons with Point Defence trait get DM+2 vs missiles at Close range. // 2300AD B3 p.55',
       requiresTarget: false,
     },
     {
