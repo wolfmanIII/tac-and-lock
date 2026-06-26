@@ -66,6 +66,7 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     currentTacSpeed:    profile.tacSpeed,
     tacSpeedAvailable:  profile.tacSpeed,
     evasionSpent:       0,
+    evasionDm:          0,  // B3 p.55: result of opposed Pilot check (−1, −2, or +1 for enemy)
     sensors:            { ...profile.sensors },
     computer:           { ...profile.computer },
     weapons:            profile.weapons.map((w) => ({ ...w, offline: false, destroyed: false })),
@@ -124,6 +125,7 @@ export const useBattleStore = create((set, get) => {
         ...sh,
         tacSpeedAvailable:        sh.currentTacSpeed,
         evasionSpent:             0,
+        evasionDm:                0,
         sensorLockTarget:         null,
         sensorLocked:             false,
         ewTarget:                 null,
@@ -457,6 +459,17 @@ export const useBattleStore = create((set, get) => {
     }),
 
     /**
+     * Set B3 evasion DM for a ship from an opposed Pilot check result. // 2300AD B3 p.55
+     * @param {string} shipId
+     * @param {number} dm — negative or 0 (e.g. -1, -2); +1 if enemy wins badly
+     */
+    setEvasionDm: wh((shipId) => !!get().ships.find((s) => s.id === shipId), (shipId, dm) => {
+      set((s) => ({
+        ships: s.ships.map((sh) => sh.id !== shipId ? sh : { ...sh, evasionDm: dm }),
+      }))
+    }),
+
+    /**
      * Reserve TAC Speed for evasion this round.
      * @param {string} shipId
      * @param {number} amount
@@ -530,6 +543,34 @@ export const useBattleStore = create((set, get) => {
           log: [...s.log, makeLogEntry({
             round, phase, type: 'critical', shipId,
             message: `⚠ ${ship.profile.name}: ${system} critical hit — severity ${newSeverity}.`,
+          })],
+        }))
+      },
+    ),
+
+    /**
+     * Record a Surface Fixture hit. Increments hit count (max 5 for radiator, 3 for others).
+     * @param {string} shipId
+     * @param {string} system — key from SURFACE_FIXTURE_SYSTEMS
+     */
+    addSurfaceFixtureHit: wh(
+      (shipId) => !!get().ships.find((s) => s.id === shipId),
+      (shipId, system) => {
+        const { round, phase } = get()
+        const ship = get().ships.find((s) => s.id === shipId)
+        if (!ship) return
+        const prev = ship.surfaceFixtureTracks?.[system] ?? 0
+        const next = prev + 1
+        set((s) => ({
+          ships: s.ships.map((sh) =>
+            sh.id !== shipId ? sh : {
+              ...sh,
+              surfaceFixtureTracks: { ...(sh.surfaceFixtureTracks ?? {}), [system]: next },
+            },
+          ),
+          log: [...s.log, makeLogEntry({
+            round, phase, type: 'critical', shipId,
+            message: `⚡ ${ship.profile.name}: surface fixture ${system} hit #${next}.`,
           })],
         }))
       },
