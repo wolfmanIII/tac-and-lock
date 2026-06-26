@@ -16,6 +16,7 @@ import {
   isDogfightRange,
   RANGE_BAND_ORDER,
 } from './rangeBands.js'
+import { SENSOR_TIME_LAG_DM } from '../data/rangeBands.js'
 
 // === RANGE_BAND_ORDER ===
 
@@ -240,6 +241,39 @@ describe('resolveBasicBandMovement', () => {
   it('already at edge going farther — stays put', () => {
     const r = resolveBasicBandMovement('Distant', 0, 'farther', 100)
     expect(r.newBand).toBe('Distant')
+  })
+})
+
+// === SENSOR_TIME_LAG_DM ===
+// Used in Firing Solution Step 1 for Electronics(sensors) check. // 2300AD B3 p.47
+
+describe('SENSOR_TIME_LAG_DM', () => {
+  const EXPECTED = [
+    ['Adjacent',  1],
+    ['Close',     0],
+    ['Short',    -1],
+    ['Medium',   -2],
+    ['Long',     -3],
+    ['VeryLong', -4],
+    ['Distant',  -5],
+  ]
+
+  it.each(EXPECTED)('"%s" → DM %i // B3 p.47', (band, dm) => {
+    expect(SENSOR_TIME_LAG_DM[band]).toBe(dm)
+  })
+
+  it('covers all 7 bands', () => {
+    expect(Object.keys(SENSOR_TIME_LAG_DM)).toHaveLength(7)
+    for (const band of RANGE_BAND_ORDER) {
+      expect(SENSOR_TIME_LAG_DM).toHaveProperty(band)
+    }
+  })
+
+  it('DMs are strictly decreasing from Adjacent to Distant', () => {
+    const values = RANGE_BAND_ORDER.map((b) => SENSOR_TIME_LAG_DM[b])
+    for (let i = 1; i < values.length; i++) {
+      expect(values[i]).toBeLessThan(values[i - 1])
+    }
   })
 })
 
