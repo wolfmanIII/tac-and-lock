@@ -49,10 +49,10 @@ function RangeBandRow({ ship1, ship2, band, onSet, onMnv }) {
 
   return (
     <div className="flex items-center gap-2 py-1">
-      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: FACTION_COLOR[ship1.faction] ?? '#94a3b8' }} />
+      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: ship1.color ?? FACTION_COLOR[ship1.faction] ?? '#94a3b8' }} />
       <span className="font-mono text-xs text-slate-300 truncate max-w-24">{ship1.profile?.name ?? ship1.id}</span>
       <span className="text-slate-500 mx-0.5">↔</span>
-      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: FACTION_COLOR[ship2.faction] ?? '#94a3b8' }} />
+      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: ship2.color ?? FACTION_COLOR[ship2.faction] ?? '#94a3b8' }} />
       <span className="font-mono text-xs text-slate-300 truncate max-w-24">{ship2.profile?.name ?? ship2.id}</span>
 
       <button

@@ -4,12 +4,18 @@ import { useBattleStore } from '../../store/battleStore.js'
 import { FACTIONS } from '../../data/factions.js'
 import { RANGE_BANDS } from '../../data/rangeBands.js'
 
+const PRESET_COLORS = [
+  '#60a5fa', '#f87171', '#4ade80', '#facc15',
+  '#c084fc', '#fb923c', '#22d3ee', '#f472b6',
+]
+
 export function AddShipModal({ onClose }) {
   const profiles = useProfilesStore((s) => s.profiles)
   const addShip  = useBattleStore((s) => s.addShip)
 
   const [selectedId, setSelectedId] = useState(profiles[0]?.id ?? null)
   const [faction,    setFaction]    = useState('npc')
+  const [color,      setColor]      = useState('#f87171')
   const [startBand,  setStartBand]  = useState('Long')
   const [filter,     setFilter]     = useState('')
 
@@ -20,13 +26,12 @@ export function AddShipModal({ onClose }) {
 
   function handleConfirm() {
     if (!selected) return
-    addShip(selected, faction, startBand)
+    addShip(selected, faction, startBand, color)
     onClose()
   }
 
   return (
     <div className="space-y-4 p-4">
-      <p className="font-mono text-xs text-(--neon-cyan) tracking-widest uppercase">Add Vessel</p>
 
       {/* Search */}
       <input
@@ -69,7 +74,7 @@ export function AddShipModal({ onClose }) {
           {FACTIONS.map((f) => (
             <button
               key={f.id}
-              onClick={() => setFaction(f.id)}
+              onClick={() => { setFaction(f.id); setColor(f.color) }}
               className={`flex-1 py-1.5 font-mono text-xs rounded border transition-colors ${
                 faction === f.id
                   ? 'border-(--neon-cyan)/60 bg-(--neon-cyan)/10 text-(--neon-cyan)'
@@ -78,6 +83,23 @@ export function AddShipModal({ onClose }) {
             >
               {f.label}
             </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Token color */}
+      <div>
+        <p className="text-slate-400 font-mono text-xs mb-1.5">Token color</p>
+        <div className="flex gap-2 flex-wrap">
+          {PRESET_COLORS.map((c) => (
+            <button
+              key={c}
+              onClick={() => setColor(c)}
+              style={{ backgroundColor: c }}
+              className={`w-6 h-6 rounded-full border-2 transition-all ${
+                color === c ? 'border-white scale-125' : 'border-transparent'
+              }`}
+            />
           ))}
         </div>
       </div>

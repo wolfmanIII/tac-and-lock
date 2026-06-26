@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { v7 as uuidv7 } from 'uuid'
 import { pairKey, resolveBasicBandMovement } from '../utils/rangeBands.js'
+import { FACTION_COLOR } from '../data/factions.js'
 import { advanceMissileOneRound, makeMissileSalvo } from '../utils/missiles.js'
 import { exportBattle, importBattle } from '../utils/io.js'
 
@@ -41,12 +42,14 @@ function snapshot(s) {
  * @param {string} [startBand]
  * @returns {object}
  */
-function shipFromProfile(profile, faction, startBand = 'Long') {
+function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
+  const resolvedFaction = faction ?? profile.faction
   return {
     id:                 uuidv7(),
     profileId:          profile.id,
     profile,           // full profile reference for display
-    faction:            faction ?? profile.faction,
+    faction:            resolvedFaction,
+    color:              color ?? FACTION_COLOR[resolvedFaction] ?? '#94a3b8',
     startBand,
     hullPoints:         profile.hullPoints,
     currentHull:        profile.hullPoints,
@@ -198,9 +201,10 @@ export const useBattleStore = create((set, get) => {
      * @param {import('../data/defaultProfiles.js').ShipProfile} profile
      * @param {string} faction
      * @param {string} startBand — initial range band for all pair relationships
+     * @param {string} [color] — token colour; defaults to faction colour
      */
-    addShip: wh((profile, faction, startBand) => {
-      const ship = shipFromProfile(profile, faction, startBand)
+    addShip: wh((profile, faction, startBand, color) => {
+      const ship = shipFromProfile(profile, faction, startBand, color)
       const { ships, log, round, phase, rangeBands } = get()
 
       // Register this ship's range band vs every existing ship
