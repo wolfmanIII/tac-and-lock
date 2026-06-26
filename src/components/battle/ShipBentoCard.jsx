@@ -3,6 +3,7 @@ import { useBattleStore } from '../../store/battleStore.js'
 import { FACTION_COLOR } from '../../data/factions.js'
 import { CRITICAL_HIT_SYSTEM_LABELS, SURFACE_FIXTURE_SYSTEM_LABELS } from '../../data/criticalHits.js'
 import { Tooltip } from '../ui/Tooltip.jsx'
+import { computeEffectiveSignature } from '../../utils/combat.js'
 
 const SEV_COLOR = ['', 'text-amber-300', 'text-amber-400', 'text-orange-400', 'text-orange-500', 'text-red-500', 'text-red-600']
 
@@ -110,12 +111,27 @@ export function ShipBentoCard({ ship }) {
             <span className="text-slate-300">{ship.currentArmour}</span>
           </div>
         </Tooltip>
-        <Tooltip content="Signature — DM bonus for enemy Electronics(sensors) checks // 2300AD B3 p.57">
-          <div className="flex flex-col">
-            <span className="text-[10px] text-slate-500 font-display tracking-widest">SIG</span>
-            <span className="text-slate-300">{ship.signature ?? ship.profile?.signature ?? 2}</span>
-          </div>
-        </Tooltip>
+        {(() => {
+          const sig = computeEffectiveSignature(ship)
+          const tip = sig.delta !== 0
+            ? `Signature ${sig.base} base ${sig.delta > 0 ? '+' : ''}${sig.delta} mods = ${sig.effective} effective\n${sig.mods.map(([l, v]) => `${v > 0 ? '+' : ''}${v} ${l}`).join(', ')}`
+            : 'Signature — DM bonus for enemy Electronics(sensors) checks // 2300AD B3 p.57'
+          return (
+            <Tooltip content={tip}>
+              <div className="flex flex-col">
+                <span className="text-[10px] text-slate-500 font-display tracking-widest">SIG</span>
+                <span className="text-slate-300 flex items-baseline gap-0.5">
+                  {sig.effective}
+                  {sig.delta !== 0 && (
+                    <span className={`text-[9px] ${sig.delta > 0 ? 'text-amber-400' : 'text-sky-400'}`}>
+                      {sig.delta > 0 ? `+${sig.delta}` : sig.delta}
+                    </span>
+                  )}
+                </span>
+              </div>
+            </Tooltip>
+          )
+        })()}
       </div>
 
       {/* Surface fixture hits (amber) */}

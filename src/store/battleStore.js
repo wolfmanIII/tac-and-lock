@@ -80,6 +80,13 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     sensorLockTarget:        null,
     ewTarget:                null,
     isDestroyed:             false,
+    // Signature modifier toggles — GM-controlled // 2300AD B3 p.57
+    radiatorsRetracted:      false,
+    heatSinkActive:          false,
+    solarPanelsExtended:     false,
+    spinHabitatRetracted:    false,
+    reactionDriveActive:     false,
+    activeSensorsOn:         false,
     initiative:              0,
     initiativeBreakdown:     null,
     initiativeBonusNextRound: 0,
@@ -656,6 +663,19 @@ export const useBattleStore = create((set, get) => {
         ships: s.ships.map((sh) => sh.id !== shipId ? sh : { ...sh, ...patch }),
       }))
     },
+
+    /**
+     * Toggle a signature-modifier flag on a ship. // 2300AD B3 p.57
+     * Allowed flags: radiatorsRetracted, heatSinkActive, solarPanelsExtended,
+     *                spinHabitatRetracted, reactionDriveActive, activeSensorsOn
+     * @param {string} shipId
+     * @param {string} flag
+     */
+    toggleShipFlag: wh((shipId, flag) => !!get().ships.find((s) => s.id === shipId), (shipId, flag) => {
+      set((s) => ({
+        ships: s.ships.map((sh) => sh.id !== shipId ? sh : { ...sh, [flag]: !sh[flag] }),
+      }))
+    }),
 
     /**
      * Reduce current armour (from armour critical hit effects).

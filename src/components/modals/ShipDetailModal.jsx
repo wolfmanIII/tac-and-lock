@@ -4,14 +4,25 @@ import { CRITICAL_HIT_SYSTEM_LABELS, SURFACE_FIXTURE_SYSTEM_LABELS } from '../..
 import { FACTION_COLOR } from '../../data/factions.js'
 import { RANGE_BAND_ORDER } from '../../data/rangeBands.js'
 import { pairKey } from '../../utils/rangeBands.js'
+import { computeEffectiveSignature } from '../../utils/combat.js'
 
 const SEV_COLOR = ['text-slate-500', 'text-yellow-400', 'text-orange-400', 'text-red-400', 'text-red-500', 'text-red-600', 'text-red-700']
 
+const SIG_FLAGS = [
+  { key: 'radiatorsRetracted',   label: 'Radiators Retracted',   dm: -1 },
+  { key: 'heatSinkActive',       label: 'Heat Sink Active',       dm: -4 },
+  { key: 'solarPanelsExtended',  label: 'Solar Panels Extended',  dm: +2 },
+  { key: 'spinHabitatRetracted', label: 'Spin Habitat Retracted', dm: -1 },
+  { key: 'reactionDriveActive',  label: 'Reaction Drive Active',  dm: +4 },
+  { key: 'activeSensorsOn',      label: 'Active Sensors On',      dm: +1 },
+]
+
 export function ShipDetailModal({ payload, onClose }) {
-  const { shipId } = payload ?? {}
-  const ships      = useBattleStore((s) => s.ships)
-  const rangeBands = useBattleStore((s) => s.rangeBands)
-  const ship       = ships.find((s) => s.id === shipId)
+  const { shipId }    = payload ?? {}
+  const ships         = useBattleStore((s) => s.ships)
+  const rangeBands    = useBattleStore((s) => s.rangeBands)
+  const toggleShipFlag = useBattleStore((s) => s.toggleShipFlag)
+  const ship          = ships.find((s) => s.id === shipId)
 
   if (!ship) return (
     <div className="p-6">
@@ -81,10 +92,64 @@ export function ShipDetailModal({ payload, onClose }) {
           <p className="text-[10px] font-display text-slate-500 tracking-widest">COMPUTER</p>
           <p className="text-slate-200">{p.computer?.model ?? '—'} BW{p.computer?.bandwidth ?? 0}</p>
         </div>
-        <div>
-          <p className="text-[10px] font-display text-slate-500 tracking-widest">SIGNATURE</p>
-          <p className="text-slate-200">{ship.signature ?? p.signature ?? 2}</p>
+        {(() => {
+          const sig = computeEffectiveSignature(ship)
+          return (
+            <div>
+              <p className="text-[10px] font-display text-slate-500 tracking-widest">SIGNATURE</p>
+              <p className="text-slate-200 flex items-baseline gap-1">
+                {sig.effective}
+                {sig.delta !== 0 && (
+                  <span className={`text-[9px] font-mono ${sig.delta > 0 ? 'text-amber-400' : 'text-sky-400'}`}>
+                    ({sig.delta > 0 ? '+' : ''}{sig.delta})
+                  </span>
+                )}
+              </p>
+            </div>
+          )
+        })()}
+      </div>
+
+      {/* Signature condition toggles — 2300AD B3 p.57 */}
+      <div>
+        <p className="text-[10px] font-display text-slate-500 tracking-widest mb-1.5">SIGNATURE CONDITIONS</p>
+        <div className="grid grid-cols-2 gap-1">
+          {SIG_FLAGS.map(({ key, label, dm }) => {
+            const active = !!ship[key]
+            return (
+              <button
+                key={key}
+                onClick={() => toggleShipFlag(shipId, key)}
+                className={`flex items-center justify-between px-2 py-1 rounded text-[10px] font-mono border transition-colors
+                  ${active
+                    ? 'bg-sky-900/40 border-sky-700 text-sky-300'
+                    : 'bg-slate-800/50 border-slate-700 text-slate-500 hover:border-slate-500 hover:text-slate-300'}`}
+              >
+                <span>{label}</span>
+                <span className={`font-bold ml-2 ${dm > 0 ? 'text-amber-400' : 'text-sky-400'}`}>
+                  {dm > 0 ? `+${dm}` : dm}
+                </span>
+              </button>
+            )
+          })}
         </div>
+        {(() => {
+          const sig = computeEffectiveSignature(ship)
+          if (sig.mods.some(([l]) => ['Hull damage >50%', 'Power Plant crit', 'EW active'].includes(l))) {
+            return (
+              <div className="mt-1 flex flex-wrap gap-1">
+                {sig.mods
+                  .filter(([l]) => ['Hull damage >50%', 'Power Plant crit', 'EW active'].includes(l))
+                  .map(([l, v]) => (
+                    <span key={l} className="text-[9px] font-mono text-amber-400 border border-amber-800/50 rounded px-1 py-0.5">
+                      {v > 0 ? '+' : ''}{v} {l}
+                    </span>
+                  ))}
+              </div>
+            )
+          }
+          return null
+        })()}
       </div>
 
       {/* Evasion state */}

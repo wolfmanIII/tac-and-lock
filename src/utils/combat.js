@@ -237,6 +237,53 @@ export function getNextSeverity(criticalTracks, system) {
   return Math.min(6, current + 1)
 }
 
+// === SIGNATURE — 2300AD B3 p.57 ===
+
+/**
+ * Compute the effective Signature of a ship, applying all dynamic modifiers.
+ * Returns base, delta, and effective value for UI breakdown display.
+ *
+ * Auto-computed modifiers:
+ *   Damage > 50% Hull          → +1
+ *   Power Plant critical hit   → +1 (per B3 p.58; severity ≥ 1 counts)
+ *   Electronic Warfare active  → +2 (ship has ewTarget set)
+ *
+ * GM-toggle modifiers (flags on ship state):
+ *   radiatorsRetracted   → −1
+ *   heatSinkActive       → −4  (limited duration, GM resets manually)
+ *   solarPanelsExtended  → +2
+ *   spinHabitatRetracted → −1
+ *   reactionDriveActive  → +4  (rockets; thruster +6, nuclear +8 not yet tracked)
+ *   activeSensorsOn      → +1  (TTA, UTES)
+ *
+ * @param {object} ship — battle-state ship object
+ * @returns {{ base: number, delta: number, effective: number, mods: Array<[string, number]> }}
+ */
+export function computeEffectiveSignature(ship) {
+  const base = ship.signature ?? 2
+  const mods = []
+
+  // Auto-computed
+  const hp          = ship.hullPoints ?? ship.profile?.hullPoints ?? 1
+  const currentHull = ship.currentHull ?? hp
+  if (currentHull / hp < 0.5) mods.push(['Hull damage >50%', 1])
+
+  if ((ship.criticalTracks?.powerPlant ?? 0) >= 1) mods.push(['Power Plant crit', 1])
+
+  if (ship.ewTarget != null) mods.push(['EW active', 2])
+
+  // Toggle flags
+  if (ship.radiatorsRetracted)   mods.push(['Radiators retracted', -1])
+  if (ship.heatSinkActive)       mods.push(['Heat sink active', -4])
+  if (ship.solarPanelsExtended)  mods.push(['Solar panels extended', 2])
+  if (ship.spinHabitatRetracted) mods.push(['Spin habitat retracted', -1])
+  if (ship.reactionDriveActive)  mods.push(['Reaction drive active', 4])
+  if (ship.activeSensorsOn)      mods.push(['Active sensors on', 1])
+
+  const delta = mods.reduce((acc, [, v]) => acc + v, 0)
+  return { base, delta, effective: base + delta, mods }
+}
+
 // === HELPERS ===
 
 /**

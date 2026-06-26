@@ -18,6 +18,7 @@ import {
   getNextSeverity,
   rollSandcasterAbsorption,
   getWeaponTraitAttackDm,
+  computeEffectiveSignature,
 } from './combat.js'
 
 // === parseDiceNotation ===
@@ -495,5 +496,107 @@ describe('rollDamage — Advanced/Obsolete traits', () => {
     const r = rollDamage('ll98', 1, 0)
     expect(r.gross).toBe(8)
     expect(r.bonus).toBe(0)
+  })
+})
+
+// === computeEffectiveSignature — 2300AD B3 p.57 ===
+
+describe('computeEffectiveSignature', () => {
+  const base = (overrides = {}) => ({
+    signature:    2,
+    hullPoints:   20,
+    currentHull:  20,
+    criticalTracks: {},
+    ewTarget:     null,
+    radiatorsRetracted:   false,
+    heatSinkActive:       false,
+    solarPanelsExtended:  false,
+    spinHabitatRetracted: false,
+    reactionDriveActive:  false,
+    activeSensorsOn:      false,
+    ...overrides,
+  })
+
+  it('no modifiers → effective equals base', () => {
+    const r = computeEffectiveSignature(base())
+    expect(r.effective).toBe(2)
+    expect(r.delta).toBe(0)
+    expect(r.mods).toHaveLength(0)
+  })
+
+  it('hull damage >50% → +1', () => {
+    const r = computeEffectiveSignature(base({ currentHull: 9 })) // 9/20 = 45%
+    expect(r.delta).toBe(1)
+    expect(r.mods.find(([l]) => l === 'Hull damage >50%')).toBeTruthy()
+  })
+
+  it('hull exactly 50% → no modifier', () => {
+    const r = computeEffectiveSignature(base({ currentHull: 10 })) // 10/20 = 50%, not <50%
+    expect(r.delta).toBe(0)
+  })
+
+  it('power plant crit severity ≥ 1 → +1', () => {
+    const r = computeEffectiveSignature(base({ criticalTracks: { powerPlant: 1 } }))
+    expect(r.delta).toBe(1)
+    expect(r.mods.find(([l]) => l === 'Power Plant crit')).toBeTruthy()
+  })
+
+  it('power plant crit severity 0 → no modifier', () => {
+    const r = computeEffectiveSignature(base({ criticalTracks: { powerPlant: 0 } }))
+    expect(r.delta).toBe(0)
+  })
+
+  it('ewTarget set → +2', () => {
+    const r = computeEffectiveSignature(base({ ewTarget: 'some-ship-id' }))
+    expect(r.delta).toBe(2)
+    expect(r.mods.find(([l]) => l === 'EW active')).toBeTruthy()
+  })
+
+  it('radiatorsRetracted → −1', () => {
+    const r = computeEffectiveSignature(base({ radiatorsRetracted: true }))
+    expect(r.delta).toBe(-1)
+  })
+
+  it('heatSinkActive → −4', () => {
+    const r = computeEffectiveSignature(base({ heatSinkActive: true }))
+    expect(r.delta).toBe(-4)
+  })
+
+  it('solarPanelsExtended → +2', () => {
+    const r = computeEffectiveSignature(base({ solarPanelsExtended: true }))
+    expect(r.delta).toBe(2)
+  })
+
+  it('spinHabitatRetracted → −1', () => {
+    const r = computeEffectiveSignature(base({ spinHabitatRetracted: true }))
+    expect(r.delta).toBe(-1)
+  })
+
+  it('reactionDriveActive → +4', () => {
+    const r = computeEffectiveSignature(base({ reactionDriveActive: true }))
+    expect(r.delta).toBe(4)
+  })
+
+  it('activeSensorsOn → +1', () => {
+    const r = computeEffectiveSignature(base({ activeSensorsOn: true }))
+    expect(r.delta).toBe(1)
+  })
+
+  it('multiple modifiers stack correctly', () => {
+    // EW +2, radiators −1, heat sink −4 → net −3; effective = 2 + (−3) = −1
+    const r = computeEffectiveSignature(base({
+      ewTarget:          'target',
+      radiatorsRetracted: true,
+      heatSinkActive:     true,
+    }))
+    expect(r.delta).toBe(-3)
+    expect(r.effective).toBe(-1)
+    expect(r.mods).toHaveLength(3)
+  })
+
+  it('falls back to base=2 when signature is missing', () => {
+    const r = computeEffectiveSignature({ currentHull: 10, hullPoints: 10 })
+    expect(r.base).toBe(2)
+    expect(r.effective).toBe(2)
   })
 })

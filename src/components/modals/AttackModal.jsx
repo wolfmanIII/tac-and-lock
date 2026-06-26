@@ -14,7 +14,7 @@ import { SENSOR_TIME_LAG_DM } from '../../data/rangeBands.js'
 import { pairKey }        from '../../utils/rangeBands.js'
 import { getAssignedSkill, getAssignedCharacteristic } from '../../utils/crew.js'
 import { getCharDM, roll2D6 } from '../../utils/dice.js'
-import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, getWeaponTraitAttackDm } from '../../utils/combat.js'
+import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, getWeaponTraitAttackDm, computeEffectiveSignature } from '../../utils/combat.js'
 import { DiceInput } from '../forms/DiceInput.jsx'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -174,15 +174,18 @@ export function AttackModal({ payload, onClose }) {
     const sensorSkill = getAssignedSkill('sensor_operator', attacker.crewAssignments, attacker.crew)
     const intChar     = getAssignedCharacteristic('sensor_operator', attacker.crewAssignments, attacker.crew)
     const intDm       = getCharDM(intChar)
-    const signature   = target.signature ?? target.profile?.signature ?? 2
-    const sensorQDm   = attacker.sensors?.dm ?? 0
-    const timeLagDm   = SENSOR_TIME_LAG_DM[band] ?? 0
-    const total = sensorSkill + intDm + signature + sensorQDm + timeLagDm
+    const sig       = computeEffectiveSignature(target) // // 2300AD B3 p.57
+    const sensorQDm = attacker.sensors?.dm ?? 0
+    const timeLagDm = SENSOR_TIME_LAG_DM[band] ?? 0
+    const total = sensorSkill + intDm + sig.effective + sensorQDm + timeLagDm
+    const sigLabel = sig.delta !== 0
+      ? `Target Signature (${sig.base}${sig.delta > 0 ? '+' : ''}${sig.delta})`
+      : 'Target Signature'
     return {
       rows: [
         ['Sensors skill',      sensorSkill],
         ['INT DM',             intDm],
-        ['Target Signature',   signature],
+        [sigLabel,             sig.effective],
         ['Sensor quality',     sensorQDm],
         [`Time-lag (${band})`, timeLagDm],
       ],
@@ -331,7 +334,7 @@ export function AttackModal({ payload, onClose }) {
           {target && (
             <p className="font-mono text-[10px] text-slate-500">
               Range: <span className="text-slate-300">{band}</span>
-              {' '}· Signature: <span className="text-sky-400">+{target.signature ?? target.profile?.signature ?? 2}</span>
+              {' '}· Signature: <span className="text-sky-400">+{computeEffectiveSignature(target).effective}</span>
               {' '}· Hull: <span className="text-slate-300">{target.currentHull}/{target.hullPoints}</span>
               {' '}· Armour: <span className="text-slate-300">{target.currentArmour ?? target.armour ?? 0}</span>
             </p>
