@@ -1,52 +1,110 @@
+/**
+ * ShipProfileForm — create or edit a ship profile.
+ * Self-contained: reads from profilesStore, saves on confirm.
+ * Ported from thrust-and-drift ShipProfileForm pattern.
+ */
+
+import { useState } from 'react'
 import { v7 as uuidv7 } from 'uuid'
+import { useProfilesStore } from '../../store/profilesStore.js'
 import { WEAPONS, WEAPON_IDS } from '../../data/weapons.js'
 import { FACTIONS } from '../../data/factions.js'
 import { SOFTWARE, SOFTWARE_IDS } from '../../data/software.js'
 import { blankCrewMember } from '../../utils/crew.js'
 import { blankCriticalTracks } from '../../data/defaultProfiles.js'
 
-const INPUT_CLS = 'w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1.5 focus:border-sky-400 outline-none'
-const LABEL_CLS = 'block text-[10px] font-display text-slate-500 tracking-widest mb-1'
+// ── Helpers ───────────────────────────────────────────────────────────────
 
-/** Skill keys shown per crew member — matches blankCrewMember() schema. */
-const CREW_SKILL_KEYS = [
-  'pilot', 'gunner', 'sensors', 'engineer',
-  'tactics', 'leadership', 'mechanic', 'gunCombat',
-]
+function blankCrew() {
+  return {
+    pilot: null, captain: null, engineer: null,
+    sensor_operator: null, gunner_turret: null,
+    gunner_bay: null, marine: null,
+  }
+}
 
-// ── Crew member row (ported from thrust-and-drift) ────────────────────────
+function blankProfile() {
+  return {
+    name: '', class: '', tonnage: 100, faction: 'neutral',
+    hullPoints: 20, currentHull: 20, armour: 0, tacSpeed: 1,
+    sensors: { type: '', dm: 0 },
+    computer: { model: '', bandwidth: 0 },
+    weapons: [], software: [], crew: [],
+    crewAssignments: blankCrew(),
+    criticalTracks: blankCriticalTracks(),
+    notes: '',
+  }
+}
+
+function initProfile(existing) {
+  if (!existing) return blankProfile()
+  return {
+    ...blankProfile(),
+    ...existing,
+    sensors: { ...existing.sensors },
+    computer: { ...existing.computer },
+    weapons: (existing.weapons ?? []).map((w) => ({ ...w })),
+    software: [...(existing.software ?? [])],
+    crew: (existing.crew ?? []).map((m) => ({ ...m, skills: { ...m.skills } })),
+  }
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────
+
+const FIELD_CLS = 'w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1 focus:outline-none focus:border-(--neon-cyan)/60'
+const LABEL_CLS = 'font-mono text-xs text-slate-400 tracking-widest'
+
+function NumField({ label, value, onChange, min = 0, max = 9999 }) {
+  return (
+    <label className="flex flex-col gap-0.5">
+      <span className={LABEL_CLS}>{label}</span>
+      <input
+        type="number" min={min} max={max} value={value}
+        onChange={(e) => onChange(Math.max(min, Math.min(max, Number(e.target.value) || 0)))}
+        className={FIELD_CLS}
+      />
+    </label>
+  )
+}
+
+function TextField({ label, value, onChange, placeholder = '' }) {
+  return (
+    <label className="flex flex-col gap-0.5">
+      <span className={LABEL_CLS}>{label}</span>
+      <input
+        type="text" value={value} placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className={FIELD_CLS}
+      />
+    </label>
+  )
+}
+
+const CREW_SKILL_KEYS = ['pilot', 'gunner', 'sensors', 'engineer', 'tactics', 'leadership', 'mechanic', 'gunCombat']
 
 function CrewMemberRow({ member, onChange, onRemove }) {
   return (
-    <div className="bg-slate-800/60 border border-slate-700 rounded px-2.5 py-2 space-y-2">
+    <div className="bg-slate-800 rounded px-2.5 py-2 space-y-2">
       <div className="flex items-center gap-2">
         <input
-          type="text"
-          value={member.name}
-          placeholder="Name"
+          type="text" value={member.name} placeholder="Name"
           onChange={(e) => onChange({ ...member, name: e.target.value })}
-          className="flex-1 bg-slate-900 border border-slate-700 text-slate-200 font-mono text-xs rounded px-2 py-1 focus:border-sky-400 outline-none placeholder:text-slate-500"
+          className="flex-1 bg-slate-700 border border-slate-600 text-slate-200 font-mono text-xs rounded px-2 py-1 focus:outline-none focus:border-(--neon-cyan)/60 placeholder:text-slate-400"
         />
-        <button
-          type="button"
-          onClick={onRemove}
-          className="text-slate-400 hover:text-red-400 font-mono text-sm leading-none transition-colors shrink-0 px-1"
-        >✕</button>
+        <button type="button" onClick={onRemove}
+          className="text-slate-400 hover:text-red-400 font-mono text-sm leading-none transition-colors shrink-0 px-1">✕</button>
       </div>
       <div className="grid grid-cols-4 gap-1.5">
         {CREW_SKILL_KEYS.map((sk) => (
           <label key={sk} className="flex flex-col gap-0.5">
             <span className="font-mono text-[9px] text-slate-500 tracking-wide uppercase">{sk}</span>
             <input
-              type="number"
-              min={0}
-              max={5}
-              value={member.skills?.[sk] ?? 0}
+              type="number" min={0} max={5} value={member.skills?.[sk] ?? 0}
               onChange={(e) => onChange({
                 ...member,
                 skills: { ...member.skills, [sk]: Math.max(0, Math.min(5, Number(e.target.value) || 0)) },
               })}
-              className="w-full bg-slate-900 border border-slate-700 text-slate-200 font-mono text-xs rounded px-1.5 py-1 focus:border-sky-400 outline-none"
+              className="w-full bg-slate-700 border border-slate-600 text-slate-200 font-mono text-xs rounded px-1.5 py-1 focus:outline-none focus:border-(--neon-cyan)/60"
             />
           </label>
         ))}
@@ -55,278 +113,186 @@ function CrewMemberRow({ member, onChange, onRemove }) {
   )
 }
 
-// ── Main form ─────────────────────────────────────────────────────────────
+// ── Main component ────────────────────────────────────────────────────────
 
-/** Controlled form for creating/editing a ship profile. `onChange` fires on every field change. */
-export function ShipProfileForm({ profile, onChange }) {
-  const p = profile
+/**
+ * @param {{ profileId: string|null, onSave: Function, onCancel: Function }} props
+ */
+export function ShipProfileForm({ profileId, onSave, onCancel }) {
+  const profiles      = useProfilesStore((s) => s.profiles)
+  const addProfile    = useProfilesStore((s) => s.addProfile)
+  const updateProfile = useProfilesStore((s) => s.updateProfile)
 
-  function set(field, value) {
-    onChange({ ...p, [field]: value })
+  const existing = profileId ? profiles.find((p) => p.id === profileId) : null
+  const [form, setForm] = useState(() => initProfile(existing))
+  const [error, setError] = useState(null)
+
+  const isNew = !existing
+
+  const set = (key, value) => setForm((f) => ({ ...f, [key]: value }))
+  const setNested = (parent, key, value) => setForm((f) => ({ ...f, [parent]: { ...f[parent], [key]: value } }))
+
+  // weapons
+  const addWeapon = () => setForm((f) => ({ ...f, weapons: [...f.weapons, { weaponId: WEAPON_IDS[0], count: 1, label: '' }] }))
+  const updateWeapon = (i, key, value) => setForm((f) => ({ ...f, weapons: f.weapons.map((w, idx) => idx === i ? { ...w, [key]: value } : w) }))
+  const removeWeapon = (i) => setForm((f) => ({ ...f, weapons: f.weapons.filter((_, idx) => idx !== i) }))
+
+  // software
+  const toggleSoftware = (id) => setForm((f) => {
+    const current = f.software ?? []
+    return { ...f, software: current.includes(id) ? current.filter((s) => s !== id) : [...current, id] }
+  })
+
+  // crew
+  const addCrew    = () => setForm((f) => ({ ...f, crew: [...f.crew, blankCrewMember(uuidv7())] }))
+  const updateCrew = (i, updated) => setForm((f) => ({ ...f, crew: f.crew.map((m, idx) => idx === i ? updated : m) }))
+  const removeCrew = (i) => setForm((f) => ({ ...f, crew: f.crew.filter((_, idx) => idx !== i) }))
+
+  function handleSave() {
+    if (!form.name.trim()) { setError('Ship name is required.'); return }
+    if (!form.hullPoints || form.hullPoints < 1) { setError('Hull Points must be ≥ 1.'); return }
+    setError(null)
+    const data = { ...form, name: form.name.trim(), currentHull: form.hullPoints }
+    if (isNew) addProfile(data)
+    else updateProfile(existing.id, data)
+    onSave()
   }
 
-  function setNested(parent, field, value) {
-    onChange({ ...p, [parent]: { ...p[parent], [field]: value } })
-  }
-
-  // ── Weapons ──────────────────────────────────────────────────────────────
-
-  function addWeapon() {
-    const weapons = [...(p.weapons ?? []), { weaponId: WEAPON_IDS[0], count: 1, label: '' }]
-    onChange({ ...p, weapons })
-  }
-
-  function updateWeapon(i, field, value) {
-    const weapons = (p.weapons ?? []).map((w, idx) => idx === i ? { ...w, [field]: value } : w)
-    onChange({ ...p, weapons })
-  }
-
-  function removeWeapon(i) {
-    onChange({ ...p, weapons: (p.weapons ?? []).filter((_, idx) => idx !== i) })
-  }
-
-  // ── Software ─────────────────────────────────────────────────────────────
-
-  function toggleSoftware(id) {
-    const current = p.software ?? []
-    const next = current.includes(id) ? current.filter((s) => s !== id) : [...current, id]
-    onChange({ ...p, software: next })
-  }
-
-  // ── Crew ─────────────────────────────────────────────────────────────────
-
-  function addCrewMember() {
-    const crew = [...(p.crew ?? []), blankCrewMember(uuidv7())]
-    onChange({ ...p, crew })
-  }
-
-  function updateCrewMember(idx, updated) {
-    const crew = (p.crew ?? []).map((m, i) => i === idx ? updated : m)
-    onChange({ ...p, crew })
-  }
-
-  function removeCrewMember(idx) {
-    onChange({ ...p, crew: (p.crew ?? []).filter((_, i) => i !== idx) })
-  }
-
-  const softwareSet = new Set(p.software ?? [])
+  const softwareSet = new Set(form.software ?? [])
 
   return (
-    <div className="space-y-5">
+    <div className="h-full flex flex-col">
 
-      {/* Identity */}
-      <section className="space-y-3">
-        <h3 className={LABEL_CLS}>IDENTIFICATION</h3>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={LABEL_CLS}>SHIP NAME *</label>
-            <input
-              value={p.name ?? ''}
-              onChange={(e) => set('name', e.target.value)}
-              placeholder="ISV Nomad"
-              className={INPUT_CLS}
-            />
-          </div>
-          <div>
-            <label className={LABEL_CLS}>CLASS</label>
-            <input
-              value={p.class ?? ''}
-              onChange={(e) => set('class', e.target.value)}
-              placeholder="ISV-2"
-              className={INPUT_CLS}
-            />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={LABEL_CLS}>TONNAGE</label>
-            <input
-              type="number" min={1}
-              value={p.tonnage ?? ''}
-              onChange={(e) => set('tonnage', Number(e.target.value))}
-              placeholder="100"
-              className={INPUT_CLS}
-            />
-          </div>
-          <div>
-            <label className={LABEL_CLS}>FACTION</label>
-            <select
-              value={p.faction ?? 'neutral'}
-              onChange={(e) => set('faction', e.target.value)}
-              className={INPUT_CLS}
-            >
-              {FACTIONS.map((f) => (
-                <option key={f.id} value={f.id}>{f.label}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </section>
+      <div className="px-5 py-3 border-b border-slate-800 shrink-0">
+        <h2 className="font-mono text-xs text-slate-400 tracking-widest uppercase">
+          {isNew ? '+ NEW PROFILE' : `EDIT — ${existing?.name ?? ''}`}
+        </h2>
+      </div>
 
-      {/* Combat stats */}
-      <section className="space-y-3">
-        <h3 className={LABEL_CLS}>COMBAT STATS</h3>
-        <div className="grid grid-cols-3 gap-3">
-          <div>
-            <label className={LABEL_CLS}>HULL POINTS *</label>
-            <input
-              type="number" min={1} value={p.hullPoints ?? ''}
-              onChange={(e) => set('hullPoints', Number(e.target.value))}
-              className={INPUT_CLS}
-            />
+      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+
+        {/* Identification */}
+        <section className="space-y-3">
+          <h3 className="font-mono text-xs text-slate-400 tracking-widest uppercase border-b border-slate-800 pb-1">Identification</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2"><TextField label="NAME *" value={form.name} onChange={(v) => set('name', v)} placeholder="ISV Nomad" /></div>
+            <TextField label="CLASS" value={form.class} onChange={(v) => set('class', v)} placeholder="ISV-2" />
+            <NumField  label="TONNAGE" value={form.tonnage} onChange={(v) => set('tonnage', v)} min={1} />
           </div>
           <div>
-            <label className={LABEL_CLS}>ARMOUR</label>
-            <input
-              type="number" min={0} value={p.armour ?? 0}
-              onChange={(e) => set('armour', Number(e.target.value))}
-              className={INPUT_CLS}
-            />
-          </div>
-          <div>
-            <label className={LABEL_CLS}>TAC SPEED</label>
-            <input
-              type="number" min={1} max={12} value={p.tacSpeed ?? 1}
-              onChange={(e) => set('tacSpeed', Number(e.target.value))}
-              className={INPUT_CLS}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Sensors + Computer */}
-      <section className="space-y-3">
-        <h3 className={LABEL_CLS}>SENSORS &amp; COMPUTER</h3>
-        <div className="grid grid-cols-[1fr_auto] gap-3 items-center">
-          <input
-            value={p.sensors?.type ?? ''}
-            onChange={(e) => setNested('sensors', 'type', e.target.value)}
-            placeholder="Basic Military, DSS, GADS"
-            className={INPUT_CLS}
-          />
-          <div className="flex items-center gap-2">
-            <label className="text-[10px] font-display text-slate-500 tracking-widest whitespace-nowrap">DM</label>
-            <input
-              type="number" min={-4} max={6} value={p.sensors?.dm ?? 0}
-              onChange={(e) => setNested('sensors', 'dm', Number(e.target.value))}
-              className="w-16 bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1.5 focus:border-sky-400 outline-none"
-            />
-          </div>
-        </div>
-        <div className="grid grid-cols-[1fr_auto] gap-3 items-center">
-          <input
-            value={p.computer?.model ?? ''}
-            onChange={(e) => setNested('computer', 'model', e.target.value)}
-            placeholder="Computer/10"
-            className={INPUT_CLS}
-          />
-          <div className="flex items-center gap-2">
-            <label className="text-[10px] font-display text-slate-500 tracking-widest whitespace-nowrap">BW</label>
-            <input
-              type="number" min={0} max={50} value={p.computer?.bandwidth ?? 0}
-              onChange={(e) => setNested('computer', 'bandwidth', Number(e.target.value))}
-              className="w-16 bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1.5 focus:border-sky-400 outline-none"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Software */}
-      <section className="space-y-2">
-        <h3 className={LABEL_CLS}>SOFTWARE</h3>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-          {SOFTWARE_IDS.map((id) => {
-            const sw = SOFTWARE[id]
-            return (
-              <label key={id} className="flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={softwareSet.has(id)}
-                  onChange={() => toggleSoftware(id)}
-                  className="accent-sky-400 w-3.5 h-3.5"
-                />
-                <span className="font-mono text-xs text-slate-300">{sw.name}</span>
-                {sw.bandwidth > 0 && (
-                  <span className="font-mono text-[10px] text-slate-500">BW{sw.bandwidth}</span>
-                )}
-              </label>
-            )
-          })}
-        </div>
-      </section>
-
-      {/* Weapons */}
-      <section className="space-y-2">
-        <div className="flex items-center justify-between">
-          <h3 className={LABEL_CLS}>WEAPONS</h3>
-          <button
-            onClick={addWeapon}
-            className="text-[10px] font-display text-sky-400 border border-sky-800 rounded px-2 py-0.5 hover:bg-sky-900/20"
-          >+ ADD</button>
-        </div>
-        <div className="space-y-2">
-          {(p.weapons ?? []).map((w, i) => (
-            <div key={i} className="flex gap-2 items-center">
-              <select
-                value={w.weaponId}
-                onChange={(e) => updateWeapon(i, 'weaponId', e.target.value)}
-                className="flex-1 bg-slate-800 border border-slate-600 text-slate-200 font-mono text-xs rounded px-2 py-1.5 focus:border-sky-400 outline-none"
-              >
-                {WEAPON_IDS.map((id) => <option key={id} value={id}>{WEAPONS[id]?.name ?? id}</option>)}
+            <label className="flex flex-col gap-0.5">
+              <span className={LABEL_CLS}>FACTION</span>
+              <select value={form.faction} onChange={(e) => set('faction', e.target.value)} className={FIELD_CLS}>
+                {FACTIONS.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
               </select>
-              <input
-                type="number" min={1} max={9} value={w.count}
-                onChange={(e) => updateWeapon(i, 'count', Number(e.target.value))}
-                className="w-12 text-center bg-slate-800 border border-slate-600 text-slate-200 font-mono text-xs rounded px-1 py-1.5 focus:border-sky-400 outline-none"
-                title="Count"
-              />
-              <input
-                value={w.label}
-                onChange={(e) => updateWeapon(i, 'label', e.target.value)}
-                placeholder="label"
-                className="w-28 bg-slate-800 border border-slate-600 text-slate-200 font-mono text-xs rounded px-2 py-1.5 focus:border-sky-400 outline-none"
-              />
-              <button onClick={() => removeWeapon(i)} className="text-red-500 hover:text-red-400 font-mono text-xs px-1">×</button>
-            </div>
-          ))}
-        </div>
-      </section>
+            </label>
+          </div>
+        </section>
 
-      {/* Crew */}
-      <section className="space-y-2">
-        <div className="flex items-center justify-between">
-          <h3 className={LABEL_CLS}>CREW MANIFEST ({(p.crew ?? []).length})</h3>
-          <button
-            type="button"
-            onClick={addCrewMember}
-            className="text-[10px] font-display text-sky-400 border border-sky-800 rounded px-2 py-0.5 hover:bg-sky-900/20"
-          >+ ADD</button>
-        </div>
-        {(p.crew ?? []).length === 0 && (
-          <p className="text-slate-500 font-mono text-xs italic">No crew assigned.</p>
-        )}
-        <div className="space-y-2">
-          {(p.crew ?? []).map((member, idx) => (
-            <CrewMemberRow
-              key={member.id}
-              member={member}
-              onChange={(updated) => updateCrewMember(idx, updated)}
-              onRemove={() => removeCrewMember(idx)}
-            />
-          ))}
-        </div>
-      </section>
+        {/* Combat stats */}
+        <section className="space-y-3">
+          <h3 className="font-mono text-xs text-slate-400 tracking-widest uppercase border-b border-slate-800 pb-1">Combat Stats</h3>
+          <div className="grid grid-cols-3 gap-3">
+            <NumField label="HULL POINTS *" value={form.hullPoints} onChange={(v) => set('hullPoints', v)} min={1} />
+            <NumField label="ARMOUR"        value={form.armour}     onChange={(v) => set('armour', v)} />
+            <NumField label="TAC SPEED"     value={form.tacSpeed}   onChange={(v) => set('tacSpeed', v)} min={1} max={12} />
+          </div>
+        </section>
 
-      {/* Notes */}
-      <section>
-        <label className={LABEL_CLS}>NOTES</label>
-        <textarea
-          value={p.notes ?? ''}
-          onChange={(e) => set('notes', e.target.value)}
-          rows={2}
-          className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1.5 focus:border-sky-400 outline-none resize-none"
-        />
-      </section>
+        {/* Sensors + Computer */}
+        <section className="space-y-3">
+          <h3 className="font-mono text-xs text-slate-400 tracking-widest uppercase border-b border-slate-800 pb-1">Sensors &amp; Computer</h3>
+          <div className="grid grid-cols-[1fr_64px] gap-2 items-end">
+            <TextField label="SENSORS" value={form.sensors?.type ?? ''} onChange={(v) => setNested('sensors', 'type', v)} placeholder="Basic Military, DSS, GADS" />
+            <NumField  label="DM" value={form.sensors?.dm ?? 0} onChange={(v) => setNested('sensors', 'dm', v)} min={-4} max={6} />
+          </div>
+          <div className="grid grid-cols-[1fr_64px] gap-2 items-end">
+            <TextField label="COMPUTER" value={form.computer?.model ?? ''} onChange={(v) => setNested('computer', 'model', v)} placeholder="Computer/10" />
+            <NumField  label="BW" value={form.computer?.bandwidth ?? 0} onChange={(v) => setNested('computer', 'bandwidth', v)} min={0} max={50} />
+          </div>
+        </section>
+
+        {/* Software */}
+        <section className="space-y-2">
+          <h3 className="font-mono text-xs text-slate-400 tracking-widest uppercase border-b border-slate-800 pb-1">Software</h3>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+            {SOFTWARE_IDS.map((id) => {
+              const sw = SOFTWARE[id]
+              return (
+                <label key={id} className="flex items-center gap-2 cursor-pointer select-none">
+                  <input type="checkbox" checked={softwareSet.has(id)} onChange={() => toggleSoftware(id)} className="w-3.5 h-3.5 accent-(--neon-cyan)" />
+                  <span className="font-mono text-xs text-slate-300">{sw.name}</span>
+                  {sw.bandwidth > 0 && <span className="font-mono text-[10px] text-slate-500">BW{sw.bandwidth}</span>}
+                </label>
+              )
+            })}
+          </div>
+        </section>
+
+        {/* Weapons */}
+        <section className="space-y-2">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-1">
+            <h3 className="font-mono text-xs text-slate-400 tracking-widest uppercase">Weapons ({form.weapons.length})</h3>
+            <button type="button" onClick={addWeapon} className="text-(--neon-cyan) font-mono text-xs border border-(--neon-cyan)/30 rounded px-2 py-0.5 hover:bg-(--neon-cyan)/10 transition-colors">+ Add</button>
+          </div>
+          {form.weapons.length === 0 && <p className="text-slate-400 font-mono text-xs italic">No weapons.</p>}
+          <div className="space-y-1.5">
+            {form.weapons.map((w, i) => (
+              <div key={i} className="flex gap-2 items-center">
+                <select value={w.weaponId} onChange={(e) => updateWeapon(i, 'weaponId', e.target.value)}
+                  className="flex-1 bg-slate-800 border border-slate-600 text-slate-200 font-mono text-xs rounded px-2 py-1 focus:outline-none focus:border-(--neon-cyan)/60">
+                  {WEAPON_IDS.map((id) => <option key={id} value={id}>{WEAPONS[id]?.name ?? id}</option>)}
+                </select>
+                <input type="number" min={1} max={9} value={w.count} onChange={(e) => updateWeapon(i, 'count', Number(e.target.value))}
+                  className="w-10 text-center bg-slate-800 border border-slate-600 text-slate-200 font-mono text-xs rounded px-1 py-1 focus:outline-none focus:border-(--neon-cyan)/60" />
+                <input value={w.label} onChange={(e) => updateWeapon(i, 'label', e.target.value)} placeholder="label"
+                  className="w-28 bg-slate-800 border border-slate-600 text-slate-200 font-mono text-xs rounded px-2 py-1 focus:outline-none focus:border-(--neon-cyan)/60 placeholder:text-slate-500" />
+                <button type="button" onClick={() => removeWeapon(i)} className="text-slate-400 hover:text-red-400 font-mono text-sm transition-colors px-1">✕</button>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Crew */}
+        <section className="space-y-2">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-1">
+            <h3 className="font-mono text-xs text-slate-400 tracking-widest uppercase">Crew Manifest ({form.crew.length})</h3>
+            <button type="button" onClick={addCrew} className="text-(--neon-cyan) font-mono text-xs border border-(--neon-cyan)/30 rounded px-2 py-0.5 hover:bg-(--neon-cyan)/10 transition-colors">+ Add</button>
+          </div>
+          {form.crew.length === 0 && <p className="text-slate-400 font-mono text-xs italic">No crew assigned.</p>}
+          <div className="space-y-2">
+            {form.crew.map((member, idx) => (
+              <CrewMemberRow key={member.id} member={member}
+                onChange={(updated) => updateCrew(idx, updated)}
+                onRemove={() => removeCrew(idx)} />
+            ))}
+          </div>
+        </section>
+
+        {/* Notes */}
+        <section>
+          <label className="flex flex-col gap-0.5">
+            <span className={LABEL_CLS}>NOTES</span>
+            <textarea value={form.notes ?? ''} onChange={(e) => set('notes', e.target.value)} rows={2}
+              className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1 focus:outline-none focus:border-(--neon-cyan)/60 resize-none" />
+          </label>
+        </section>
+
+      </div>
+
+      <div className="px-5 py-3 border-t border-slate-800 shrink-0 space-y-2">
+        {error && <p className="text-red-400 font-mono text-xs">🚨 {error}</p>}
+        <div className="flex gap-2">
+          <button type="button" onClick={onCancel}
+            className="flex-1 py-2 border border-slate-700 text-slate-400 font-mono text-xs rounded hover:border-slate-500 transition-colors">
+            CANCEL
+          </button>
+          <button type="button" onClick={handleSave}
+            className="flex-1 py-2 bg-(--neon-cyan)/10 border border-(--neon-cyan)/40 text-(--neon-cyan) font-mono text-xs tracking-widest rounded hover:bg-(--neon-cyan)/20 transition-colors">
+            {isNew ? '+ CREATE PROFILE' : '✅ SAVE CHANGES'}
+          </button>
+        </div>
+      </div>
 
     </div>
   )
