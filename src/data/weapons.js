@@ -1,5 +1,7 @@
 // Trav2022 CRB p.168 — Spacecraft weapons (turrets & barbettes).
-// 2300AD uses TL10–12 weaponry; only weapons available in CRB are listed.
+// 2300AD-specific weapons: stats from 2300AD B3 p.60–61 (Weapons & Targeting),
+// p.110 (Kaefer tech). Range DMs for 2300AD weapons are approximated from CRB
+// equivalents where B3 does not provide explicit spacecraft combat range tables.
 
 /**
  * Attack DM vs target band for each weapon.
@@ -23,6 +25,8 @@
 
 /** @type {Record<string, WeaponDef>} */
 export const WEAPONS = {
+  // ── Trav2022 CRB weapons ───────────────────────────────────────────────────
+
   pulse_laser: {
     id: 'pulse_laser',
     name: 'Pulse Laser',
@@ -127,6 +131,176 @@ export const WEAPONS = {
     traits: ['Radiation'],
     notes: 'Ignores armour (AP∞). On hit, crew in targeted compartment take 2D6 radiation exposure.',
   },
+
+  // ── 2300AD weapons ─────────────────────────────────────────────────────────
+
+  ll98: {
+    id: 'll98',
+    name: 'LL98 Liquid Laser',
+    mount: 'turret',
+    TL: 11,
+    damage: '2D',
+    damageBonus: 1,
+    optimalRange: 'Close',  // Darlan LL-98: Range Close // 2300AD B3 p.60
+    rangeDm: {
+      Adjacent:  2,
+      Close:     0,
+      Short:   -20, // beyond max range
+      Medium:  -20,
+      Long:    -20,
+      VeryLong:-20,
+      Distant: -20,
+    },
+    traits: ['Accurate'],  // 2300AD B3 p.60
+    notes: 'Darlan LL-98. Standard 2300AD beam laser. Retractable surface mount. // 2300AD B3 p.60, p.80',
+  },
+
+  ea1000: {
+    id: 'ea1000',
+    name: 'EA1000 Energy Assault',
+    mount: 'turret',
+    TL: 12,
+    damage: '2D',
+    damageBonus: 2,
+    optimalRange: 'Close', // laser-type weapon, Close range
+    rangeDm: {
+      Adjacent:  2,
+      Close:     0,
+      Short:   -20,
+      Medium:  -20,
+      Long:    -20,
+      VeryLong:-20,
+      Distant: -20,
+    },
+    traits: [],
+    notes: '2300AD fighter primary energy weapon. Fixed retractable mount. // 2300AD B3 p.78',
+  },
+
+  aero12: {
+    id: 'aero12',
+    name: 'Aero-12 Missile',
+    mount: 'turret',
+    TL: 12,
+    damage: '4D',
+    damageBonus: 0,
+    optimalRange: 'Long',
+    rangeDm: {
+      Adjacent: 0,
+      Close:    0,
+      Short:    0,
+      Medium:   0,
+      Long:     0,
+      VeryLong: 0,
+      Distant:  0,
+    },
+    traits: ['Smart', 'AP5'],
+    notes: 'Smart anti-vehicle missile. Internal bay mount. // 2300AD B3 p.70',
+  },
+
+  anti_missile_laser: {
+    id: 'anti_missile_laser',
+    name: 'Quinn Type 17 PDC',
+    mount: 'turret',
+    TL: 12,
+    damage: '1D',             // 2300AD B3 p.60
+    damageBonus: 0,
+    optimalRange: 'Adjacent', // Range: Adjacent // 2300AD B3 p.60
+    rangeDm: {
+      Adjacent:  2,
+      Close:     0,  // Point Defence works at Close range (intercept role)
+      Short:   -20,
+      Medium:  -20,
+      Long:    -20,
+      VeryLong:-20,
+      Distant: -20,
+    },
+    traits: ['Reaction', 'Point Defence', 'Rapid Fire'], // 2300AD B3 p.60
+    notes: 'Quinn Optronics PDC Type 17. Beam laser cluster. DM+2 vs missiles/drones/fighters at Close. // 2300AD B3 p.60',
+  },
+
+  autocannon_25mm: {
+    id: 'autocannon_25mm',
+    name: '25mm Rotary Autocannon',
+    mount: 'turret',
+    TL: 10,
+    damage: '2D',
+    damageBonus: 1,
+    optimalRange: 'Close',
+    rangeDm: {
+      Adjacent:  2,
+      Close:     0,
+      Short:   -20,
+      Medium:  -20,
+      Long:    -20,
+      VeryLong:-20,
+      Distant: -20,
+    },
+    traits: [],
+    notes: 'Short-range rotary cannon. Retractable mount. // 2300AD B3 p.70',
+  },
+
+  grumbler: {
+    id: 'grumbler',
+    name: "Kaefer 'Grumbler' Laser",
+    mount: 'turret',
+    TL: 12,               // 2300AD B3 p.60
+    damage: '2D+2',
+    damageBonus: 0,
+    optimalRange: 'Short', // Range: Short — extended range pulse laser // 2300AD B3 p.60
+    rangeDm: {
+      Adjacent:  2,
+      Close:     0,
+      Short:    -6,  // can fire at Short (unique for a non-missile weapon) // 2300AD B3 p.57
+      Medium:  -20,
+      Long:    -20,
+      VeryLong:-20,
+      Distant: -20,
+    },
+    traits: ['Advanced', 'Inefficient'], // 2300AD B3 p.60 — NOT 'Extended Range'
+    notes: "Kaefer 'Grumbler' High Power Laser Array. TL12. Advanced (+1 dmg/die), Inefficient (×2 power). // 2300AD B3 p.60, p.110",
+  },
+
+  kingfisher: {
+    id: 'kingfisher',
+    name: 'Kaefer Kingfisher Missile',
+    mount: 'turret',
+    TL: 10,
+    damage: '8D',
+    damageBonus: 0,
+    optimalRange: 'Long',
+    rangeDm: {
+      Adjacent: 0,
+      Close:    0,
+      Short:    0,
+      Medium:   0,
+      Long:     0,
+      VeryLong: 0,
+      Distant:  0,
+    },
+    traits: ['Smart', 'AP16', 'One Use'],
+    notes: 'Kaefer anti-ship missile. High damage, deep armour penetration. // 2300AD B3 p.110',
+  },
+
+  tri_beamer: {
+    id: 'tri_beamer',
+    name: 'Kaefer Tri-Beamer',
+    mount: 'turret',
+    TL: 12,
+    damage: '5D',
+    damageBonus: 0,
+    optimalRange: 'Adjacent',
+    rangeDm: {
+      Adjacent:  0,
+      Close:    -2,
+      Short:    -4,
+      Medium:   -6,
+      Long:     -8,
+      VeryLong:-10,
+      Distant: -12,
+    },
+    traits: ['AP12', 'Auto 3'],
+    notes: 'Kaefer close-range rapid-fire weapon. Devastating only at Adjacent range. // 2300AD B3 p.110',
+  },
 }
 
 /** Ordered list for UI display. */
@@ -136,4 +310,12 @@ export const WEAPON_IDS = [
   'missile_rack',
   'sandcaster',
   'particle_barbette',
+  'll98',
+  'ea1000',
+  'aero12',
+  'anti_missile_laser',
+  'autocannon_25mm',
+  'grumbler',
+  'kingfisher',
+  'tri_beamer',
 ]
