@@ -1,62 +1,129 @@
-import { useState } from 'react'
+/**
+ * Dashboard — pre-battle lobby.
+ * Left: ship profiles library. Right: header (logo) + session panel.
+ */
+
+import { useState, useRef } from 'react'
 import { useProfilesStore } from '../../store/profilesStore.js'
 import { useBattleStore } from '../../store/battleStore.js'
 import { useUIStore } from '../../store/uiStore.js'
 import { useProfileImport } from './useProfileImport.js'
 import { FACTIONS } from '../../data/factions.js'
 import { RANGE_BANDS } from '../../data/rangeBands.js'
+import { Tooltip } from '../ui/Tooltip.jsx'
 
-function ProfileCard({ profile, onAddToBattle }) {
-  const { deleteProfile, duplicateProfile } = useProfilesStore()
-  const { openModal } = useUIStore()
+// ── Profiles panel (left) ─────────────────────────────────────────────────
+
+function ActionIcon({ label, title, onClick, dim = '' }) {
+  return (
+    <Tooltip label={title}>
+      <button
+        onClick={onClick}
+        className={`w-6 h-6 flex items-center justify-center text-slate-400 font-mono text-sm rounded hover:bg-slate-700 transition-colors ${dim}`}
+      >
+        {label}
+      </button>
+    </Tooltip>
+  )
+}
+
+function ProfilesPanel({ onEdit, editingId }) {
+  const profiles         = useProfilesStore((s) => s.profiles)
+  const deleteProfile    = useProfilesStore((s) => s.deleteProfile)
+  const duplicateProfile = useProfilesStore((s) => s.duplicateProfile)
+  const exportAll        = useProfilesStore((s) => s.exportAll)
+  const { openModal }    = useUIStore()
+  const { importStatus, fileInputRef, handleImport } = useProfileImport()
+  const [filter, setFilter] = useState('')
+
+  const filtered = profiles.filter((p) =>
+    p.name?.toLowerCase().includes(filter.toLowerCase()) ||
+    (p.class ?? '').toLowerCase().includes(filter.toLowerCase())
+  )
 
   return (
-    <div className="bg-slate-900 border border-slate-800 hover:border-slate-600 rounded p-3 flex flex-col gap-2 transition-colors">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="font-display text-sm text-slate-100 truncate">{profile.name}</p>
-          <p className="text-[10px] font-mono text-slate-500">{profile.class}</p>
-        </div>
-        <div className="flex gap-1 shrink-0">
-          <button
-            className="text-[10px] font-mono text-slate-500 hover:text-slate-200 px-1"
-            onClick={() => openModal('ship-profile', { profileId: profile.id })}
+    <div className="flex flex-col h-full">
+      <div className="px-4 py-3 border-b border-slate-700 shrink-0 bg-slate-900">
+        <h2 className="font-display text-xs text-(--neon-cyan) tracking-widest">
+          SHIP PROFILES <span className="text-slate-400">({profiles.length})</span>
+        </h2>
+      </div>
+
+      <div className="px-4 pt-3 pb-2 shrink-0">
+        <input
+          type="text"
+          placeholder="Search…"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="w-full bg-slate-800 border border-slate-700 text-slate-200 font-mono text-xs rounded px-3 py-1.5 focus:outline-none focus:border-(--neon-cyan)/60 placeholder:text-slate-400"
+        />
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-2 space-y-0.5 py-1">
+        {filtered.length === 0 && (
+          <p className="text-slate-400 font-mono text-xs italic px-2 py-2">
+            {filter ? 'No results.' : 'No profiles. Create one.'}
+          </p>
+        )}
+        {filtered.map((p) => (
+          <div
+            key={p.id}
+            className={`group flex items-center gap-2 px-2 py-2 rounded transition-colors ${
+              editingId === p.id
+                ? 'bg-(--neon-cyan)/10 border border-(--neon-cyan)/30'
+                : 'border border-transparent hover:bg-slate-800'
+            }`}
           >
-            ✎
+            <div className="flex-1 min-w-0">
+              <p className={`font-mono text-xs font-bold truncate ${editingId === p.id ? 'text-(--neon-cyan)' : 'text-slate-200'}`}>
+                {p.name}
+              </p>
+              <p className="text-slate-400 font-mono text-xs truncate">
+                {[p.class, p.hullPoints ? `HP${p.hullPoints}` : null, p.tacSpeed ? `SPD${p.tacSpeed}` : null].filter(Boolean).join(' · ')}
+              </p>
+            </div>
+            <div className={`flex gap-1 shrink-0 ${editingId === p.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+              <ActionIcon label="✎" title="Edit"      onClick={() => onEdit(p.id)} dim="text-(--neon-cyan)" />
+              <ActionIcon label="⧉" title="Duplicate" onClick={() => duplicateProfile(p.id)} />
+              <ActionIcon label="⊗" title="Delete"    onClick={() => { if (confirm(`Delete "${p.name}"?`)) deleteProfile(p.id) }} dim="hover:text-red-400" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="px-4 py-3 border-t border-slate-800 shrink-0 space-y-2">
+        {importStatus && (
+          <p className={`font-mono text-xs ${importStatus.ok ? 'text-green-400' : 'text-red-400'}`}>
+            {importStatus.ok ? '✅ ' : '🚨 '}{importStatus.msg}
+          </p>
+        )}
+        <button
+          onClick={() => openModal('ship-profile')}
+          className="w-full py-1.5 bg-(--neon-cyan)/10 border border-(--neon-cyan)/30 text-(--neon-cyan) font-display text-xs tracking-widest rounded hover:bg-(--neon-cyan)/20 transition-colors"
+        >
+          + NEW PROFILE
+        </button>
+        <div className="flex gap-2">
+          <input ref={fileInputRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex-1 py-1 border border-slate-700 text-slate-400 font-display text-xs rounded hover:border-slate-500 transition-colors"
+          >
+            ↓ IMPORT
           </button>
           <button
-            className="text-[10px] font-mono text-slate-500 hover:text-slate-200 px-1"
-            onClick={() => duplicateProfile(profile.id)}
+            onClick={exportAll}
+            className="flex-1 py-1 border border-slate-700 text-slate-400 font-display text-xs rounded hover:border-slate-500 transition-colors"
           >
-            ⊕
-          </button>
-          <button
-            className="text-[10px] font-mono text-slate-500 hover:text-red-400 px-1"
-            onClick={() => {
-              if (confirm(`Delete "${profile.name}"?`)) deleteProfile(profile.id)
-            }}
-          >
-            ✕
+            ↑ EXPORT
           </button>
         </div>
       </div>
-
-      <div className="flex gap-3 text-[10px] font-mono text-slate-400">
-        <span>HP {profile.hullPoints}</span>
-        <span>ARM {profile.armour}</span>
-        <span>SPD {profile.tacSpeed}</span>
-        <span>{profile.weapons?.length ?? 0} wpn</span>
-      </div>
-
-      <button
-        className="w-full py-1 text-[10px] font-display tracking-widest text-sky-300 border border-sky-800 hover:bg-sky-900/30 transition-colors rounded"
-        onClick={() => onAddToBattle(profile)}
-      >
-        ADD TO BATTLE
-      </button>
     </div>
   )
 }
+
+// ── Add-to-battle dialog ──────────────────────────────────────────────────
 
 function AddToBattleDialog({ profile, onConfirm, onCancel }) {
   const [faction, setFaction] = useState(profile.faction ?? 'players')
@@ -64,9 +131,9 @@ function AddToBattleDialog({ profile, onConfirm, onCancel }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60" onClick={onCancel} />
-      <div className="relative z-10 bg-slate-900 border border-slate-700 rounded p-6 w-full max-w-sm space-y-4">
-        <p className="font-display text-sky-300 text-sm tracking-widest">ADD TO BATTLE</p>
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onCancel} />
+      <div className="relative z-10 bg-slate-900 border border-slate-700 rounded-lg p-6 w-full max-w-sm space-y-4">
+        <p className="font-display text-(--neon-cyan) text-sm tracking-widest">ADD TO BATTLE</p>
         <p className="text-slate-300 text-sm font-mono">{profile.name}</p>
 
         <div className="space-y-3">
@@ -76,8 +143,7 @@ function AddToBattleDialog({ profile, onConfirm, onCancel }) {
               {FACTIONS.map((f) => (
                 <button
                   key={f.id}
-                  className={`flex-1 py-1 text-xs font-mono border rounded transition-colors
-                    ${faction === f.id ? 'border-sky-500 text-sky-300 bg-sky-900/30' : 'border-slate-700 text-slate-400 hover:border-slate-500'}`}
+                  className={`flex-1 py-1 text-xs font-mono border rounded transition-colors ${faction === f.id ? 'border-sky-500 text-sky-300 bg-sky-900/30' : 'border-slate-700 text-slate-400 hover:border-slate-500'}`}
                   style={faction === f.id ? { borderColor: f.color, color: f.color } : {}}
                   onClick={() => setFaction(f.id)}
                 >
@@ -86,165 +152,239 @@ function AddToBattleDialog({ profile, onConfirm, onCancel }) {
               ))}
             </div>
           </div>
-
           <div>
-            <label className="text-[10px] font-display text-slate-500 tracking-widest block mb-1">INITIAL RANGE (from all other ships)</label>
+            <label className="text-[10px] font-display text-slate-500 tracking-widest block mb-1">INITIAL RANGE</label>
             <select
-              value={band}
-              onChange={(e) => setBand(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1.5 focus:border-sky-400 outline-none"
+              value={band} onChange={(e) => setBand(e.target.value)}
+              className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1.5 focus:border-(--neon-cyan) outline-none"
             >
-              {RANGE_BANDS.map((b) => (
-                <option key={b.id} value={b.id}>{b.label} — {b.distance}</option>
-              ))}
+              {RANGE_BANDS.map((b) => <option key={b.id} value={b.id}>{b.label} — {b.distance}</option>)}
             </select>
           </div>
         </div>
 
         <div className="flex gap-2 pt-2">
-          <button
-            className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-700 hover:bg-slate-800 rounded"
-            onClick={onCancel}
-          >
-            CANCEL
-          </button>
-          <button
-            className="flex-1 py-2 text-xs font-display tracking-widest text-sky-300 border border-sky-700 hover:bg-sky-900/30 rounded"
-            onClick={() => onConfirm(profile, faction, band)}
-          >
-            CONFIRM
-          </button>
+          <button className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-700 hover:bg-slate-800 rounded" onClick={onCancel}>CANCEL</button>
+          <button className="flex-1 py-2 text-xs font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 hover:bg-(--neon-cyan)/10 rounded" onClick={() => onConfirm(profile, faction, band)}>CONFIRM</button>
         </div>
       </div>
     </div>
   )
 }
 
+// ── Session panel ─────────────────────────────────────────────────────────
+
+function StatusLine({ label, value, active = true }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${active ? 'bg-(--neon-cyan) animate-pulse' : 'bg-slate-700'}`} />
+      <span className="font-mono text-xs text-slate-400 flex-1">{label}</span>
+      <span className={`font-mono text-xs ${active ? 'text-(--neon-cyan)/60' : 'text-slate-400'}`}>{value}</span>
+    </div>
+  )
+}
+
+function CommandConsole({ onEnterBattle, onLoadBattle, loading }) {
+  return (
+    <div className="border-r border-slate-800 flex flex-col overflow-hidden" style={{ width: 300 }}>
+      <div className="px-5 py-3 border-b border-slate-800 shrink-0">
+        <p className="font-display text-xs text-slate-400 tracking-widest">// OPERATIONS CONSOLE</p>
+      </div>
+      <div className="px-5 py-3 space-y-1.5 border-b border-slate-800 shrink-0">
+        <StatusLine label="NAVIGATION"   value="ACTIVE"  />
+        <StatusLine label="SENSORS"      value="ONLINE"  />
+        <StatusLine label="ARMAMENTS"    value="READY"   />
+        <StatusLine label="MISSION DATA" value="STANDBY" active={false} />
+      </div>
+      <div className="flex-1 px-5 py-5 space-y-3 overflow-y-auto">
+        <p className="font-display text-xs text-slate-400 tracking-widest mb-1">ACTIONS</p>
+        <button
+          onClick={onEnterBattle}
+          className="w-full py-3.5 bg-(--neon-cyan)/10 border border-(--neon-cyan)/40 text-(--neon-cyan) font-display text-xs tracking-widest rounded-lg hover:bg-(--neon-cyan)/20 transition-colors"
+        >
+          <span className="text-base block mb-0.5">▶</span>
+          ENTER BATTLE
+          <span className="block font-mono text-slate-400 mt-0.5 normal-case tracking-normal font-normal text-xs">Go to battle screen</span>
+        </button>
+        <button
+          onClick={onLoadBattle}
+          disabled={loading}
+          className="w-full py-3 border border-slate-700 text-slate-400 font-display text-xs tracking-widest rounded-lg hover:border-slate-500 hover:text-slate-300 transition-colors"
+        >
+          <span className="text-sm block mb-0.5">{loading ? '⌛' : '↓'}</span>
+          {loading ? 'LOADING…' : 'RESUME FROM FILE'}
+          <span className="block font-mono text-slate-400 mt-0.5 normal-case tracking-normal font-normal text-xs">Import .json session</span>
+        </button>
+      </div>
+      <div className="shrink-0 px-5 py-3 border-t border-slate-800">
+        <p className="font-mono text-xs text-slate-400 leading-relaxed">Add profiles on the left before entering battle.</p>
+      </div>
+    </div>
+  )
+}
+
+function TacticalDisplay({ ships }) {
+  const FACTION_HEX = { players: '#60a5fa', npc: '#f87171', neutral: '#94a3b8' }
+
+  return (
+    <div className="relative flex flex-col flex-1 overflow-hidden bg-slate-950">
+      <div
+        className="absolute inset-0 pointer-events-none opacity-25"
+        style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(15,23,42,0.5) 3px, rgba(15,23,42,0.5) 4px)' }}
+      />
+      <div className="relative z-10 flex flex-col h-full">
+
+        <div className="px-6 py-3 border-b border-slate-800/60 shrink-0 flex items-center gap-3">
+          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${ships.length ? 'bg-(--neon-cyan) animate-pulse' : 'bg-slate-600'}`} />
+          <span className="font-display text-xs text-slate-400 tracking-widest">TACTICAL DISPLAY</span>
+          <div className="flex-1 h-px bg-slate-800" />
+          <span className="font-display text-xs text-slate-400 tracking-widest">{ships.length ? 'ROSTER READY' : 'STANDBY'}</span>
+        </div>
+
+        <div className="px-6 py-3 border-b border-slate-800/60 shrink-0 grid grid-cols-2 gap-x-8 gap-y-1">
+          {[
+            { k: 'PROTOCOL', v: '2300AD/TCV-1.0' },
+            { k: 'RANGE',    v: 'BAND SYSTEM'    },
+            { k: 'VESSELS',  v: ships.length || '—' },
+            { k: 'MISSILES', v: '—' },
+          ].map(({ k, v }) => (
+            <div key={k} className="flex justify-between gap-2">
+              <span className="font-mono text-xs text-slate-400">{k}</span>
+              <span className={`font-mono text-xs ${ships.length ? 'text-(--neon-cyan)/70' : 'text-slate-400'}`}>{v}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          {ships.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full gap-4 opacity-40">
+              <svg width="72" height="72" viewBox="0 0 100 100" aria-hidden="true">
+                <circle cx="50" cy="50" r="38" fill="none" stroke="#0891b2" strokeWidth="0.8" />
+                <circle cx="50" cy="50" r="4"  fill="none" stroke="#0891b2" strokeWidth="0.8" />
+                <line x1="12" y1="50" x2="26" y2="50" stroke="#0891b2" strokeWidth="0.8" />
+                <line x1="74" y1="50" x2="88" y2="50" stroke="#0891b2" strokeWidth="0.8" />
+                <line x1="50" y1="12" x2="50" y2="26" stroke="#0891b2" strokeWidth="0.8" />
+                <line x1="50" y1="74" x2="50" y2="88" stroke="#0891b2" strokeWidth="0.8" />
+              </svg>
+              <p className="font-display text-xs text-slate-400 tracking-widest">NO VESSELS ASSIGNED</p>
+            </div>
+          ) : (
+            <>
+              <p className="font-display text-xs text-slate-400 tracking-widest mb-3">BATTLE ROSTER</p>
+              <div className="space-y-1.5">
+                {ships.map((s) => {
+                  const hull = s.hullPoints ?? 0
+                  const cur  = s.currentHull ?? hull
+                  const pct  = hull > 0 ? Math.max(0, cur / hull) : 1
+                  const bar  = pct > 0.6 ? '#22c55e' : pct > 0.3 ? '#eab308' : '#ef4444'
+                  return (
+                    <div key={s.id} className="flex items-center gap-2.5">
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: FACTION_HEX[s.faction] ?? '#64748b' }} />
+                      <span className="font-mono text-xs text-slate-300 truncate flex-1">{s.profile?.name ?? '?'}</span>
+                      <div className="w-14 h-1 bg-slate-800 rounded-full overflow-hidden shrink-0">
+                        <div className="h-full rounded-full" style={{ width: `${pct * 100}%`, backgroundColor: bar }} />
+                      </div>
+                      <span className="font-mono text-xs text-slate-400 w-10 text-right shrink-0">{cur}/{hull || '?'}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="shrink-0 px-6 py-2 border-t border-slate-800/60">
+          <div className="flex justify-between font-mono text-xs text-slate-400">
+            <span>SYS:ONLINE</span>
+            <span>2300AD // MONGOOSE PUBLISHING</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Root ──────────────────────────────────────────────────────────────────
+
 export default function Dashboard() {
   const profiles    = useProfilesStore((s) => s.profiles)
-  const { addShip, exportBattleState, importBattleState, ships } = useBattleStore()
+  const ships       = useBattleStore((s) => s.ships)
+  const { addShip, importBattleState, exportBattleState, resetBattle } = useBattleStore()
   const { gotoScreen, openModal } = useUIStore()
-  const { handleImport } = useProfileImport()
-  const [addTarget, setAddTarget] = useState(null)
-  const [battleImporting, setBattleImporting] = useState(false)
+
+  const [addTarget,  setAddTarget]  = useState(null)
+  const [editingId,  setEditingId]  = useState(null)
+  const [loadingBattle, setLoadingBattle] = useState(false)
 
   function handleConfirmAdd(profile, faction, band) {
     addShip(profile, faction, band)
     setAddTarget(null)
   }
 
-  async function handleImportBattle() {
+  async function handleLoadBattle() {
     const input = document.createElement('input')
-    input.type   = 'file'
-    input.accept = '.json'
+    input.type = 'file'; input.accept = '.json'
     input.onchange = async (e) => {
       const file = e.target.files?.[0]
       if (!file) return
-      setBattleImporting(true)
-      try {
-        await importBattleState(file)
-        gotoScreen('battle')
-      } catch (err) {
-        alert(`Import failed: ${err.message}`)
-      } finally {
-        setBattleImporting(false)
-      }
+      setLoadingBattle(true)
+      try { await importBattleState(file); gotoScreen('battle') }
+      catch (err) { alert(`Import failed: ${err.message}`) }
+      finally { setLoadingBattle(false) }
     }
     input.click()
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-      {/* Top bar */}
-      <header className="shrink-0 flex items-center justify-between px-6 py-3 bg-slate-900 border-b border-slate-800">
-        <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="TAC & LOCK" className="h-10 w-auto" />
-          <div>
-            <p className="font-display text-sky-300 text-lg tracking-widest">TAC &amp; LOCK</p>
-            <p className="text-[10px] font-mono text-slate-500">2300AD Space Combat — GM Interface</p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <button
-            className="px-3 py-1.5 text-xs font-display tracking-widest text-slate-400 border border-slate-700 hover:bg-slate-800 rounded"
-            onClick={handleImport}
-          >
-            IMPORT PROFILES
-          </button>
-          <button
-            className="px-3 py-1.5 text-xs font-display tracking-widest text-slate-400 border border-slate-700 hover:bg-slate-800 rounded"
-            onClick={handleImportBattle}
-            disabled={battleImporting}
-          >
-            LOAD BATTLE
-          </button>
-          <button
-            className="px-3 py-1.5 text-xs font-display tracking-widest text-sky-300 border border-sky-700 hover:bg-sky-900/30 rounded"
-            onClick={() => openModal('ship-profile')}
-          >
-            + NEW PROFILE
-          </button>
-        </div>
-      </header>
+    <div className="w-full h-full flex bg-slate-950">
 
-      <div className="flex-1 flex min-h-0 overflow-hidden">
-        {/* Profile library */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <p className="text-[10px] font-display text-slate-500 tracking-widest mb-4">SHIP PROFILES ({profiles.length})</p>
-          <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
-            {profiles.map((p) => (
-              <ProfileCard key={p.id} profile={p} onAddToBattle={setAddTarget} />
-            ))}
-          </div>
-        </div>
+      {/* Left: profiles library */}
+      <div className="w-72 shrink-0 border-r border-slate-800 flex flex-col overflow-hidden">
+        <ProfilesPanel editingId={editingId} onEdit={setEditingId} />
+      </div>
 
-        {/* Battle queue */}
-        <div className="w-72 shrink-0 border-l border-slate-800 flex flex-col">
-          <div className="p-4 border-b border-slate-800">
-            <p className="text-[10px] font-display text-slate-500 tracking-widest mb-3">BATTLE QUEUE ({ships.length})</p>
-            {ships.length === 0 ? (
-              <p className="text-xs font-mono text-slate-600">No ships added yet.</p>
-            ) : (
-              <div className="space-y-1.5">
-                {ships.map((s) => (
-                  <div key={s.id} className="flex items-center gap-2 text-xs font-mono text-slate-300">
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: s.faction === 'players' ? '#60a5fa' : s.faction === 'npc' ? '#f87171' : '#a3a3a3' }} />
-                    <span className="truncate">{s.profile?.name}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+      {/* Right: logo header + session panels */}
+      <div className="flex-1 flex flex-col overflow-hidden">
 
-          <div className="p-4 space-y-2">
+        <header className="shrink-0 px-6 py-4 border-b border-slate-800 flex items-center gap-4">
+          <div className="relative shrink-0 w-24 h-24">
+            <img src="/logo.png" alt="TAC & LOCK" className="w-24 h-24 object-contain" />
+            <div className="logo-shimmer" />
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <h1 className="font-display font-bold text-(--neon-cyan) tracking-widest text-2xl leading-tight">
+              TAC &amp; LOCK
+            </h1>
+            <span className="font-display text-xs text-slate-400 tracking-widest">TACTICAL INTERFACE // 2300AD SPACE COMBAT</span>
+            <span className="font-display text-xs text-slate-400 tracking-widest">GM-OPERATED COMBAT SIMULATOR</span>
+          </div>
+          <div className="ml-auto flex flex-col gap-1.5 items-end">
             {ships.length >= 2 && (
               <button
-                className="w-full py-2.5 text-sm font-display tracking-widest text-sky-300 border border-sky-600 hover:bg-sky-900/30 rounded transition-colors"
+                className="px-4 py-1.5 bg-(--neon-cyan)/10 border border-(--neon-cyan)/40 text-(--neon-cyan) font-display text-xs tracking-widest rounded-lg hover:bg-(--neon-cyan)/20 transition-colors"
                 onClick={() => gotoScreen('battle')}
               >
-                LAUNCH BATTLE ▶
+                ENTER BATTLE ▶
               </button>
             )}
             {ships.length > 0 && (
-              <>
-                <button
-                  className="w-full py-1.5 text-xs font-display tracking-widest text-slate-400 border border-slate-700 hover:bg-slate-800 rounded"
-                  onClick={exportBattleState}
-                >
-                  SAVE BATTLE
-                </button>
-                <button
-                  className="w-full py-1.5 text-xs font-display tracking-widest text-red-400 border border-red-900 hover:bg-red-900/20 rounded"
-                  onClick={() => {
-                    if (confirm('Clear all ships from battle?')) useBattleStore.getState().resetBattle()
-                  }}
-                >
-                  CLEAR BATTLE
-                </button>
-              </>
+              <div className="flex gap-2">
+                <button className="px-3 py-1 text-xs font-display tracking-widest text-slate-400 border border-slate-700 hover:bg-slate-800 rounded" onClick={exportBattleState}>SAVE</button>
+                <button className="px-3 py-1 text-xs font-display tracking-widest text-red-400 border border-red-900 hover:bg-red-900/20 rounded" onClick={() => { if (confirm('Clear all ships?')) resetBattle() }}>CLEAR</button>
+              </div>
             )}
           </div>
-        </div>
+        </header>
+
+        <main className="flex-1 overflow-hidden flex">
+          <CommandConsole
+            onEnterBattle={() => gotoScreen('battle')}
+            onLoadBattle={handleLoadBattle}
+            loading={loadingBattle}
+          />
+          <TacticalDisplay ships={ships} />
+        </main>
+
       </div>
 
       {addTarget && (
