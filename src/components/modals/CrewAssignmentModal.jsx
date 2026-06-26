@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { uuidv7 } from 'uuid'
+import { v7 as uuidv7 } from 'uuid'
 import { useBattleStore } from '../../store/battleStore.js'
 import { blankCrewMember, buildDefaultAssignments, CREW_SKILLS } from '../../utils/crew.js'
 
