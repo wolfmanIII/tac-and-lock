@@ -109,9 +109,9 @@ Può esserci **un solo Pilot e un solo Captain**; tutti gli altri ruoli ammetton
 
 Ogni nave (in ordine di Iniziativa) distribuisce il suo **TAC Speed** tra:
 
-1. Movimento (cambio di fascia)
+1. Movimento (cambio di fascia) — Open/Close — check Pilot opposto (DEX), adding TAC Speed
 2. Combat manoeuvring
-3. Evasive Action (TAC Speed rimanente usato come reazione nella fase di attacco)
+3. **Evade** — azione separata (vedi §11); non è "TAC Speed rimanente" come nel CRB
 
 ---
 
@@ -119,14 +119,22 @@ Ogni nave (in ordine di Iniziativa) distribuisce il suo **TAC Speed** tra:
 
 ### Firing Solution (Task Chain) — 2300AD B3 p.56
 
-L'attacco è una **catena di check** (ogni Effect positivo si trasferisce come DM al check successivo):
+L'attacco è una **catena di check**. Ogni Effect positivo si trasferisce come DM al check successivo.
 
-1. **Sensor Operator** — Very Difficult (12+) Electronics (sensors) INT  
-   DM: +Signature del bersaglio; qualità sensori (Basic Military +0, Improved +1, Advanced +2); Sensor Time-lag (tabella sotto, negativo a distanza)
-2. **Pilot** — Difficult (10+) Pilot DEX  
-   DM: +TAC Speed della nave
-3. **Gunner** — Difficult (10+) Gunner INT — bersaglio **10+**  
-   DM: +Fire Control software rating; +Effect della catena
+**Step 1 — Sensor Operator**: Very Difficult (12+) Electronics (sensors) **INT**
+- DM: +Signature del bersaglio; +Sensor Time-lag (tabella sotto); qualità sensori (Basic Military +0, Improved +1, Advanced +2)
+- Assist Engineer (opzionale): Routine (8+) Engineer (power) **INT**
+- In alternativa al sensor operator: il gunner può usare un array UTES per sviluppare la Firing Solution da solo. Very Difficult (12+) Gunner **EDU**, richiede 2 round. Effect 1–4: DM+1 al prossimo Gunner check; Effect 5–6: DM+2.
+
+**Step 2 — Pilot**: Difficult (10+) Pilot **DEX**
+- DM: +TAC Speed della nave
+- Assist Engineer (opzionale): Routine (8+) Engineer (power) **INT** (può aumentare temporaneamente il TAC Speed)
+
+**Step 3 — Gunner**: Difficult (10+) Gunner **INT** — target 10+
+- DM: +Fire Control software rating; +Effect accumulato dagli step 1–2
+- Assist Captain (opzionale): Difficult (10+) Tactics (naval) **INT**
+
+> Bersagli stazionari (reaction drive spento, in orbita): DM+2 e **danno doppio**. — B3 p.56
 
 ### DM di distanza per l'attacco — 2300AD B3 p.57
 
@@ -141,9 +149,9 @@ L'attacco è una **catena di check** (ogni Effect positivo si trasferisce come D
 
 ### Sensor Time-lag — 2300AD B3 p.47
 
-Si somma ai DM sensori nello step 1 della Firing Solution.
+Si applica allo Step 1 della Firing Solution (check sensori). DM-1 per ogni fascia di distanza tra le navi.
 
-| Fascia | DM |
+| Fascia | DM sensori |
 | --- | --- |
 | Adjacent | +1 |
 | Close | +0 |
@@ -155,27 +163,27 @@ Si somma ai DM sensori nello step 1 della Firing Solution.
 
 ### Signature — 2300AD B3 p.57
 
-DM positivo ai check Electronics (sensors) nemici. Modificatori notevoli:
+Ogni nave ha una **Signature base** (dal suo stat block B3). È un valore sempre positivo usato come DM positivo ai check Electronics (sensors) nemici (incluso lo step 1 della Firing Solution). Si ricalcola a fine round.
 
-| Condizione | Effetto |
+| Azione / Condizione | Effetto su Signature |
 | --- | --- |
-| Reaction Drive in uso | +4 (razzi) / +6 (thruster) / +8 (nucleare) |
 | Danno > 50% Hull | +1 |
 | Electronic Warfare attivo | +2 |
-| Radiatori retratti | −1 |
-| Stealth | −4 |
 | Heat Sink (durata limitata) | −4 |
+| Power Plant Critical | +1 |
+| Radiatori retratti | −1 |
+| Reaction Drive in uso | +4 razzi / +6 thruster / +8 nucleare |
+| Sensor attivi (TTA, UTES) | +1 |
+| Solar Panels estesi | +2 |
+| Spin Habitat ritirato | −1 |
+| Stealth | −4 |
 
-### Scala danno
-
-Spacecraft e Ground usano scale diverse:
+### Scala danno spacecraft vs ground
 
 | Attaccante → Bersaglio | DM to hit | Danno |
 | --- | --- | --- |
-| Ground weapon → Ground target | +0 | x1 |
-| Ground weapon → Spacecraft | -2 | /10 |
-| Spacecraft weapon → Spacecraft | +0 | x1 |
-| Spacecraft weapon → Ground target | +2 | x10 |
+| Ground weapon → Spacecraft | −2 | ÷10 |
+| Spacecraft weapon → Ground target | +2 | ×10 |
 
 ---
 
@@ -207,51 +215,55 @@ Spacecraft e Ground usano scale diverse:
 
 ---
 
-## 8. Danno alla Nave
+## 8. Danno alla Nave — 2300AD B3 p.56–58
 
 ```text
-Danno = (danno arma + Effect del tiro) - Armatura
+Danno = danno arma − Armatura
 ```
 
-Il risultato viene sottratto dagli **Hull Points**.  
-Se gli Hull Points arrivano a 0: la nave è **distrutta** (irrecuperabile).
+> **Nota B3**: l'Effect del Gunner check **non si somma al danno**. Determina solo se scattano gli effetti critici (Surface Fixture, Internal Crit). Questa è una differenza rispetto al Trav2022 CRB.
 
-### Critical Hits
+Il danno netto (dopo armatura) viene sottratto dagli **Hull Points**.  
+Se gli Hull Points arrivano a 0: la nave è **distrutta**.
 
-Scattano quando: l'Effect del tiro è **≥ 6** E il danno penetra l'armatura.
+### Surface Fixture Damage — Effect ≥ 3
 
-- **Severity** = Effect del tiro - 5
-- Tirare 2D sulla tabella Critical Hit Location
+Qualsiasi hit con **Effect ≥ 3** triggerizza un roll sulla Surface Fixture table (§9), **anche se il danno non penetra l'armatura**.
 
-### Danno Sostenuto
+### Internal Critical Hits — danno netto > 0 + Effect ≥ 6 (o hull a 0)
 
-Ogni volta che il danno cumulativo raggiunge il **10% degli Hull Points iniziali**, tirare sulla Critical Hit Location table → Severity 1 automatica.
-
-### Called Shots (Short range o meno)
-
-Dichiarare la location prima del tiro. DM-2 all'attacco. Se critico, l'attaccante sceglie la location.
+Quando il danno penetra l'armatura, seguire la tabella Internal Critical Hits (§10) usando CRB p.158–159 con le sostituzioni B3.
 
 ---
 
-## 9. Critical Hit Location (2D)
+## 9. Surface Fixture Damage — 2300AD B3 p.58
 
-| 2D | Posizione |
+Trigger: **Effect ≥ 3** su qualsiasi hit (anche non penetrante). Tirare 2D:
+
+| 2D | Sistema | 1° Hit | 2° Hit | 3° Hit |
+| --- | --- | --- | --- | --- |
+| 2 | Fire Control | DM−2 ai roll di attacco | — | Destroyed |
+| 3–4 | Weapon | −1D Damage, DM−2 ai roll di attacco | Disabled | Destroyed |
+| 5 | Sensors | DM−2 ai check Electronics (sensors) | — | Destroyed |
+| 6–8 | Radiator | (vedi regole Radiator) | — | — |
+| 9 | Sensors | DM−2 ai check Electronics (sensors) | — | Destroyed |
+| 10–11 | Discharge Vanes (se presenti; altrimenti nessun effetto) | Disabled | Destroyed | — |
+| 12 | Other System | Disabled | Destroyed | — |
+
+**Radiator** — il 1° e 2° hit non hanno effetto. 3° hit: Signature +2. 4° hit: Power deve essere ridotto al 50% o la nave subisce 1 Internal Crit ogni round. 5° hit: Power completamente spento o 1D danno/round + 1 Internal Crit/round.
+
+---
+
+## 10. Internal Critical Hits — CRB p.158–159 + sostituzioni B3
+
+Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). Tirare sulla tabella CRB p.158–159 con le seguenti sostituzioni obbligatorie:
+
+| Sostituzione | Regola B3 |
 | --- | --- |
-| 2 | Sensors |
-| 3 | Power Plant |
-| 4 | Fuel |
-| 5 | Weapon |
-| 6 | Armour |
-| 7 | Hull |
-| 8 | Stutterwarp Drive |
-| 9 | Cargo |
-| 10 | Stutterwarp (FTL) |
-| 11 | Crew |
-| 12 | Bridge |
+| M-Drive → **Reaction Drive** | 1° crit: inoperabile; 2° crit: distrutto |
+| J-Drive → **Stutterwarp Drive** | Ogni crit riduce TAC Speed di −1 per punto di Thrust perso |
 
----
-
-## 10. Critical Hit Effects (per Severity 1–6)
+**Effetti per Severity 1–6** (tabella CRB p.158–159, systems aggiornati per 2300AD):
 
 ### Sensors
 
@@ -376,60 +388,43 @@ Dichiarare la location prima del tiro. DM-2 all'attacco. Se critico, l'attaccant
 
 ---
 
-## 11. Reazioni (durante il turno avversario)
+## 11. Reazioni — 2300AD B3 p.54–55
 
-### Evasive Action — Pilot
+### Evade — Pilot
 
-- Ogni punto di **TAC Speed** non speso = 1 tentativo di schivata
-- L'attacco subisce DM negativo = livello di skill del Pilot
+**Check opposto Pilot (DEX)**. Il pilot evadente dichiara Evade; il check avviene in opposizione al Pilot check (step 2 della Firing Solution) del nemico.
 
-### Point Defence — Gunner (turret)
+| Effect del Pilot evadente | Effetto su tutti i check Electronics (sensors) e Gunner del nemico |
+| --- | --- |
+| Effect 1–4 | DM−1 |
+| Effect 5+ | DM−2 |
+| Effect −5 o peggio | il nemico guadagna DM+1 |
 
-- Gunner (turret) check vs salvo di missili in arrivo
-- Effect = missili rimossi dal salvo
-- DM+1 con double turret con 2 laser, DM+2 con triple turret con 3 laser
-- Solo una volta per round per gunner; arma usata per Point Defence non può attaccare nello stesso round
+> **Nota B3**: NON è "TAC Speed rimanente × Pilot skill" come nel CRB. È un check attivo opposto.
 
-### Disperse Sand — Gunner (turret)
+### Point Defence — Gunner (turret/PDC)
 
-- Gunner (turret) check vs attacco laser
-- Successo: aggiunge 1D + Effect all'armatura della nave vs quell'attacco
-- Usa un canister di sabbia
-- Vs boarding party: 8D danno (scala Ground) a ogni bersaglio nel gruppo
+**Difficult (10+) Gunner (DEX)** — B3 p.55
+
+- DM−2 per missili e droni sotto 10 tonnellate (arma non PDC)
+- PDC (es. Quinn Type 17): DM+4 invece di DM−2
+- Effect = unità distrutte dal salvo
+- Solo una volta per round per gunner; arma usata non può attaccare nello stesso round
 
 ---
 
-## 12. Step 3 — Actions Step
+## 12. Step 3 — Actions Step — 2300AD B3 p.53–55
 
-### Improve Initiative — Captain
+### Captain
 
-- **Leadership check**
-- Effect (anche negativo) aggiunto all'Iniziativa per il round successivo
+- **Commands**: Routine (8+) Leadership **INT o SOC**. Effect 1–4: DM+1 a un membro crew quel round. Effect 5–6: DM+2. Crew che disobbedisce: DM−1.
+- **Tactics** (assist al Gunner): come da Firing Solution step 3 — Difficult (10+) Tactics (naval) **INT**.
 
-### Stutterwarp Escape — Engineer
+### Engineer
 
-- Come un normale stutterwarp, ma difficoltà +1 livello su Astrogation e Engineer (stutterwarp)
-- Tempo ridotto a 1D minuti (entro il round)
-
-### Offline System — Engineer
-
-- **Engineer (power) check, 1 round, EDU** *(difficoltà non specificata nel CRB — si assume Average 8+)*
-- Spegne qualsiasi numero di sistemi, libera Power per gli altri
-- Un round aggiuntivo per riaccenderli
-
-### Overload Stutterwarp — Engineer
-
-- **Difficult (10+) Engineer (stutterwarp), 1 round, INT**
-- Successo: TAC Speed +1 per il round successivo
-- Fallimento con Effect ≤ -6: Stutterwarp critical hit Severity 1
-- DM cumulativo -2 ad ogni tentativo (rimosso con manutenzione: 1D ore)
-
-### Overload Plant — Engineer
-
-- **Difficult (10+) Engineer (power), 1 round, INT**
-- Successo: Power +10% per il round successivo
-- Fallimento con Effect ≤ -6: Power Plant critical hit Severity 1
-- DM cumulativo -2 ad ogni tentativo
+- **Re-route Power**: Average (8+) Engineer (power) **EDU**. Riabilita sistemi o redistribuisce energia.
+- **Boost Power Output**: Difficult (10+) Engineer (power) **EDU**. Successo: Effect% aumento Power. Effect −5 o peggio: critical hit Power Plant.
+- **Boost Tac Speed**: Very Difficult (10+) Engineer (stutterwarp) **INT**. Effect 1–4: TAC Speed +1. Effect 5–6: TAC Speed +2.
 
 ### Repair System — Engineer
 
@@ -570,11 +565,23 @@ Le statistiche rilevanti per il combattimento spaziale:
 | --- | --- |
 | **Hull Points** | 1 per ogni 2,5 ton di scafo |
 | **Armour** | Protezione (Crystaliron TL10 max 13; Bonded Superdense TL14) |
-| **TAC Speed** | Rating del motore Stutterwarp — usato per Iniziativa, movimento, schivate. Assente senza Stutterwarp. |
-| **Sensors** | Tipo e DM (per Electronic Warfare e Sensor Lock) |
+| **TAC Speed** | Rating del motore Stutterwarp — usato per movimento e Firing Solution step 2 |
+| **Signature** | Valore base dal stat block B3 (sempre ≥ 1). DM positivo per i check Electronics (sensors) nemici nello step 1 della Firing Solution. Si ricava dal profilo nave B3; può essere modificato da stealth, heat sink, EW, ecc. |
+| **Sensors** | Tipo e DM (Basic Military +0, Improved +1, Advanced +2 allo step 1) |
 | **Computer** | Modello + Bandwidth (limite software installabili) |
 | **Weapons** | Lista: tipo, mount, TL, range, danno, traits |
-| **Power** | Totale disponibile / richiesto da sistemi e armi |
+
+### Caratteristiche crew rilevanti per la Firing Solution
+
+| Step | Crew | Skill | Caratteristica |
+| --- | --- | --- | --- |
+| Iniziativa | Captain | Tactics (naval) | **INT** |
+| Step 1 | Sensor Operator | Electronics (sensors) | **INT** |
+| Step 2 | Pilot | Pilot | **DEX** |
+| Step 3 | Gunner | Gunner | **INT** |
+| Point Defence | Gunner | Gunner | **DEX** |
+| Captain assist (step 3) | Captain | Tactics (naval) | **INT** |
+| Engineer assist | Engineer | Engineer (power) | **INT** (step 1) / **INT** (step 2) |
 
 ### Software rilevanti per il combattimento — 2300AD B3 p.44
 
