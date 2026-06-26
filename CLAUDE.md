@@ -37,6 +37,15 @@ Regole complete in `doc/space-combat-rules.md`.
 
 ## GAME RULES SUMMARY
 
+### Iniziativa — 2300AD B3 p.54
+
+**Check opposto Tactics (naval) (INT)** — formula: `2D6 + Tactics(naval) + INT DM`
+
+- Il **Capitano** (o lead tactician) di ogni nave effettua un check Tactics (naval) opposto.
+- La nave con il risultato più alto muove e spara per prima. Ordine fisso per tutta la durata del combattimento.
+- In caso di sorpresa: la nave sorpresa non può agire nel primo round.
+- **NON usa Pilot skill né TAC Speed** (quella è la formula CRB — errata per 2300AD).
+
 ### Round Structure (6 minuti) — 2300AD B3 p.53
 
 1. **Manoeuvre Step** — spesa TAC Speed (movimento tra fasce + riserva evasion)
