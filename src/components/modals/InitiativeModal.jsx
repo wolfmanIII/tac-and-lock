@@ -1,45 +1,54 @@
+/**
+ * InitiativeModal — roll initiative per 2300AD B3 p.54.
+ * Opposed Tactics(naval) check (INT) by the Captain.
+ * Formula: 2D6 + Tactics(naval) + INT DM
+ */
+
 import { useState } from 'react'
 import { useBattleStore } from '../../store/battleStore.js'
 import { rollInitiative } from '../../utils/combat.js'
-import { roll2D6 } from '../../utils/dice.js'
+import { getAssignedSkill, getAssignedCharacteristic } from '../../utils/crew.js'
 
 export function InitiativeModal({ onClose }) {
-  const ships          = useBattleStore((s) => s.ships)
-  const setInitOrder   = useBattleStore((s) => s.setInitiativeOrder)
+  const ships        = useBattleStore((s) => s.ships)
+  const rollAllStore = useBattleStore((s) => s.rollAllInitiative)
+  const setInitOrder = useBattleStore((s) => s.setInitiativeOrder)
 
   const [results, setResults] = useState(() =>
-    ships.map((s) => ({ shipId: s.id, name: s.profile?.name ?? s.id, total: 0, locked: false }))
+    ships.map((s) => ({
+      shipId: s.id,
+      name:   s.profile?.name ?? s.id,
+      color:  s.color,
+      total:  0,
+      breakdown: null,
+    }))
   )
+
+  function rollSingle(shipId) {
+    const ship        = ships.find((s) => s.id === shipId)
+    if (!ship) return
+    const tacticsNaval = getAssignedSkill('captain', ship.crewAssignments, ship.crew)
+    const captainInt   = getAssignedCharacteristic('captain', ship.crewAssignments, ship.crew, 'INT')
+    const roll         = rollInitiative(tacticsNaval, captainInt)
+    setResults((prev) => prev.map((r) =>
+      r.shipId !== shipId ? r : { ...r, total: roll.total, breakdown: roll }
+    ))
+  }
 
   function rollAll() {
     setResults((prev) => prev.map((r) => {
-      if (r.locked) return r
-      const ship    = ships.find((s) => s.id === r.shipId)
-      const pilot   = ship?.crewAssignments?.pilot ? 1 : 0 // simplified: use 1 if pilot assigned
-      const tacSpeed = ship?.currentTacSpeed ?? 1
-      const roll    = rollInitiative(tacSpeed, pilot)
-      return { ...r, total: roll.total, dice: roll.dice, breakdown: roll }
-    }))
-  }
-
-  function rollSingle(shipId) {
-    setResults((prev) => prev.map((r) => {
-      if (r.shipId !== shipId) return r
-      const ship    = ships.find((s) => s.id === shipId)
-      const pilot   = 1
-      const tacSpeed = ship?.currentTacSpeed ?? 1
-      const roll    = rollInitiative(tacSpeed, pilot)
-      return { ...r, total: roll.total, dice: roll.dice, breakdown: roll }
+      const ship        = ships.find((s) => s.id === r.shipId)
+      if (!ship) return r
+      const tacticsNaval = getAssignedSkill('captain', ship.crewAssignments, ship.crew)
+      const captainInt   = getAssignedCharacteristic('captain', ship.crewAssignments, ship.crew, 'INT')
+      const roll         = rollInitiative(tacticsNaval, captainInt)
+      return { ...r, total: roll.total, breakdown: roll }
     }))
   }
 
   function setManual(shipId, val) {
     const n = parseInt(val, 10)
-    if (!isNaN(n)) setResults((prev) => prev.map((r) => r.shipId === shipId ? { ...r, total: n } : r))
-  }
-
-  function addTacticsBonus(shipId, bonus) {
-    setResults((prev) => prev.map((r) => r.shipId === shipId ? { ...r, total: r.total + bonus } : r))
+    if (!isNaN(n)) setResults((prev) => prev.map((r) => r.shipId === shipId ? { ...r, total: n, breakdown: null } : r))
   }
 
   function confirm() {
@@ -51,30 +60,42 @@ export function InitiativeModal({ onClose }) {
   const sorted = [...results].sort((a, b) => b.total - a.total)
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-5 space-y-4">
       <div className="flex items-center justify-between">
-        <p className="font-display text-sky-300 text-sm tracking-widest">INITIATIVE ROLL</p>
+        <div>
+          <p className="font-display text-amber-400 text-sm tracking-widest">INITIATIVE</p>
+          <p className="font-mono text-[10px] text-slate-500 mt-0.5">
+            2D6 + Tactics(naval) + INT DM — opposed Captain check // 2300AD B3 p.54
+          </p>
+        </div>
         <button
-          className="px-4 py-1.5 text-xs font-display tracking-widest text-slate-300 border border-slate-600 hover:bg-slate-800 rounded"
           onClick={rollAll}
+          className="px-3 py-1.5 text-xs font-display tracking-widest text-amber-400 border border-amber-800 hover:bg-amber-900/20 rounded transition-colors"
         >
           ROLL ALL
         </button>
       </div>
-      <p className="text-[10px] font-mono text-slate-500">2D6 + Pilot skill + TAC Speed // Trav2022 CRB p.161</p>
 
       <div className="space-y-2">
         {sorted.map((r, idx) => {
-          const ship = ships.find((s) => s.id === r.shipId)
+          const bd = r.breakdown
           return (
-            <div key={r.shipId} className="flex items-center gap-3 bg-slate-800/50 rounded px-3 py-2">
+            <div key={r.shipId}
+              className={`flex items-center gap-3 rounded px-3 py-2 border ${
+                idx === 0 && r.total > 0 ? 'border-amber-800/60 bg-amber-950/30' : 'border-slate-700/50 bg-slate-800/40'
+              }`}>
               <span className="text-slate-500 text-xs font-mono w-4">{idx + 1}.</span>
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: r.color ?? '#94a3b8' }} />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-mono text-slate-200 truncate">{r.name}</p>
-                {r.breakdown && (
+                <p className={`text-sm font-mono truncate ${idx === 0 && r.total > 0 ? 'text-amber-300' : 'text-slate-200'}`}>
+                  {r.name}
+                </p>
+                {bd && (
                   <p className="text-[10px] font-mono text-slate-500">
-                    [{r.breakdown.dice.join('+')}] +pilot{r.breakdown.pilotSkill} +spd{r.breakdown.tacSpeed}
-                    {r.breakdown.charDm !== 0 ? ` +dex${r.breakdown.charDm}` : ''}
+                    [{bd.dice.join('+')}]
+                    {bd.tacticsNaval > 0 ? ` +tactics${bd.tacticsNaval}` : ''}
+                    {bd.intDm !== 0 ? ` INT${bd.intDm > 0 ? '+' : ''}${bd.intDm}` : ''}
+                    {' '}= {bd.total}
                   </p>
                 )}
               </div>
@@ -82,36 +103,29 @@ export function InitiativeModal({ onClose }) {
                 type="number"
                 value={r.total}
                 onChange={(e) => setManual(r.shipId, e.target.value)}
-                className="w-14 text-center bg-slate-800 border border-slate-600 rounded px-1 py-1 text-sky-300 font-mono text-sm focus:border-sky-400 outline-none"
+                className="w-14 text-center bg-slate-800 border border-slate-600 rounded px-1 py-1 text-amber-300 font-mono text-sm focus:border-amber-500 outline-none"
               />
               <button
-                className="text-xs font-mono text-slate-400 hover:text-slate-200 border border-slate-700 rounded px-2 py-1"
                 onClick={() => rollSingle(r.shipId)}
+                className="text-xs font-mono text-slate-400 hover:text-amber-400 border border-slate-700 hover:border-amber-800 rounded px-2 py-1 transition-colors"
               >
                 🎲
-              </button>
-              <button
-                className="text-xs font-mono text-emerald-500 hover:text-emerald-300 border border-emerald-900 rounded px-2 py-1"
-                title="Add +1 Tactics bonus (Captain check success)"
-                onClick={() => addTacticsBonus(r.shipId, 1)}
-              >
-                +TAC
               </button>
             </div>
           )
         })}
       </div>
 
-      <div className="flex gap-2 pt-2">
+      <div className="flex gap-2 pt-1">
         <button
-          className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-700 hover:bg-slate-800 rounded"
           onClick={onClose}
+          className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-700 hover:bg-slate-800 rounded"
         >
           CANCEL
         </button>
         <button
-          className="flex-1 py-2 text-xs font-display tracking-widest text-sky-300 border border-sky-700 hover:bg-sky-900/30 rounded"
           onClick={confirm}
+          className="flex-1 py-2 text-xs font-display tracking-widest text-amber-400 border border-amber-800 hover:bg-amber-900/20 rounded"
         >
           CONFIRM ORDER
         </button>
