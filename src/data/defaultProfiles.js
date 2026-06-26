@@ -5,7 +5,7 @@
  * Fresh critical-hit track state (all systems undamaged).
  * @returns {Record<string, number>}
  */
-function blankCriticalTracks() {
+export function blankCriticalTracks() {
   return {
     sensors:          0,
     bridge:           0,

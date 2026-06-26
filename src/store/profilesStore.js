@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { uuidv7 } from 'uuid'
+import { v7 as uuidv7 } from 'uuid'
 import { DEFAULT_PROFILES } from '../data/defaultProfiles.js'
 import { exportProfiles, importProfiles } from '../utils/io.js'
 
