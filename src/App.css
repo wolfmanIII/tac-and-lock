@@ -1,23 +1,36 @@
-/* Minimal app-level styles — Tailwind handles the rest */
+/* ── Logo shimmer ────────────────────────────────────────────────────────── */
 
-* {
-  box-sizing: border-box;
+.logo-shimmer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+.logo-shimmer::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -65%;
+  width: 32%;
+  height: 200%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(186, 230, 253, 0.10) 30%,
+    rgba(186, 230, 253, 0.60) 50%,
+    rgba(186, 230, 253, 0.10) 70%,
+    transparent 100%
+  );
+  border-radius: 50% 50% 50% 50% / 70% 70% 30% 30%;
+  transform: skewX(-12deg);
+  mix-blend-mode: screen;
+  animation: logo-shine 4s ease-in-out infinite;
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #334155; /* slate-700 */
-  border-radius: 2px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #475569; /* slate-600 */
+@keyframes logo-shine {
+  0%,  58% { left: -65%; opacity: 0; }
+  61%      { opacity: 1; }
+  76%      { left: 130%; opacity: 0; }
+  100%     { left: 130%; opacity: 0; }
 }
