@@ -1,6 +1,6 @@
 # Tac-and-Lock — Regole del Combattimento Spaziale
 
-## Fonte: Traveller 2022 Core Rulebook (base di 2300AD) + 2300AD Core Book 1
+## Fonte: 2300AD Core Book 3 p.52–62 (primario) | Trav2022 CRB: solo crit interno p.158–159, weapon traits p.75
 
 > **Nota 2300AD**: in 2300AD il Manoeuvre Drive del Traveller standard non esiste.
 > Il movimento tattico è fornito dallo **Stutterwarp Drive**, che produce una statistica di velocità tattica.
@@ -27,30 +27,34 @@ Al termine dell'Actions Step, se ci sono ancora navi in combattimento, il round 
 
 ---
 
-## 2. Iniziativa
+## 2. Iniziativa — 2300AD B3 p.54
 
-**Formula:** `2D + Pilot skill + TAC Speed`
+**Formula:** check **Tactics (naval)** opposto (INT) — `2D6 + Tactics(naval) + INT DM`
 
-- Il Capitano può fare un check **Tactics (naval)**: l'Effect si aggiunge all'Iniziativa.
+- Il **Capitano** (o lead tactician) di ogni nave effettua un check **Tactics (naval) opposto**.
+- La nave con il risultato più alto muove e spara per prima.
+- In caso di parità, risolvere con un ulteriore tiro opposto.
+- L'iniziativa è fissa per tutta la durata del combattimento.
 - In caso di **sorpresa**, la nave sorpresa non può agire nel primo round.
-- L'iniziativa viene tirata una sola volta all'inizio del combattimento.
 
 ---
 
 ## 3. Fascie di Distanza (Range Bands)
 
-| Range Band | Distanza | TAC Speed richiesto per muoversi |
-| --- | --- | --- |
-| Adjacent | ≤ 1 km | 1 |
-| Close | 1–10 km | 1 |
-| Short | 11–1.250 km | 2 |
-| Medium | 1.251–10.000 km | 5 |
-| Long | 10.001–25.000 km | 10 |
-| Very Long | 25.001–50.000 km | 25 |
-| Distant | > 50.000 km | 50 |
+> Scala light-second. Ogni fascia = ½ light second (~150.000 km). Cinque volte la scala Trav2022 CRB. — 2300AD B3 p.52
 
-Gli scontri tipicamente iniziano a **Very Long** o **Distant**.  
-Il combattimento reale avviene di solito a **Long** o **Medium**.  
+| Range Band | Distanza (km) | TAC Speed richiesto per muoversi |
+| --- | --- | --- |
+| Adjacent | < 100 | 1 |
+| Close | ≤ 150.000 | 1 |
+| Short | 150.001 – 300.000 | 2 |
+| Medium | 301.000 – 450.000 | 5 |
+| Long | 450.001 – 600.000 | 10 |
+| Very Long | 600.001 – 750.000 | 25 |
+| Distant | > 750.000 | 50 |
+
+Gli scontri iniziano tipicamente a **Long range**.  
+La grande maggioranza delle armi è efficace **solo a Close range** o meno.  
 A **Close** o **Adjacent** si attivano le regole del **Dogfight**.
 
 ### TAC Speed per muoversi
@@ -113,27 +117,54 @@ Ogni nave (in ordine di Iniziativa) distribuisce il suo **TAC Speed** tra:
 
 ## 6. Step 2 — Attack Step
 
-### Formula di attacco
+### Firing Solution (Task Chain) — 2300AD B3 p.56
 
-```text
-2D + Gunner (specialità appropriata) + DEX DM ≥ 8
-```
+L'attacco è una **catena di check** (ogni Effect positivo si trasferisce come DM al check successivo):
 
-Un Pilot che spara da un fixed-mount subisce **DM-2**.
+1. **Sensor Operator** — Very Difficult (12+) Electronics (sensors) INT  
+   DM: +Signature del bersaglio; qualità sensori (Basic Military +0, Improved +1, Advanced +2); Sensor Time-lag (tabella sotto, negativo a distanza)
+2. **Pilot** — Difficult (10+) Pilot DEX  
+   DM: +TAC Speed della nave
+3. **Gunner** — Difficult (10+) Gunner INT — bersaglio **10+**  
+   DM: +Fire Control software rating; +Effect della catena
 
-### Modificatori comuni
+### DM di distanza per l'attacco — 2300AD B3 p.57
 
-| Condizione | DM |
+> La grande maggioranza delle armi è efficace **solo a Close range**. Short è il massimo per armi con Range "Short" (es. Kaefer Grumbler).
+
+| Fascia | DM all'attacco |
 | --- | --- |
-| Short Range | +1 |
-| Long Range | -2 |
-| Very Long Range | -4 |
-| Distant Range | -6 |
-| Pulse Laser | +2 |
-| Beam Laser | +4 |
-| Per 1.000 tonnellate del bersaglio | +1 (max DM+6) |
-| Sensor Lock attivo | +2 |
-| Evasive Action (Pilot) | -Pilot skill per ogni TAC Speed speso |
+| Adjacent | +2 |
+| Close | +0 |
+| Short | −6 |
+| Medium+ | N/A — nessuna arma da nave standard arriva |
+
+### Sensor Time-lag — 2300AD B3 p.47
+
+Si somma ai DM sensori nello step 1 della Firing Solution.
+
+| Fascia | DM |
+| --- | --- |
+| Adjacent | +1 |
+| Close | +0 |
+| Short | −1 |
+| Medium | −2 |
+| Long | −3 |
+| Very Long | −4 |
+| Distant | −5 |
+
+### Signature — 2300AD B3 p.57
+
+DM positivo ai check Electronics (sensors) nemici. Modificatori notevoli:
+
+| Condizione | Effetto |
+| --- | --- |
+| Reaction Drive in uso | +4 (razzi) / +6 (thruster) / +8 (nucleare) |
+| Danno > 50% Hull | +1 |
+| Electronic Warfare attivo | +2 |
+| Radiatori retratti | −1 |
+| Stealth | −4 |
+| Heat Sink (durata limitata) | −4 |
 
 ### Scala danno
 
@@ -148,30 +179,31 @@ Spacecraft e Ground usano scale diverse:
 
 ---
 
-## 7. Armi Spaziali
+## 7. Armi Spaziali Canoniche 2300AD — B3 p.60–61
 
-| Arma | TL | Range | Danno | Tonnellate | Costo | Traits |
-| --- | --- | --- | --- | --- | --- | --- |
-| Beam Laser | 10 | Medium | 1D | — | MCr0.5 | — |
-| Pulse Laser | 9 | Long | 2D | — | MCr1 | — |
-| Missile Rack | 7 | Special | 4D | — | MCr0.75 | Smart |
-| Missile (Nuclear) | — | Special | 1DD | — | — | Radiation, Smart |
-| Particle Barbette | 11 | Very Long | 4D* | 5 | MCr8 | Radiation |
-| Sandcaster | 9 | Special | Special | — | MCr0.25 | — |
+### Laser
 
-*Particle Barbette: dopo aver sottratto l'armatura, moltiplicare il danno x3.
+| Arma | TL | Range | Danno | Traits |
+| --- | --- | --- | --- | --- |
+| Darlan LL-88 | 10 | Close | 1D−1 | Obsolete, Accurate |
+| Darlan LL-98 | 11 | Close | 2D | Accurate |
+| Darlan G2 (Laser Drill) | 10 | Adjacent | 1D−1 | Obsolete |
+| Quinn Type 17 PDC | 12 | Adjacent | 1D | Point Defence, Rapid Fire |
+| Kaefer 'Grumbler' | 12 | Short | 2D+2 | Advanced, Inefficient |
 
-### Torrette
+### Particle Beam
 
-| Tipo | Tons | Costo |
-| --- | --- | --- |
-| Single Turret | 1 | MCr0.2 |
-| Double Turret | 1 | MCr0.5 |
-| Triple Turret | 1 | MCr1 |
+| Arma | TL | Range | Danno | Traits |
+| --- | --- | --- | --- | --- |
+| Allen BMZ-50 | 11 | Close | 3D | AP 4, EM, Inefficient, Slow |
 
-**Double/Triple turret con stessa arma:** un solo tiro; ogni arma aggiuntiva aggiunge **+1 al totale di danno per ogni dado dell'arma** (non un dado extra). Esempio: 3× Pulse Laser (2D) = 2D+4; 3× Beam Laser (1D) = 1D+2. I missili **non** ricevono questo bonus.  
-**Double/Triple con armi diverse:** si può usare un solo tipo per round.  
-**Sandcaster collegati:** +1 all'armatura negata dagli attacchi laser per ogni sandcaster aggiuntivo oltre il primo.
+### Combat Drones — B3 p.61
+
+| Drone | TL | Danno | TAC Speed | Endurance | Traits |
+| --- | --- | --- | --- | --- | --- |
+| Ritage-1 | 11 | 1D | 3 | 6 ore | — |
+| Ritage-2 | 12 | 5D | 4 | 4 ore | Blast 6, Radiation |
+| 'Whiskey' (Kaefer) | 12 | 1D laser / 3D det. | 4 | 2 ore | Blast 3, Radiation |
 
 ---
 
@@ -544,15 +576,21 @@ Le statistiche rilevanti per il combattimento spaziale:
 | **Weapons** | Lista: tipo, mount, TL, range, danno, traits |
 | **Power** | Totale disponibile / richiesto da sistemi e armi |
 
-### Software rilevanti per il combattimento
+### Software rilevanti per il combattimento — 2300AD B3 p.44
 
-| Software | TL | Bandwidth | Costo (MCr) | Effetto |
-| --- | --- | --- | --- | --- |
-| Manoeuvre | 8 | 0 | incluso | Controllo base |
-| Intellect | 11 | 0 | incluso | Comandi vocali |
-| Evade/1–3 | 9–13 | 10–25 | 1–3 | DM negativo pari al rating su tutti gli attacchi in entrata (non richiede TAC Speed) |
-| Fire Control/1–5 | 9–13 | 5–25 | 2–10 | x attacchi automatici, o DM ai gunner |
-| Auto-Repair/1–2 | 10–12 | 10–20 | 5–10 | x tentativi di riparazione automatici per round |
+> **Nota:** In 2300AD **non esistono** i software "Manoeuvre" e "Evade" del Trav2022 CRB.
+
+| Software | TL | Bandwidth | Effetto |
+| --- | --- | --- | --- |
+| Operations | 10 | 0 | Controllo base nave (incluso) |
+| Intellect | 10 | 10 | Comandi vocali in linguaggio naturale |
+| Stutterwarp Control | As drive | 2× Warp Efficiency | Abilita il viaggio stutterwarp |
+| Fire Control/1 | 10 | 5 | DM+1 al Gunner check (step 3 Firing Solution) |
+| Fire Control/2 | 11 | 10 | DM+2 al Gunner check |
+| Fire Control/3 | 12 | 15 | DM+3 al Gunner check |
+| Auto-Repair/1 | 10 | 10 | 1 tentativo riparazione/round (o DM+1) |
+| Auto-Repair/2 | 11 | 20 | 2 tentativi/round (o DM+2) |
+| Archive | 10 | 0 | Banca dati (incluso) |
 
 ### Critical Hit Tracks (6 livelli ciascuna)
 
@@ -605,4 +643,4 @@ Prezzo parti di ricambio: Cr100.000 per tonnellata.
 
 ---
 
-Fonti: Traveller 2022 Core Rulebook pp. 159–175; 2300AD Core Book 1 p. 11
+Fonti: 2300AD Core Book 3 p.52–62 (primario); Trav2022 CRB p.158–159 (crit interno), p.75 (weapon traits)
