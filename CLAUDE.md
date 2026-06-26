@@ -1,9 +1,11 @@
 # TAC & LOCK // Space Combat Simulator — Agent Instructions
 
 ## ROLE
+
 Senior Frontend Engineer. Vite + React specialist. Write efficient, maintainable, and performant code. Prefer technical accuracy over politeness.
 
 ## TECH STACK
+
 - **Runtime**: Browser-only — no backend, no server, no network calls
 - **Framework**: React 19 (JSX, hooks, concurrent features)
 - **Build**: Vite 8 + `@vitejs/plugin-react`
@@ -16,11 +18,13 @@ Senior Frontend Engineer. Vite + React specialist. Write efficient, maintainable
 - **Package Manager**: npm
 
 ## PROJECT DESCRIPTION
+
 Local VTT lite (Virtual Tabletop) per il combattimento spaziale di **2300AD** (Mongoose Publishing, 2021), basato sul **Traveller 2022 Core Rulebook**. GM-operated, designed for shared-screen sessions.
 
 Il combattimento usa **fascie di distanza** (range bands) — nessuna griglia esagonale, nessun movimento vettoriale. Le 7 fasce (Adjacent → Distant) definiscono tutte le relazioni spaziali. Le navi spendono Thrust per muoversi tra fasce.
 
 Riferimenti regole:
+
 - `// Trav2022 CRB p.xxx` — Traveller 2022 Core Rulebook
 - `// 2300AD B1 p.xxx` — 2300AD Core Book 1
 
@@ -29,13 +33,15 @@ Regole complete in `doc/space-combat-rules.md`.
 ## GAME RULES SUMMARY
 
 ### Round Structure (6 minuti)
+
 1. **Manoeuvre Step** — spesa Thrust (movimento + riserva evasive action)
 2. **Attack Step** — gunner aprono il fuoco; reazioni (evasion, point defence, sand)
 3. **Actions Step** — azioni speciali crew (sensor lock, EW, overload, repair, boarding)
 
 ### Fascie di Distanza
+
 | Fascia | Distanza | Thrust per muoversi |
-|---|---|---|
+| --- | --- | --- |
 | Adjacent | ≤ 1 km | 1 |
 | Close | 1–10 km | 1 |
 | Short | 11–1.250 km | 2 |
@@ -45,11 +51,13 @@ Regole complete in `doc/space-combat-rules.md`.
 | Distant | > 50.000 km | 50 |
 
 ### Ship Profile Fields (combat-relevant)
+
 `name`, `class`, `hullPoints`, `currentHull`, `armour`, `tacSpeed`, `sensors` (type + DM), `computer` (model + bandwidth), `weapons[]`, `software[]`, `criticalTracks` (11 track × 6 livelli di severità)
 
 ### Ruoli Crew & Skill
+
 | Ruolo | Skill chiave |
-|---|---|
+| --- | --- |
 | Pilot | Pilot |
 | Captain | Tactics (naval), Leadership |
 | Engineer | Engineer (m-drive / power / stutterwarp), Mechanic |
@@ -59,11 +67,13 @@ Regole complete in `doc/space-combat-rules.md`.
 | Marine | Gun Combat / Melee |
 
 ### 2300AD Specifics
+
 - Nessun Jump Drive — usa **Stutterwarp** (`Engineer (stutterwarp)` sostituisce `Engineer (j-drive)`)
 - Navi più piccole (fino a ~20.000 ton); TL10–TL12
 - `Astrogation` usata per rotte stutterwarp, non per plot di salto
 
 ## CODING GUIDELINES
+
 1. **Conciseness**: Do not explain basic concepts. Only explain complex architectural decisions.
 2. **Safety**: Handle all edge cases. Explicit error handling — no `catch(e) {}` swallowing.
 3. **Modern JS**: ES2024, named exports preferred, no default exports on stores/utils.
@@ -80,6 +90,7 @@ Regole complete in `doc/space-combat-rules.md`.
 14. **Game Rules Fidelity**: Tutti i calcoli meccanici (DM, danno, thrust, range bands, critical hits) devono corrispondere al Traveller 2022 CRB RAW + modifiche 2300AD. Segnalare qualsiasi ambiguità prima di implementare.
 
 ## CRITICAL RULES
+
 - DO NOT apologize.
 - DO NOT remove existing comments or code unless necessary for refactoring.
 - DO NOT hallucinate React APIs, Zustand APIs, or Traveller/2300AD rules.
@@ -90,7 +101,8 @@ Regole complete in `doc/space-combat-rules.md`.
 - DO NOT exercise operational complacency. Flag suboptimal patterns immediately.
 
 ## PROJECT STRUCTURE
-```
+
+```text
 src/
 ├── main.jsx                      ← React entry point
 ├── App.jsx                       ← Root component, MODAL_MAP, screen routing
