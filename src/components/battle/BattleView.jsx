@@ -90,12 +90,14 @@ export default function BattleView() {
   const missiles        = useBattleStore((s) => s.missiles)
   const rangeBands      = useBattleStore((s) => s.rangeBands)
   const setRangeBand    = useBattleStore((s) => s.setRangeBand)
-  const { openModal, showContextMenu } = useUIStore()
+  const { openModal, hideContextMenu } = useUIStore()
 
   const handleContainerCtx = useCallback((e) => {
     e.preventDefault()
-    showContextMenu(e.clientX, e.clientY, null)
-  }, [showContextMenu])
+    // Right-click on empty space: suppress native menu, close any open context menu.
+    // Only ship cards (ShipBentoCard) open the custom context menu.
+    hideContextMenu()
+  }, [hideContextMenu])
 
   // All cross-faction pairs that have a registered range band
   const trackedPairs = useMemo(() => {
