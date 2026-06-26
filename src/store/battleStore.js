@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { uuidv7 } from 'uuid'
+import { v7 as uuidv7 } from 'uuid'
 import { pairKey, resolveBasicBandMovement } from '../utils/rangeBands.js'
 import { advanceMissileOneRound, makeMissileSalvo } from '../utils/missiles.js'
 import { exportBattle, importBattle } from '../utils/io.js'
@@ -489,6 +489,17 @@ export const useBattleStore = create((set, get) => {
         }))
       },
     ),
+
+    /**
+     * Patch arbitrary fields on a ship instance (used for crew/assignment updates).
+     * @param {string} shipId
+     * @param {object} patch
+     */
+    updateShip: (shipId, patch) => {
+      set((s) => ({
+        ships: s.ships.map((sh) => sh.id !== shipId ? sh : { ...sh, ...patch }),
+      }))
+    },
 
     /**
      * Reduce current armour (from armour critical hit effects).
