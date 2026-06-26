@@ -353,10 +353,10 @@ export default function Dashboard() {
           </div>
           <div className="flex flex-col gap-0.5">
             <h1 className="font-display font-bold text-(--neon-cyan) tracking-widest text-2xl leading-tight">
-              TAC &amp; LOCK
+              <i>TAC &amp; LOCK</i>
             </h1>
             <span className="font-display text-xs text-slate-400 tracking-widest">TACTICAL INTERFACE // 2300AD SPACE COMBAT</span>
-            <span className="font-display text-xs text-slate-400 tracking-widest">GM-OPERATED COMBAT SIMULATOR</span>
+            <span className="font-display text-xs text-slate-400 tracking-widest">SPACE COMBAT SIMULATOR</span>
           </div>
           <div className="ml-auto flex flex-col gap-1.5 items-end">
             {ships.length >= 2 && (
