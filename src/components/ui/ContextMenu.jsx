@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useUIStore } from '../../store/uiStore.js'
 import { useBattleStore } from '../../store/battleStore.js'
 
@@ -51,10 +52,10 @@ export function ContextMenu() {
     },
   ]
 
-  return (
+  return createPortal(
     <div
       ref={ref}
-      className="fixed z-40 min-w-[180px] bg-slate-900 border border-slate-700 rounded shadow-2xl overflow-hidden"
+      className="fixed z-[9999] min-w-[180px] bg-slate-900 border border-slate-700 rounded shadow-2xl overflow-hidden"
       style={{ left: x, top: y }}
     >
       {items.map((item, i) =>
@@ -71,6 +72,7 @@ export function ContextMenu() {
           </button>
         ),
       )}
-    </div>
+    </div>,
+    document.body,
   )
 }
