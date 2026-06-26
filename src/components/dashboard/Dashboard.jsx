@@ -8,6 +8,7 @@ import { useProfilesStore } from '../../store/profilesStore.js'
 import { useBattleStore } from '../../store/battleStore.js'
 import { useUIStore } from '../../store/uiStore.js'
 import { useProfileImport } from './useProfileImport.js'
+import { CatalogPanel } from './CatalogPanel.jsx'
 import { FACTIONS } from '../../data/factions.js'
 import { RANGE_BANDS } from '../../data/rangeBands.js'
 import { Tooltip } from '../ui/Tooltip.jsx'
@@ -339,8 +340,13 @@ export default function Dashboard() {
   return (
     <div className="w-full h-full flex bg-slate-950">
 
-      {/* Left: profiles library */}
+      {/* Left: catalog */}
       <div className="w-72 shrink-0 border-r border-slate-800 flex flex-col overflow-hidden">
+        <CatalogPanel />
+      </div>
+
+      {/* Left-center: session profiles */}
+      <div className="w-64 shrink-0 border-r border-slate-800 flex flex-col overflow-hidden">
         <ProfilesPanel editingId={editingId} onEdit={setEditingId} onAddToBattle={setAddTarget} />
       </div>
 
