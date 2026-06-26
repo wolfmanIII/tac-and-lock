@@ -33,6 +33,21 @@ export const RANGE_BAND_MOVE_COST = {
 }
 
 /**
+ * Sensor Time-lag DM per range band. Applied to Electronics(sensors) checks
+ * in Firing Solution Step 1. // 2300AD B3 p.47
+ * @type {Record<string, number>}
+ */
+export const SENSOR_TIME_LAG_DM = {
+  Adjacent:  1,
+  Close:     0,
+  Short:    -1,
+  Medium:   -2,
+  Long:     -3,
+  VeryLong: -4,
+  Distant:  -5,
+}
+
+/**
  * Default weapon attack DM per range band. // 2300AD B3 p.57
  * Weapon definitions in data/weapons.js always override these values.
  * Beyond Close range, DMs become severe — most weapons cannot reach Short at all.
