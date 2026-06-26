@@ -38,7 +38,7 @@ const MODAL_MAP = {
   'add-ship':         AddShipModal,
 }
 
-const WIDE_MODALS = new Set(['ship-profile', 'ship-detail', 'crew-assignment', 'action'])
+const WIDE_MODALS = new Set(['ship-profile', 'ship-detail', 'crew-assignment', 'action', 'add-ship'])
 
 function ModalLayer() {
   const activeModal  = useUIStore((s) => s.activeModal)
