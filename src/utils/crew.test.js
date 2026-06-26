@@ -10,6 +10,7 @@ import {
   getCrewSkill,
   buildDefaultAssignments,
   getAssignedSkill,
+  getAssignedCharacteristic,
   getEffectiveSkill,
   migrateCrew,
 } from './crew.js'
@@ -155,6 +156,42 @@ describe('getAssignedSkill', () => {
   it('resolves gunner_turret using gunner skill', () => {
     const assignments = { gunner_turret: 'crew-2' }
     expect(getAssignedSkill('gunner_turret', assignments, crewList)).toBe(4)
+  })
+})
+
+// === getAssignedCharacteristic ===
+
+describe('getAssignedCharacteristic', () => {
+  const crewList = [
+    {
+      ...blankCrewMember('c1'),
+      characteristics: { STR: 8, DEX: 10, END: 7, INT: 11, EDU: 9, SOC: 6 },
+    },
+  ]
+
+  it('returns INT (primary) for captain role', () => {
+    const assignments = { captain: 'c1' }
+    expect(getAssignedCharacteristic('captain', assignments, crewList)).toBe(11)
+  })
+
+  it('returns DEX (primary) for pilot role', () => {
+    const assignments = { pilot: 'c1' }
+    expect(getAssignedCharacteristic('pilot', assignments, crewList)).toBe(10)
+  })
+
+  it('explicit characteristic override ignores role primary', () => {
+    const assignments = { captain: 'c1' }
+    expect(getAssignedCharacteristic('captain', assignments, crewList, 'STR')).toBe(8)
+  })
+
+  it('returns 7 (DM+0) when role is unassigned', () => {
+    const assignments = { captain: null }
+    expect(getAssignedCharacteristic('captain', assignments, crewList)).toBe(7)
+  })
+
+  it('returns 7 when crew ID not found in list', () => {
+    const assignments = { pilot: 'ghost-id' }
+    expect(getAssignedCharacteristic('pilot', assignments, crewList)).toBe(7)
   })
 })
 
