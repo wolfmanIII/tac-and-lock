@@ -76,6 +76,7 @@ function AppScreens() {
         <HUD />
         <PhaseTracker />
         <BattleLog />
+        <ContextMenu />
       </div>
       <LegalFooter />
     </>
@@ -87,7 +88,6 @@ export default function App() {
     <ErrorBoundary>
       <AppScreens />
       <ModalLayer />
-      <ContextMenu />
     </ErrorBoundary>
   )
 }

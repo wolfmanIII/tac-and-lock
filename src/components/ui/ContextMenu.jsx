@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
 import { useUIStore } from '../../store/uiStore.js'
 import { useBattleStore } from '../../store/battleStore.js'
 
@@ -12,8 +11,8 @@ export function ContextMenu() {
     const onDown = (e) => {
       if (!ref.current?.contains(e.target)) hideContextMenu()
     }
-    window.addEventListener('mousedown', onDown)
-    return () => window.removeEventListener('mousedown', onDown)
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
   }, [contextMenu, hideContextMenu])
 
   if (!contextMenu) return null
@@ -52,10 +51,10 @@ export function ContextMenu() {
     },
   ]
 
-  return createPortal(
+  return (
     <div
       ref={ref}
-      className="fixed z-[9999] min-w-[180px] bg-slate-900 border border-slate-700 rounded shadow-2xl overflow-hidden"
+      className="absolute z-50 min-w-[180px] bg-slate-900 border border-slate-700 rounded shadow-2xl overflow-hidden"
       style={{ left: x, top: y }}
     >
       {items.map((item, i) =>
@@ -72,7 +71,6 @@ export function ContextMenu() {
           </button>
         ),
       )}
-    </div>,
-    document.body,
+    </div>
   )
 }
