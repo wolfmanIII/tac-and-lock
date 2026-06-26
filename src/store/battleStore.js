@@ -328,6 +328,18 @@ export const useBattleStore = create((set, get) => {
      * @param {string} shipId
      * @param {number} bonus
      */
+    /** Set initiative order from the modal after GM rolls. // 2300AD B3 p.54 */
+    setInitiativeOrder: wh((orderedIds) => {
+      set((s) => ({
+        initiativeOrder: orderedIds,
+        ships: s.ships.map((sh) => {
+          const rank = orderedIds.indexOf(sh.id)
+          return rank === -1 ? sh : { ...sh, initiative: orderedIds.length - rank }
+        }),
+        log: [...s.log, makeLogEntry(get(), 'initiative', `Initiative order set: ${orderedIds.map((id) => get().ships.find((sh) => sh.id === id)?.profile?.name ?? id).join(' → ')}`)],
+      }))
+    }),
+
     addInitiativeBonus: (shipId, bonus) => {
       set((s) => ({
         ships: s.ships.map((sh) =>

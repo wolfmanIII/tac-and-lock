@@ -11,7 +11,6 @@ import { getAssignedSkill, getAssignedCharacteristic } from '../../utils/crew.js
 
 export function InitiativeModal({ onClose }) {
   const ships        = useBattleStore((s) => s.ships)
-  const rollAllStore = useBattleStore((s) => s.rollAllInitiative)
   const setInitOrder = useBattleStore((s) => s.setInitiativeOrder)
 
   const [results, setResults] = useState(() =>
