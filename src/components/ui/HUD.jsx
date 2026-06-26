@@ -10,17 +10,19 @@ import { Tooltip } from './Tooltip.jsx'
 import { Modal } from '../modals/Modal.jsx'
 
 const PHASE_LABEL = {
-  setup:     'SETUP',
-  manoeuvre: 'MANOEUVRE',
-  attack:    'ATTACK',
-  actions:   'ACTIONS',
+  setup:      'SETUP',
+  initiative: 'INITIATIVE',
+  manoeuvre:  'MANOEUVRE',
+  attack:     'ATTACK',
+  actions:    'ACTIONS',
 }
 
 const PHASE_COLOR = {
-  setup:     'text-slate-300',
-  manoeuvre: 'text-(--neon-cyan)',
-  attack:    'text-red-400',
-  actions:   'text-emerald-400',
+  setup:      'text-slate-300',
+  initiative: 'text-amber-400',
+  manoeuvre:  'text-(--neon-cyan)',
+  attack:     'text-red-400',
+  actions:    'text-emerald-400',
 }
 
 export function HUD() {
@@ -47,8 +49,8 @@ export function HUD() {
 
   const canAdvance = useMemo(() => {
     if (pendingMissileImpacts.length > 0) return false
-    if (phase === 'setup')     return ships.length > 0
-    if (phase === 'manoeuvre') return initiativeOrder.length > 0
+    if (phase === 'setup')      return ships.length > 0
+    if (phase === 'initiative') return initiativeOrder.length > 0
     return true
   }, [phase, ships, initiativeOrder, pendingMissileImpacts])
 
@@ -60,7 +62,7 @@ export function HUD() {
         setBlockMsg(`Resolve ${pendingMissileImpacts.length} pending impact${pendingMissileImpacts.length !== 1 ? 's' : ''} first.`)
       } else if (phase === 'setup') {
         setBlockMsg('Add at least one ship first.')
-      } else if (phase === 'manoeuvre') {
+      } else if (phase === 'initiative') {
         setBlockMsg('Roll initiative before advancing.')
       }
       return
@@ -95,11 +97,11 @@ export function HUD() {
         <span className={`font-display text-xs tracking-widest ${phaseColor}`}>{phaseLabel}</span>
       </div>
 
-      {/* Roll initiative CTA */}
-      {phase === 'manoeuvre' && initiativeOrder.length === 0 && (
+      {/* Roll initiative CTA — shown during initiative phase */}
+      {phase === 'initiative' && (
         <button
           onClick={() => openModal('initiative')}
-          className="pointer-events-auto bg-(--neon-cyan)/10 border border-(--neon-cyan)/50 hover:bg-(--neon-cyan)/20 text-(--neon-cyan) font-mono text-xs tracking-widest rounded px-3 py-1.5 backdrop-blur-sm transition-colors"
+          className="pointer-events-auto bg-amber-500/10 border border-amber-500/50 hover:bg-amber-500/20 text-amber-400 font-display text-xs tracking-widest rounded px-3 py-1.5 backdrop-blur-sm transition-colors"
         >
           🎲 ROLL INITIATIVE →
         </button>
