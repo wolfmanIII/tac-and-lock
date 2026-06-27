@@ -32,3 +32,6 @@ doc/*.pdf
 # Playwright
 test-results/
 playwright-report/
+
+# Vitest coverage
+coverage/
