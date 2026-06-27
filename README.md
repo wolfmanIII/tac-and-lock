@@ -203,7 +203,7 @@ e2e/
 ├── 06-manoeuvre.spec.js          ← ManoeuvreModal, GM override, evasion
 ├── 07-attack.spec.js             ← AttackModal, 3-step Firing Solution
 ├── 08-missiles.spec.js           ← Launch + impact flow
-└── 09-crew-actions.spec.js       ← Leading Fire, EW jam/penalty, EW countermeasures, Sensor Lock
+└── 09-crew-actions.spec.js       ← Leading Fire, EW, EW countermeasures, Sensor Lock, Deploy Sand, Point Defence, Damage Control, Boarding
 ```
 
 ---
