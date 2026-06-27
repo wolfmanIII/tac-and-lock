@@ -10,6 +10,25 @@
     <title>TAC &amp; LOCK</title>
   </head>
   <body>
+    <!-- SVG filter for logo gravitational lens distortion — referenced via CSS url(#logo-lens) -->
+    <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="logo-lens" x="-30%" y="-30%" width="160%" height="160%">
+          <feTurbulence type="turbulence" baseFrequency="0.015 0.015" numOctaves="3" result="noise" seed="7">
+            <animate attributeName="baseFrequency"
+              values="0.015 0.015; 0.015 0.015; 0.05 0.03; 0.09 0.05; 0.03 0.07; 0.015 0.015; 0.015 0.015"
+              keyTimes="0; 0.75; 0.80; 0.82; 0.84; 0.87; 1"
+              dur="11s" repeatCount="indefinite" />
+          </feTurbulence>
+          <feDisplacementMap in="SourceGraphic" in2="noise" xChannelSelector="R" yChannelSelector="G">
+            <animate attributeName="scale"
+              values="0; 0; 28; 45; 18; 0; 0"
+              keyTimes="0; 0.75; 0.80; 0.82; 0.84; 0.87; 1"
+              dur="11s" repeatCount="indefinite" />
+          </feDisplacementMap>
+        </filter>
+      </defs>
+    </svg>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
