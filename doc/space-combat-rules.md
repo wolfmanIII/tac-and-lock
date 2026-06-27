@@ -505,7 +505,7 @@ Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). Tirare sul
 | 4 a 6 | Boarding riuscito; 2D round per pacificare | 1D ignorando Armatura |
 | 7 o più | Boarding immediato; controllo della nave passa agli attaccanti | — |
 
-> Il danno Hull segnato come "automatico" viene applicato dalla VTT quando il GM clicca APPLY RESULT. I DM al prossimo round si applicano come `otherDm` al prossimo roll di boarding.
+> Il danno Hull segnato come "automatico" viene applicato dalla VTT quando il GM clicca APPLY RESULT. I DM carry-over al prossimo round si salvano come `boardingDmNextRound` sulla nave vincitrice e vengono inseriti manualmente dal GM al prossimo check boarding.
 
 ### Repel Boarders — Marine (Reaction)
 
