@@ -6,6 +6,9 @@ import { DiceInput } from '../forms/DiceInput.jsx'
 
 const ALL_ACTIONS = Object.values(CREW_ACTIONS).flat()
 
+/** Actions that have a mechanical store effect on failure as well as success. */
+const HAS_FAILURE_EFFECT = new Set(['overload_stutterwarp'])
+
 export function ActionModal({ payload, onClose }) {
   const { shipId } = payload ?? {}
   const ships            = useBattleStore((s) => s.ships)
@@ -14,6 +17,8 @@ export function ActionModal({ payload, onClose }) {
   const applySensorLock  = useBattleStore((s) => s.applySensorLock)
   const applyEW          = useBattleStore((s) => s.applyEW)
   const spendEvasion     = useBattleStore((s) => s.spendEvasion)
+  const addCriticalHit   = useBattleStore((s) => s.addCriticalHit)
+  const updateShip       = useBattleStore((s) => s.updateShip)
 
   const ship    = ships.find((s) => s.id === shipId)
   const targets = ships.filter((s) => s.id !== shipId && !s.isDestroyed)
@@ -24,6 +29,7 @@ export function ActionModal({ payload, onClose }) {
   const [rollResult,     setRollResult]     = useState(null)
   const [manualMode,     setManualMode]     = useState(false)
   const [critSystem,     setCritSystem]     = useState('')
+  const [repairMode,     setRepairMode]     = useState('system') // 'system' | 'hull'
 
   const action = ALL_ACTIONS.find((a) => a.id === selectedAction)
   const target = ships.find((s) => s.id === targetId)
@@ -43,26 +49,53 @@ export function ActionModal({ payload, onClose }) {
   }
 
   function applyAction() {
-    if (!action || !rollResult?.success) return
-    const effect = rollResult.effect
+    if (!action || !rollResult) return
+    const { success, effect } = rollResult
 
     switch (action.id) {
       case 'sensor_lock':
-        if (target) applySensorLock(shipId, target.id, effect)
+        if (success && target) applySensorLock(shipId, target.id, effect)
         break
+
       case 'electronic_warfare':
-        if (target) applyEW(shipId, target.id, effect)
+        if (success && target) applyEW(shipId, target.id, effect)
         break
+
       case 'emergency_repair':
-        if (critSystem) reduceCritical(shipId, critSystem)
+        if (success) {
+          if (repairMode === 'hull') {
+            repairHull(shipId, 1)
+          } else if (critSystem) {
+            reduceCritical(shipId, critSystem)
+          }
+        }
         break
-      case 'damage_control':
-      case 'overload_stutterwarp':
-        // handled by GM narration; overload TAC speed bonus tracked via reduceTacSpeed/addShip
+
+      case 'overload_stutterwarp': // 2300AD B3 p.55
+        if (success) {
+          const sh = ship
+          if (sh) updateShip(shipId, {
+            currentTacSpeed:    sh.currentTacSpeed    + 1,
+            tacSpeedAvailable:  sh.tacSpeedAvailable  + 1,
+          })
+        } else {
+          // Failure: stutterwarp overstressed → critical hit on stutterwarp system // B3 p.55
+          addCriticalHit(shipId, 'stutterwarp')
+        }
         break
+
+      case 'active_sensors': // 2300AD B3 p.57 — sets activeSensorsOn flag (+1 Signature)
+        if (success) updateShip(shipId, { activeSensorsOn: true })
+        break
+
       case 'evasive_action':
-        spendEvasion(shipId, 1)
+        if (success) spendEvasion(shipId, 1)
         break
+
+      case 'damage_control':
+        // GM narration — no discrete store state to update
+        break
+
       default:
         break
     }
@@ -119,15 +152,27 @@ export function ActionModal({ payload, onClose }) {
           )}
 
           {action.id === 'emergency_repair' && (
-            <div>
-              <p className="text-[10px] font-display text-slate-500 tracking-widest mb-1">SYSTEM TO REPAIR</p>
-              <select value={critSystem} onChange={(e) => setCritSystem(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1 focus:border-sky-400 outline-none">
-                <option value="">— select system —</option>
-                {Object.entries(ship?.criticalTracks ?? {}).filter(([, sev]) => sev > 0).map(([sys, sev]) => (
-                  <option key={sys} value={sys}>{sys} (sev {sev})</option>
+            <div className="space-y-2">
+              <p className="text-[10px] font-display text-slate-500 tracking-widest">REPAIR TARGET</p>
+              <div className="flex gap-2">
+                {['system', 'hull'].map((mode) => (
+                  <button key={mode}
+                    onClick={() => setRepairMode(mode)}
+                    className={`flex-1 py-1 text-xs font-mono border rounded ${repairMode === mode ? 'border-emerald-500 text-emerald-300 bg-emerald-900/30' : 'border-slate-700 text-slate-400'}`}
+                  >
+                    {mode === 'system' ? 'Critical System' : 'Hull (+1 HP)'}
+                  </button>
                 ))}
-              </select>
+              </div>
+              {repairMode === 'system' && (
+                <select value={critSystem} onChange={(e) => setCritSystem(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1 focus:border-sky-400 outline-none">
+                  <option value="">— select system —</option>
+                  {Object.entries(ship?.criticalTracks ?? {}).filter(([, sev]) => sev > 0).map(([sys, sev]) => (
+                    <option key={sys} value={sys}>{sys} (sev {sev})</option>
+                  ))}
+                </select>
+              )}
             </div>
           )}
 
@@ -167,9 +212,9 @@ export function ActionModal({ payload, onClose }) {
 
       <div className="flex gap-2 pt-2">
         <button className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-700 hover:bg-slate-800 rounded" onClick={onClose}>CANCEL</button>
-        {action && (action.difficulty === 0 || rollResult?.success) && (
+        {action && (action.difficulty === 0 || rollResult?.success || (HAS_FAILURE_EFFECT.has(action.id) && rollResult)) && (
           <button className="flex-1 py-2 text-xs font-display tracking-widest text-emerald-400 border border-emerald-800 hover:bg-emerald-900/20 rounded" onClick={applyAction}>
-            APPLY ACTION
+            APPLY RESULT
           </button>
         )}
       </div>
