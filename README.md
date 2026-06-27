@@ -23,7 +23,7 @@ Implements the starship combat rules from **2300AD Core Book 3: Vehicles and Spa
 | **Reactions** | Defender reacts before each attack: Evasive Action (TAC Speed → DM), Point Defence (Gunner check, removes missiles), Disperse Sand (Gunner check, +1D armour vs laser) |
 | **Missile system** | Launch salvos (count stepper 1–6); flight rounds computed by range band; Missile Tracker ETA counter; point defence and EW countermeasures at impact |
 | **Crew assignments** | Assign named crew members to roles (Captain, Pilot, Engineer, Sensor Operator, Turret/Bay Gunner, Marine); unassigned roles contribute 0 |
-| **Crew actions** | Actions phase: Sensor Lock, Electronic Warfare, Overload Drive, Overload Plant, Offline/Repair System, Improve Initiative, Boarding Action, Stutterwarp Escape |
+| **Crew actions** | Actions phase: Sensor Lock (DM+max(1,Effect) to attacks vs target), Electronic Warfare (DM penalty to jammed ship's attacks), EW Countermeasures (clears incoming jam), Leading Fire (DM+1/+2 to all gunners), Overload Stutterwarp (+1 TAC Speed or stutterwarp crit), Emergency Repair (hull +1 HP or reduce critical severity), Active Sensors, Evasive Action, Point Defence, Boarding |
 | **Critical hits** | Surface Fixture Damage (Effect ≥ 3, even non-penetrating) and Internal Crits (Effect ≥ 6 or hull = 0); 2D location table; 11 systems × 6 severity levels // B3 p.58 |
 | **Damage tracking** | Hull Points, current armour, per-system critical tracks (11 systems, severity 1–6) |
 | **Phase tracker** | Setup → Initiative → Manoeuvre → Attack → Actions; HUD shows round, current actor, advance button |
@@ -194,7 +194,7 @@ src/
     ├── io.js                     ← JSON import/export via File API
     └── db.js                     ← IndexedDB wrapper (openDB, get, put, delete)
 e2e/
-├── helpers.js                    ← clearAppState, gotoBattle, advanceToPhase
+├── helpers.js                    ← clearAppState, gotoBattle, advanceToPhase, drainActors
 ├── 01-smoke.spec.js              ← Load, no JS errors
 ├── 02-profile.spec.js            ← Profile CRUD + catalog
 ├── 03-battle-setup.spec.js       ← Ships in battle, range bands
@@ -202,7 +202,8 @@ e2e/
 ├── 05-initiative.spec.js         ← Initiative modal, roll + confirm
 ├── 06-manoeuvre.spec.js          ← ManoeuvreModal, GM override, evasion
 ├── 07-attack.spec.js             ← AttackModal, 3-step Firing Solution
-└── 08-missiles.spec.js           ← Launch + impact flow
+├── 08-missiles.spec.js           ← Launch + impact flow
+└── 09-crew-actions.spec.js       ← Leading Fire, EW jam/penalty, EW countermeasures, Sensor Lock
 ```
 
 ---

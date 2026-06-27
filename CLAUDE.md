@@ -243,7 +243,7 @@ Come Trav2022 CRB p.158–159, con queste sostituzioni:
 11. **Strict Scope**: Stay within discussed scope. Do not add extra features unless requested.
 12. **Tailwind v4 Syntax**: Canonical class syntax — `(--var)` not `[var(--var)]`, `bg-linear-to-t` not `bg-gradient-to-t`. No `tailwind.config.js` — use CSS `@theme` for custom tokens.
 13. **No External State Libraries**: Do not introduce Redux, Jotai, Context-based state — Zustand only.
-14. **Game Rules Fidelity**: Tutti i calcoli meccanici (DM, danno, TAC Speed, range bands, critical hits) devono corrispondere a **2300AD B3 p.52–62** come fonte primaria, con Trav2022 CRB usato solo per tabelle crit interno (p.158–159) e weapon traits (p.75). Segnalare qualsiasi ambiguità prima di implementare. Software validi in 2300AD: `stutterwarp_control`, `fire_control_1/2/3`, `auto_repair_1/2`, `operations`, `intellect`, `archive` — NON `manoeuvre` o `evade_N`. Funzioni chiave in `utils/combat.js` già implementate: `getWeaponTraitAttackDm(traits)` (Accurate +1, Slow −2 all'attacco), `computeEffectiveSignature(ship)` (firma effettiva con tutti i modificatori dinamici B3 p.57), `computeAttackDMs(params)` (include weaponTraitDm), `rollDamage(weaponId, count, armour)` (Advanced/Obsolete per die).
+14. **Game Rules Fidelity**: Tutti i calcoli meccanici (DM, danno, TAC Speed, range bands, critical hits) devono corrispondere a **2300AD B3 p.52–62** come fonte primaria, con Trav2022 CRB usato solo per tabelle crit interno (p.158–159) e weapon traits (p.75). Segnalare qualsiasi ambiguità prima di implementare. Software validi in 2300AD: `stutterwarp_control`, `fire_control_1/2/3`, `auto_repair_1/2`, `operations`, `intellect`, `archive` — NON `manoeuvre` o `evade_N`. Funzioni chiave in `utils/combat.js` già implementate: `getWeaponTraitAttackDm(traits)` (Accurate +1, Slow −2 all'attacco), `computeEffectiveSignature(ship)` (firma effettiva con tutti i modificatori dinamici B3 p.57), `computeAttackDMs(params)` (include weaponTraitDm), `rollDamage(weaponId, count, armour)` (Advanced/Obsolete per die). Azioni Actions Phase implementate in `store/battleStore.js`: `applySensorLock(attackerId, targetId, effect)` → salva `sensorLockDm = max(1, effect)` sulla nave bersaglio; `applyEW(attackerId, targetId, effect)` → salva `ewEffect = -max(1, effect)` sul jammatore + `ewTarget`; `applyLeadingFire(dm)` → `leadingFireDm` a livello battaglia (max 2, reset a fine round). Tutti e tre fluiscono automaticamente nell'AttackModal step 3. `updateShip(shipId, { ewTarget: null, ewEffect: 0 })` per cancellare un jam (EW Countermeasures).
 
 ## CRITICAL RULES
 
@@ -300,7 +300,7 @@ src/
 │   └── useAutosave.js            ← IndexedDB autosave + restore on mount
 ├── store/
 │   ├── profilesStore.js          ← Ship profiles (CRUD + import/export JSON)
-│   ├── battleStore.js            ← Stato battaglia (navi, fascia, missili, round, fase)
+│   ├── battleStore.js            ← Stato battaglia (navi, fascia, missili, round, fase, leadingFireDm, undo/redo)
 │   └── uiStore.js                ← Modal open state, nave selezionata, context menu
 ├── utils/
 │   ├── combat.js                 ← getWeaponTraitAttackDm, computeEffectiveSignature, computeAttackDMs, rollDamage, crits
@@ -370,6 +370,6 @@ font-mono: 'Share Tech Mono' (body/values)
 ## TESTING
 
 - **Unit tests** (Vitest + jsdom): `src/**/*.test.js` — colocated with source. Cover `utils/` logic: combat, rangeBands, missiles, crew. Run: `npm test`.
-- **E2E tests** (Playwright, Chromium): `e2e/*.spec.js` at repo root. 52 tests across 8 spec files. Store injection via `window.__ZUSTAND_*_STORE__` exposed in non-production builds. Run: `npm run e2e` (requires dev server on :5173).
+- **E2E tests** (Playwright, Chromium): `e2e/*.spec.js` at repo root. 68 tests across 9 spec files. Store injection via `window.__ZUSTAND_*_STORE__` exposed in non-production builds. Run: `npm run e2e` (requires dev server on :5173).
 - **Do NOT write Vitest tests for React components or Zustand stores** — E2E covers those flows. Unit tests are for pure-logic utils only.
-- `e2e/helpers.js` exports `clearAppState` (full reset including IndexedDB + profiles), `gotoBattle`, `advanceToPhase`.
+- `e2e/helpers.js` exports `clearAppState` (full reset including IndexedDB + profiles), `gotoBattle`, `advanceToPhase`, `drainActors` (exhaust all actor turns before advancing phase).

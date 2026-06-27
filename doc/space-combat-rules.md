@@ -132,7 +132,8 @@ L'attacco è una **catena di check**. Ogni Effect positivo si trasferisce come D
 - Assist Engineer (opzionale): Routine (8+) Engineer (power) **INT** (può aumentare temporaneamente il TAC Speed)
 
 **Step 3 — Gunner**: Difficult (10+) Gunner **INT** — target 10+
-- DM: +Fire Control software rating; +Effect accumulato dagli step 1–2
+- DM: +Fire Control software rating; +Effect accumulato dagli step 1–2; +weapon trait (Accurate +1, Slow −2)
+- DM aggiuntivi automatici: +`sensorLockDm` (target è sotto Sensor Lock); −`ewEffect` (propria nave è sotto EW jam); +`leadingFireDm` (Captain ha usato Leading Fire questo round)
 - Assist Captain (opzionale): Difficult (10+) Tactics (naval) **INT**
 
 > Bersagli stazionari (reaction drive spento, in orbita): DM+2 e **danno doppio**. — B3 p.56
@@ -420,37 +421,30 @@ Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). Tirare sul
 
 - **Commands**: Routine (8+) Leadership **INT o SOC**. Effect 1–4: DM+1 a un membro crew quel round. Effect 5–6: DM+2. Crew che disobbedisce: DM−1.
 - **Tactics** (assist al Gunner): come da Firing Solution step 3 — Difficult (10+) Tactics (naval) **INT**.
+- **Leading Fire** — Average (8+) Tactics (naval) **INT**: coordina tutti i gunner. Successo: tutti gli attacchi di questa nave guadagnano DM+1 per questo round. Effect ≥ 4: DM+2. Il bonus è cumulativo con altri DM. Reset a fine round. // B3 p.55
 
 ### Engineer
 
 - **Re-route Power**: Average (8+) Engineer (power) **EDU**. Riabilita sistemi o redistribuisce energia.
 - **Boost Power Output**: Difficult (10+) Engineer (power) **EDU**. Successo: Effect% aumento Power. Effect −5 o peggio: critical hit Power Plant.
-- **Boost Tac Speed**: Very Difficult (10+) Engineer (stutterwarp) **INT**. Effect 1–4: TAC Speed +1. Effect 5–6: TAC Speed +2.
-
-### Repair System — Engineer
-
-- **Average (8+) Engineer check, 1 round, INT o EDU**
-- DM negativo = Severity del critical hit
-- DM cumulativo +1 ogni round sulla stessa riparazione
-- Riparazione temporanea (dura 1D ore); se nuovo critical hit sulla stessa location: ricominciare da capo
-- Hull damage e armi distrutte NON sono riparabili in combattimento
+- **Overload Stutterwarp** — Difficult (10+) Engineer (stutterwarp) **INT**: porta il motore oltre i limiti di sicurezza. Successo: TAC Speed +1 questo round. Fallimento: critical hit sul sistema Stutterwarp Drive. // B3 p.55
+- **Emergency Repair** — Average (8+) Engineer **INT o EDU**: ripara un danno nella fase corrente.
+  - Modalità *Critical System*: riduce la severity di un critical hit track di 1.
+  - Modalità *Hull*: ripristina 1 Hull Point.
+  - Riparazione temporanea (dura 1D ore); se nuovo critical hit sulla stessa location: ricominciare da capo.
+  - Hull damage e armi distrutte NON sono riparabili in combattimento.
 
 ### Reload Turret — Gunner
 
 - Qualsiasi Traveller con la skill Gunner
 - La torretta non può attaccare in quel round
 
-### Sensor Lock — Sensor Operator
+### Sensor Operator
 
-- **Electronics (sensors) check**
-- Successo: tutti gli attacchi vs quel bersaglio guadagnano DM+2 finché il lock non viene rotto
-
-### Electronic Warfare — Sensor Operator
-
-- **Opposed Electronics (comms) check** vs sensor operator del bersaglio
-- Può anche distruggere/deviare missili in un salvo: **Difficult (10+) Electronics (sensors)**
-- Effect = missili rimossi dal salvo
-- Una sola volta per salvo per round (anche con più sensor operator)
+- **Active Sensors** — Easy (6+) Electronics (sensors): attiva il sweep attivo dei sensori. Successo: Signature della nave +1 per questo round e i successivi finché non disattivato (flag `activeSensorsOn`). Rivela posizioni nascoste e salvi di missili a Very Long o Distant range. // B3 p.57
+- **Sensor Lock** — Average (8+) Electronics (sensors): blocca il bersaglio con i sensori. Successo: tutti gli attacchi vs quel bersaglio guadagnano **DM+max(1, Effect)** questo round. Il valore è salvato sulla nave bersaglio come `sensorLockDm` e appare automaticamente nello step 3 dell'AttackModal. Reset a fine round. // B3 p.55
+- **Electronic Warfare** — Average (8+) Electronics (countermeasures): disturba sensori e fire control del bersaglio. Successo: il bersaglio subisce **DM−max(1, Effect)** a tutti gli attacchi e check sensori questo round. Il penalty è salvato come `ewEffect` sulla nave jammatrice e applicato automaticamente allo step 3 Gunner quando quella nave attacca. // B3 p.55
+- **EW Countermeasures** — Average (8+) Electronics (countermeasures): contrasta un jam in ingresso. Successo opposto: annulla il DM EW subito dalla propria nave questo round (cancella `ewTarget`/`ewEffect` sul jammatore). // B3 p.55
 
 ### Boarding Action — Marine
 
