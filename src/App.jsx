@@ -1,4 +1,5 @@
 import './App.css'
+import { useState } from 'react'
 import { useUIStore } from './store/uiStore.js'
 import { useAutosave } from './hooks/useAutosave.js'
 import ErrorBoundary from './components/ui/ErrorBoundary.jsx'
@@ -57,6 +58,30 @@ function ModalLayer() {
   )
 }
 
+function BattleTopRight() {
+  const [helpOpen, setHelpOpen] = useState(false)
+  return (
+    <>
+      <div className="absolute top-3 right-3 z-10">
+        <button
+          onClick={() => setHelpOpen(true)}
+          aria-label="Open field manual"
+          className="bg-slate-900/80 border border-slate-700 rounded backdrop-blur-sm px-2.5 py-1 font-mono text-xs font-bold text-(--neon-cyan) hover:text-sky-200 hover:border-slate-500 transition-colors"
+        >
+          ?
+        </button>
+      </div>
+      {helpOpen && (
+        <Modal onClose={() => setHelpOpen(false)} variant="dialog" width="max-w-5xl" title="FIELD MANUAL">
+          <div className="h-[75vh]">
+            <HelpScreen onBack={() => setHelpOpen(false)} />
+          </div>
+        </Modal>
+      )}
+    </>
+  )
+}
+
 function AppScreens() {
   const screen = useUIStore((s) => s.screen)
   useAutosave()
@@ -91,6 +116,7 @@ function AppScreens() {
         <PhaseTracker />
         <BattleLog />
         <ContextMenu />
+        <BattleTopRight />
       </div>
       <LegalFooter />
     </>

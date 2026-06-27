@@ -90,8 +90,9 @@ function Table({ headers, rows }) {
   )
 }
 
-export function HelpScreen() {
+export function HelpScreen({ onBack } = {}) {
   const gotoScreen = useUIStore((s) => s.gotoScreen)
+  const handleBack = onBack ?? (() => gotoScreen('dashboard'))
   const [active, setActive] = useState('overview')
 
   const scrollTo = (id) => {
@@ -122,16 +123,9 @@ export function HelpScreen() {
             </button>
           ))}
         </nav>
-        <div className="shrink-0 px-4 py-3 border-t border-slate-800 space-y-2">
-          <a
-            href="/field-manual.pdf"
-            download="tac-and-lock-field-manual.pdf"
-            className="block w-full py-2 border border-slate-700 text-slate-400 font-display text-xs tracking-widest rounded hover:border-slate-500 hover:text-slate-200 transition-colors text-center"
-          >
-            ⬇ DOWNLOAD PDF
-          </a>
+        <div className="shrink-0 px-4 py-3 border-t border-slate-800">
           <button
-            onClick={() => gotoScreen('dashboard')}
+            onClick={handleBack}
             className="w-full py-2 border border-slate-700 text-slate-400 font-display text-xs tracking-widest rounded hover:border-slate-500 hover:text-slate-200 transition-colors"
           >
             ⬅ BACK
