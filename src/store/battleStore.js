@@ -78,6 +78,7 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     crew:               structuredClone(profile.crew ?? []),
     crewAssignments:    { ...(profile.crewAssignments ?? {}) },
     sensorLocked:            false,
+    sensorLockDm:            0,   // DM bonus to attacks vs this ship when sensor-locked // B3 p.55
     sensorLockTarget:        null,
     ewTarget:                null,
     ewEffect:                0,   // negative DM this ship applies to its jammed target // B3 p.55
@@ -137,6 +138,7 @@ export const useBattleStore = create((set, get) => {
         evasionDm:                0,
         sensorLockTarget:         null,
         sensorLocked:             false,
+        sensorLockDm:             0,
         ewTarget:                 null,
         ewEffect:                 0,
         hasActedThisPhase:        false,
@@ -779,7 +781,7 @@ export const useBattleStore = create((set, get) => {
         set((s) => ({
           ships: s.ships.map((sh) => {
             if (sh.id === attackerId) return { ...sh, sensorLockTarget: targetId }
-            if (sh.id === targetId)   return { ...sh, sensorLocked: true }
+            if (sh.id === targetId)   return { ...sh, sensorLocked: true, sensorLockDm: dmBonus }
             return sh
           }),
           log: [...s.log, makeLogEntry({

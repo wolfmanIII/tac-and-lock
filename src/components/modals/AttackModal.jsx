@@ -227,7 +227,9 @@ export function AttackModal({ payload, onClose }) {
     // EW penalty: find any ship currently jamming the attacker // B3 p.55
     const jammer = ships.find((s) => s.ewTarget === attacker.id)
     const jammerPenalty = jammer?.ewEffect ?? 0 // already negative
-    const total = gunnerSkill + intDm + fireControlDm + rangeDm + step2CarryEffect + evasionDm + weaponTraitDm + jammerPenalty + leadingFireDm
+    // Sensor lock bonus: target is locked → attackers gain DM+sensorLockDm // B3 p.55
+    const sensorLockDm = target?.sensorLockDm ?? 0
+    const total = gunnerSkill + intDm + fireControlDm + rangeDm + step2CarryEffect + evasionDm + weaponTraitDm + jammerPenalty + leadingFireDm + sensorLockDm
     return {
       rows: [
         ['Gunner skill',      gunnerSkill],
@@ -238,11 +240,12 @@ export function AttackModal({ payload, onClose }) {
         ['Evasion penalty',   evasionDm],
         ['Weapon trait',      weaponTraitDm],
         ...(jammerPenalty !== 0 ? [['EW jamming',       jammerPenalty]] : []),
-        ...(leadingFireDm  !== 0 ? [['Leading Fire',    leadingFireDm]] : []),
+        ...(sensorLockDm  !== 0 ? [['Sensor lock',      sensorLockDm]] : []),
+        ...(leadingFireDm !== 0 ? [['Leading Fire',     leadingFireDm]] : []),
       ],
       total,
     }
-  }, [attacker, weaponId, band, step2CarryEffect, evasionDm, weapon, ships, leadingFireDm])
+  }, [attacker, target, weaponId, band, step2CarryEffect, evasionDm, weapon, ships, leadingFireDm])
 
   // ── Roll handlers ──────────────────────────────────────────────────────────
 
