@@ -25,6 +25,9 @@ const PHASE_COLOR = {
   actions:    'text-emerald-400',
 }
 
+/** Phases where the initiative order drives per-ship turns. // 2300AD B3 p.53 */
+const ACTOR_TURN_PHASES = new Set(['manoeuvre', 'attack', 'actions'])
+
 export function HUD() {
   const round               = useBattleStore((s) => s.round)
   const phase               = useBattleStore((s) => s.phase)
@@ -35,6 +38,7 @@ export function HUD() {
   const undoStack           = useBattleStore((s) => s.undoStack)
   const redoStack           = useBattleStore((s) => s.redoStack)
   const advancePhase        = useBattleStore((s) => s.advancePhase)
+  const advanceActor        = useBattleStore((s) => s.advanceActor)
   const undo                = useBattleStore((s) => s.undo)
   const redo                = useBattleStore((s) => s.redo)
   const exportBattleState   = useBattleStore((s) => s.exportBattleState)
@@ -47,12 +51,15 @@ export function HUD() {
   const [showExit, setShowExit]   = useState(false)
   const [blockMsg, setBlockMsg]   = useState(null)
 
+  const allActorsGone = initiativeOrder.length === 0 || currentActorIndex >= initiativeOrder.length
+
   const canAdvance = useMemo(() => {
     if (pendingMissileImpacts.length > 0) return false
-    if (phase === 'setup')      return ships.length > 0
-    if (phase === 'initiative') return initiativeOrder.length > 0
+    if (phase === 'setup')                return ships.length > 0
+    if (phase === 'initiative')           return initiativeOrder.length > 0
+    if (ACTOR_TURN_PHASES.has(phase))     return allActorsGone
     return true
-  }, [phase, ships, initiativeOrder, pendingMissileImpacts])
+  }, [phase, ships, initiativeOrder, pendingMissileImpacts, allActorsGone])
 
   useEffect(() => { if (canAdvance) setBlockMsg(null) }, [canAdvance])
 
@@ -64,12 +71,14 @@ export function HUD() {
         setBlockMsg('Add at least one ship first.')
       } else if (phase === 'initiative') {
         setBlockMsg('Roll initiative before advancing.')
+      } else if (ACTOR_TURN_PHASES.has(phase)) {
+        setBlockMsg('All actors must act before advancing phase.')
       }
       return
     }
     setBlockMsg(null)
     advancePhase()
-  }, [canAdvance, advancePhase, phase, pendingMissileImpacts])
+  }, [canAdvance, advancePhase, phase, pendingMissileImpacts, allActorsGone])
 
   useEffect(() => {
     const onKey = (e) => {
@@ -105,6 +114,33 @@ export function HUD() {
         >
           🎲 ROLL INITIATIVE →
         </button>
+      )}
+
+      {/* Current actor badge + NEXT ACTOR button — shown during actor-turn phases */}
+      {ACTOR_TURN_PHASES.has(phase) && initiativeOrder.length > 0 && (
+        !allActorsGone ? (
+          <div className="flex flex-col gap-1">
+            <div className="bg-slate-900/80 border border-slate-700 rounded px-3 py-1.5 backdrop-blur-sm">
+              <p className="text-[10px] font-display text-slate-500 tracking-widest">ACTING NOW</p>
+              <p className="font-mono text-sm text-(--neon-cyan) font-bold leading-tight truncate max-w-44">
+                {currentActor?.profile?.name ?? '—'}
+              </p>
+              <p className="text-[10px] font-mono text-slate-500">
+                {currentActorIndex + 1} / {initiativeOrder.length}
+              </p>
+            </div>
+            <button
+              onClick={advanceActor}
+              className="pointer-events-auto bg-slate-800/80 border border-slate-600 hover:border-(--neon-cyan)/60 text-slate-300 hover:text-(--neon-cyan) font-mono text-xs tracking-widest rounded px-3 py-1.5 backdrop-blur-sm transition-colors"
+            >
+              DONE — NEXT ACTOR ⟶
+            </button>
+          </div>
+        ) : (
+          <div className="bg-slate-900/80 border border-slate-700 rounded px-3 py-1 backdrop-blur-sm">
+            <p className="text-[10px] font-display text-emerald-400 tracking-widest">ALL ACTORS DONE</p>
+          </div>
+        )
       )}
 
       {/* Pending missile impacts */}

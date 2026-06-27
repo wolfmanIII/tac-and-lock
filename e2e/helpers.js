@@ -92,6 +92,19 @@ export async function gotoBattle(page) {
 }
 
 /**
+ * Exhaust all actor turns in the current phase by clicking "DONE — NEXT ACTOR ⟶"
+ * until the button disappears (all actors have acted).
+ * Required before clicking NEXT PHASE in Manoeuvre/Attack/Actions phases.
+ * @param {import('@playwright/test').Page} page
+ */
+export async function drainActors(page) {
+  const btn = page.getByText('DONE — NEXT ACTOR ⟶')
+  while (await btn.isVisible()) {
+    await btn.click()
+  }
+}
+
+/**
  * Advance to a given phase by clicking NEXT PHASE, optionally seeding
  * initiative order so the advance is not blocked.
  * @param {import('@playwright/test').Page} page
@@ -99,6 +112,7 @@ export async function gotoBattle(page) {
  */
 export async function advanceToPhase(page, targetPhase) {
   const ORDER = ['setup', 'initiative', 'manoeuvre', 'attack', 'actions']
+  const ACTOR_TURN_PHASES = new Set(['manoeuvre', 'attack', 'actions'])
   const targetIdx = ORDER.indexOf(targetPhase)
 
   for (let i = 0; i < targetIdx; i++) {
@@ -110,6 +124,10 @@ export async function advanceToPhase(page, targetPhase) {
         const ships = store.getState().ships
         store.getState().setInitiativeOrder(ships.map((s) => s.id))
       })
+    }
+    // Drain actor turns before advancing from an actor-turn phase
+    if (ACTOR_TURN_PHASES.has(fromPhase)) {
+      await drainActors(page)
     }
     await page.getByText('NEXT PHASE ⟶').click()
     // Use .first() — phase name may appear in multiple elements (label + button text)

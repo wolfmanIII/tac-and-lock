@@ -3,7 +3,7 @@
  */
 
 import { test, expect } from '@playwright/test'
-import { clearAppState, addShipsToStore, gotoBattle, advanceToPhase } from './helpers.js'
+import { clearAppState, addShipsToStore, gotoBattle, advanceToPhase, drainActors } from './helpers.js'
 
 test.describe('Phase progression', () => {
   test.beforeEach(async ({ page }) => {
@@ -34,18 +34,18 @@ test.describe('Phase progression', () => {
   })
 
   test('full round cycle reaches round 2', async ({ page }) => {
-    // advanceToPhase always starts from SETUP — call once to reach MANOEUVRE
     await advanceToPhase(page, 'manoeuvre')
     await expect(page.getByText('MANOEUVRE').first()).toBeVisible()
 
-    // Manually step through remaining phases (we're already past SETUP/INITIATIVE)
+    await drainActors(page)
     await page.getByText('NEXT PHASE ⟶').click()
     await expect(page.getByText('ATTACK').first()).toBeVisible()
 
+    await drainActors(page)
     await page.getByText('NEXT PHASE ⟶').click()
     await expect(page.getByText('ACTIONS').first()).toBeVisible()
 
-    // ACTIONS → round 2
+    await drainActors(page)
     await page.getByText('NEXT PHASE ⟶').click()
     await expect(page.getByText('2').first()).toBeVisible()
   })
