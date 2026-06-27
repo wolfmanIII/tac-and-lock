@@ -23,7 +23,7 @@ Implements the starship combat rules from **2300AD Core Book 3: Vehicles and Spa
 | **Reactions** | Defender reacts before each attack: Evasive Action (TAC Speed → DM), Point Defence (Gunner check, removes missiles), Disperse Sand (Gunner check, +1D armour vs laser) |
 | **Missile system** | Launch salvos (count stepper 1–6); flight rounds computed by range band; Missile Tracker ETA counter; point defence and EW countermeasures at impact |
 | **Crew assignments** | Assign named crew members to roles (Captain, Pilot, Engineer, Sensor Operator, Turret/Bay Gunner, Marine); unassigned roles contribute 0 |
-| **Crew actions** | Actions phase: Sensor Lock (DM+max(1,Effect) to attacks vs target), Electronic Warfare (DM penalty to jammed ship's attacks), EW Countermeasures (clears incoming jam), Leading Fire (DM+1/+2 to all gunners), Overload Stutterwarp (+1 TAC Speed or stutterwarp crit), Emergency Repair (hull +1 HP or reduce critical severity), Active Sensors, Evasive Action, Point Defence, Boarding |
+| **Crew actions** | Actions phase (Actions Step): Sensor Lock, Electronic Warfare, EW Countermeasures, Leading Fire, Overload Stutterwarp, Emergency Repair (hull or system), Active Sensors, Evasive Action, Deploy Sand (+1 sandcaster armour vs next attack), Point Defence (reduce incoming salvo by Effect), Damage Control (clear GM hazard on success), Boarding Action (two-roll opposed resolution with hull damage + carry-over DM), Repel Boarders |
 | **Critical hits** | Surface Fixture Damage (Effect ≥ 3, even non-penetrating) and Internal Crits (Effect ≥ 6 or hull = 0); 2D location table; 11 systems × 6 severity levels // B3 p.58 |
 | **Damage tracking** | Hull Points, current armour, per-system critical tracks (11 systems, severity 1–6) |
 | **Phase tracker** | Setup → Initiative → Manoeuvre → Attack → Actions; HUD shows round, current actor, advance button |
@@ -116,8 +116,8 @@ Click **🏠** per tornare alla Dashboard — modal di conferma se ci sono dati 
 | Styling | Tailwind CSS v4 |
 | Persistence | IndexedDB (autosave) + Browser File API (JSON export/import) |
 | IDs | uuid v7 (time-ordered) |
-| Unit tests | Vitest + jsdom + fake-indexeddb |
-| E2E tests | Playwright (Chromium) |
+| Unit tests | Vitest + jsdom + fake-indexeddb (499 tests) |
+| E2E tests | Playwright (Chromium) — 79 tests, 9 spec files |
 
 ---
 

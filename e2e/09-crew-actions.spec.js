@@ -247,6 +247,199 @@ test.describe('EW Countermeasures — ew_countermeasure action', () => {
   })
 })
 
+// === Deploy Sand ============================================================
+
+test.describe('Deploy Sand — deploySand', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  test('deploySand increments sandArmourBonus by 1', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().deploySand(id)
+    }, id0)
+    const ship = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
+    , id0)
+    expect(ship.sandArmourBonus).toBe(1)
+  })
+
+  test('deploySand twice gives sandArmourBonus = 2', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      const s = window.__ZUSTAND_BATTLE_STORE__.getState()
+      s.deploySand(id)
+      s.deploySand(id)
+    }, id0)
+    const ship = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
+    , id0)
+    expect(ship.sandArmourBonus).toBe(2)
+  })
+
+  test('sandArmourBonus resets to 0 at round end', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      const s = window.__ZUSTAND_BATTLE_STORE__.getState()
+      s.deploySand(id)
+      s.startNextRound?.()
+    }, id0)
+    const ship = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
+    , id0)
+    expect(ship.sandArmourBonus).toBe(0)
+  })
+})
+
+// === Point Defence — reduceSalvoCount =======================================
+
+test.describe('Point Defence — reduceSalvoCount', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  async function injectPendingSalvo(page, attackerId, targetId) {
+    return page.evaluate((ids) => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const salvoId = crypto.randomUUID()
+      const current = store.getState()
+      // Use Zustand's public setState to merge — avoids importBattleState (File API dependency)
+      store.setState({
+        pendingMissileImpacts: [
+          ...current.pendingMissileImpacts,
+          { id: salvoId, attackerId: ids.attackerId, targetId: ids.targetId,
+            launchBand: 'Close', currentBand: 'Adjacent',
+            salvoSize: 4, salvoRemaining: 4, attackDmBonus: 0, flightRounds: 1, roundsToImpact: 0 },
+        ],
+      })
+      return salvoId
+    }, { attackerId, targetId })
+  }
+
+  test('reduceSalvoCount(id, 2) decrements salvoRemaining by 2', async ({ page }) => {
+    const { id0, id1 } = await setupShips(page)
+    const salvoId = await injectPendingSalvo(page, id0, id1)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().reduceSalvoCount(id, 2)
+    }, salvoId)
+    const salvo = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().pendingMissileImpacts.find((m) => m.id === id)
+    , salvoId)
+    expect(salvo?.salvoRemaining).toBe(2)
+  })
+
+  test('reduceSalvoCount by more than count removes the salvo entirely', async ({ page }) => {
+    const { id0, id1 } = await setupShips(page)
+    const salvoId = await injectPendingSalvo(page, id0, id1)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().reduceSalvoCount(id, 99)
+    }, salvoId)
+    const impacts = await page.evaluate(() =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().pendingMissileImpacts
+    )
+    expect(impacts.find((m) => m.id === salvoId)).toBeUndefined()
+  })
+})
+
+// === Damage Control — hazards ===============================================
+
+test.describe('Damage Control — addHazard / removeHazard', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  test('addHazard appends entry to ship.hazards', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().addHazard(id, 'Hull Fire')
+    }, id0)
+    const ship = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
+    , id0)
+    expect(ship.hazards.length).toBe(1)
+    expect(ship.hazards[0].label).toBe('Hull Fire')
+  })
+
+  test('removeHazard removes entry by id', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().addHazard(id, 'Fuel Leak')
+    }, id0)
+    const hazardId = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id).hazards[0].id
+    , id0)
+    await page.evaluate((ids) => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().removeHazard(ids.id0, ids.hazardId)
+    }, { id0, hazardId })
+    const ship = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
+    , id0)
+    expect(ship.hazards.length).toBe(0)
+  })
+
+  test('addHazard accumulates multiple hazards', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      const s = window.__ZUSTAND_BATTLE_STORE__.getState()
+      s.addHazard(id, 'Fire')
+      s.addHazard(id, 'Breach')
+    }, id0)
+    const ship = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
+    , id0)
+    expect(ship.hazards.length).toBe(2)
+  })
+
+  test('ShipDetailModal shows hazards panel', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().addHazard(id, 'Coolant Leak')
+    }, id0)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('ship-detail', { shipId: id })
+    }, id0)
+    await expect(page.getByText('ACTIVE HAZARDS')).toBeVisible()
+    await expect(page.getByText('Coolant Leak')).toBeVisible()
+  })
+})
+
+// === Boarding Action — boardingDmNextRound ==================================
+
+test.describe('Boarding — boardingDmNextRound carry-over', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  test('updateShip sets boardingDmNextRound on attacker ship', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().updateShip(id, { boardingDmNextRound: 2 })
+    }, id0)
+    const ship = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
+    , id0)
+    expect(ship.boardingDmNextRound).toBe(2)
+  })
+
+  test('boardingDmNextRound resets to 0 at round end', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      const s = window.__ZUSTAND_BATTLE_STORE__.getState()
+      s.updateShip(id, { boardingDmNextRound: 2 })
+      s.startNextRound?.()
+    }, id0)
+    const ship = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
+    , id0)
+    expect(ship.boardingDmNextRound).toBe(0)
+  })
+})
+
 // === Sensor Lock ============================================================
 
 test.describe('Sensor Lock — applySensorLock + sensorLockDm', () => {
