@@ -37,6 +37,7 @@ function snapshot(s) {
     currentActorIndex:     s.currentActorIndex,
     round:                 s.round,
     phase:                 s.phase,
+    leadingFireDm:         s.leadingFireDm,
     log:                   structuredClone(s.log),
     pendingMissileImpacts: structuredClone(s.pendingMissileImpacts),
   }
@@ -943,6 +944,7 @@ export const useBattleStore = create((set, get) => {
       phase:                 'setup',
       initiativeOrder:       [],
       currentActorIndex:     0,
+      leadingFireDm:         0,
       ships:                 [],
       missiles:              [],
       rangeBands:            {},
@@ -956,11 +958,11 @@ export const useBattleStore = create((set, get) => {
     exportBattleState: () => {
       const {
         id, name, round, phase, initiativeOrder, currentActorIndex,
-        ships, missiles, rangeBands, basicBandPool, pendingMissileImpacts, log,
+        leadingFireDm, ships, missiles, rangeBands, basicBandPool, pendingMissileImpacts, log,
       } = get()
       exportBattle({
         id, name, round, phase, initiativeOrder, currentActorIndex,
-        ships, missiles, rangeBands, basicBandPool, pendingMissileImpacts, log,
+        leadingFireDm, ships, missiles, rangeBands, basicBandPool, pendingMissileImpacts, log,
         savedAt: new Date().toISOString(),
       })
     },
@@ -974,6 +976,7 @@ export const useBattleStore = create((set, get) => {
         phase:                 battle.phase ?? 'setup',
         initiativeOrder:       battle.initiativeOrder ?? [],
         currentActorIndex:     battle.currentActorIndex ?? 0,
+        leadingFireDm:         battle.leadingFireDm ?? 0,
         ships:                 battle.ships ?? [],
         missiles:              battle.missiles ?? [],
         rangeBands:            battle.rangeBands ?? {},
