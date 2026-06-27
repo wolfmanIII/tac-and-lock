@@ -6,6 +6,7 @@ import { Modal } from './components/modals/Modal.jsx'
 import LegalFooter from './components/ui/LegalFooter.jsx'
 import Dashboard from './components/dashboard/Dashboard.jsx'
 import BattleView from './components/battle/BattleView.jsx'
+import { HelpScreen } from './components/help/HelpScreen.jsx'
 import { HUD }          from './components/ui/HUD.jsx'
 import { PhaseTracker } from './components/ui/PhaseTracker.jsx'
 import { BattleLog }    from './components/ui/BattleLog.jsx'
@@ -65,6 +66,17 @@ function AppScreens() {
       <>
         <div className="h-[calc(100%-1.75rem)]">
           <Dashboard />
+        </div>
+        <LegalFooter />
+      </>
+    )
+  }
+
+  if (screen === 'help') {
+    return (
+      <>
+        <div className="h-[calc(100%-1.75rem)]">
+          <HelpScreen />
         </div>
         <LegalFooter />
       </>

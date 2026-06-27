@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
 /**
- * @typedef {'dashboard' | 'battle'} Screen
+ * @typedef {'dashboard' | 'battle' | 'help'} Screen
  *
  * @typedef {{
  *   screen: Screen,

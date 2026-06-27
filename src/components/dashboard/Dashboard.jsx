@@ -196,7 +196,7 @@ function StatusLine({ label, value, active = true }) {
   )
 }
 
-function SessionPanel({ onEnterBattle, onLoadBattle, loading }) {
+function SessionPanel({ onEnterBattle, onLoadBattle, loading, onFieldManual }) {
   const ships = useBattleStore((s) => s.ships)
   const { exportBattleState, resetBattle } = useBattleStore()
   const FACTION_HEX = { players: '#60a5fa', npc: '#f87171', neutral: '#94a3b8' }
@@ -240,6 +240,12 @@ function SessionPanel({ onEnterBattle, onLoadBattle, loading }) {
               <button className="flex-1 py-1.5 text-xs font-display tracking-widest text-red-400 border border-red-900 hover:bg-red-900/20 rounded" onClick={() => { if (confirm('Clear all ships?')) resetBattle() }}>CLEAR</button>
             </div>
           )}
+          <button
+            onClick={onFieldManual}
+            className="w-full py-2 border border-slate-700 text-slate-500 font-display text-xs tracking-widest rounded-lg hover:border-slate-600 hover:text-slate-400 transition-colors"
+          >
+            📖 FIELD MANUAL
+          </button>
         </div>
         <div className="shrink-0 px-5 py-3 border-t border-slate-800">
           <p className="font-mono text-xs text-slate-400 leading-relaxed">Add profiles on the left before entering battle.</p>
@@ -410,6 +416,7 @@ export default function Dashboard() {
               onEnterBattle={() => gotoScreen('battle')}
               onLoadBattle={handleLoadBattle}
               loading={loadingBattle}
+              onFieldManual={() => gotoScreen('help')}
             />
           )}
         </main>
