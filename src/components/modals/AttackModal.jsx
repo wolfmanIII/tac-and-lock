@@ -143,6 +143,7 @@ export function AttackModal({ payload, onClose }) {
   const leadingFireDm  = useBattleStore((s) => s.leadingFireDm)
   const applyDamage    = useBattleStore((s) => s.applyDamage)
   const addCritical    = useBattleStore((s) => s.addCriticalHit)
+  const updateShip     = useBattleStore((s) => s.updateShip)
   const { openModal }  = useUIStore()
 
   const attacker = ships.find((s) => s.id === attackerId) ?? ships[0]
@@ -280,7 +281,8 @@ export function AttackModal({ payload, onClose }) {
     const effect = total - 10  // Difficult
     setStep3Result({ dice, base, total, effect })
     if (total >= 10) {
-      const dmgResult = rollDamage(weaponId, weaponCount, target?.currentArmour ?? 0)
+      const effectiveArmour = (target?.currentArmour ?? 0) + (target?.sandArmourBonus ?? 0)
+      const dmgResult = rollDamage(weaponId, weaponCount, effectiveArmour)
       setDamageResult(dmgResult)
     }
   }
@@ -289,7 +291,8 @@ export function AttackModal({ payload, onClose }) {
     const effect = total - 10
     setStep3Result({ dice, base: dice[0] + dice[1], total, effect })
     if (total >= 10) {
-      const dmgResult = rollDamage(weaponId, weaponCount, target?.currentArmour ?? 0)
+      const effectiveArmour = (target?.currentArmour ?? 0) + (target?.sandArmourBonus ?? 0)
+      const dmgResult = rollDamage(weaponId, weaponCount, effectiveArmour)
       setDamageResult(dmgResult)
     }
   }
@@ -297,6 +300,10 @@ export function AttackModal({ payload, onClose }) {
   function applyResults() {
     if (!damageResult || !target || applied) return
     applyDamage(target.id, damageResult.net, attacker?.id)
+    // Consume sand armour bonus — it applies only to this one attack // B3 p.55
+    if ((target.sandArmourBonus ?? 0) > 0) {
+      updateShip(target.id, { sandArmourBonus: 0 })
+    }
     const effect = step3Result?.effect ?? 0
     if (isSurfaceFixtureDamage(effect)) {
       openModal('critical-hit', { shipId: target.id, mode: 'surface', effect })
@@ -345,7 +352,10 @@ export function AttackModal({ payload, onClose }) {
               Range: <span className="text-slate-300">{band}</span>
               {' '}· Signature: <span className="text-sky-400">+{computeEffectiveSignature(target).effective}</span>
               {' '}· Hull: <span className="text-slate-300">{target.currentHull}/{target.hullPoints}</span>
-              {' '}· Armour: <span className="text-slate-300">{target.currentArmour ?? target.armour ?? 0}</span>
+              {' '}· Armour: <span className={(target.sandArmourBonus ?? 0) > 0 ? 'text-amber-300' : 'text-slate-300'}>
+                {(target.currentArmour ?? target.armour ?? 0) + (target.sandArmourBonus ?? 0)}
+                {(target.sandArmourBonus ?? 0) > 0 && ` (+${target.sandArmourBonus} sand)`}
+              </span>
             </p>
           )}
         </div>
