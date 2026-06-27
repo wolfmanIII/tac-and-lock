@@ -386,8 +386,8 @@ export default function Dashboard() {
             <img src="/logo.png" alt="TAC &amp; LOCK" />
           </div>
           <div className="flex flex-col gap-0.5">
-            <h1 className="font-display font-bold text-(--neon-cyan) tracking-widest text-2xl leading-tight">
-              <i>TAC &amp; LOCK</i>
+            <h1 className="font-bold text-(--neon-cyan) text-2xl leading-tight" style={{ fontFamily: 'Ubuntu, sans-serif' }}>
+              Tac &amp; Lock
             </h1>
             <span className="font-display text-xs text-slate-400 tracking-widest">TACTICAL INTERFACE // 2300AD SPACE COMBAT</span>
             <span className="font-display text-xs text-slate-400 tracking-widest">SPACE COMBAT SIMULATOR</span>
