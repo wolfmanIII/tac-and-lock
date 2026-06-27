@@ -138,11 +138,12 @@ function RollBlock({ dm, onRoll, onManual, result, target }) {
 
 export function AttackModal({ payload, onClose }) {
   const { attackerId } = payload ?? {}
-  const ships      = useBattleStore((s) => s.ships)
-  const rangeBands = useBattleStore((s) => s.rangeBands)
-  const applyDamage   = useBattleStore((s) => s.applyDamage)
-  const addCritical   = useBattleStore((s) => s.addCriticalHit)
-  const { openModal } = useUIStore()
+  const ships          = useBattleStore((s) => s.ships)
+  const rangeBands     = useBattleStore((s) => s.rangeBands)
+  const leadingFireDm  = useBattleStore((s) => s.leadingFireDm)
+  const applyDamage    = useBattleStore((s) => s.applyDamage)
+  const addCritical    = useBattleStore((s) => s.addCriticalHit)
+  const { openModal }  = useUIStore()
 
   const attacker = ships.find((s) => s.id === attackerId) ?? ships[0]
   const targets  = ships.filter((s) => s.id !== attacker?.id && !s.isDestroyed)
@@ -223,7 +224,10 @@ export function AttackModal({ payload, onClose }) {
     const fireControlDm  = getFireControlDm(attacker.software)
     const rangeDm        = getRangeDM(weaponId, band)
     const weaponTraitDm  = getWeaponTraitAttackDm(weapon.traits) // Accurate +1, Slow −2 // B3 p.59
-    const total = gunnerSkill + intDm + fireControlDm + rangeDm + step2CarryEffect + evasionDm + weaponTraitDm
+    // EW penalty: find any ship currently jamming the attacker // B3 p.55
+    const jammer = ships.find((s) => s.ewTarget === attacker.id)
+    const jammerPenalty = jammer?.ewEffect ?? 0 // already negative
+    const total = gunnerSkill + intDm + fireControlDm + rangeDm + step2CarryEffect + evasionDm + weaponTraitDm + jammerPenalty + leadingFireDm
     return {
       rows: [
         ['Gunner skill',      gunnerSkill],
@@ -233,10 +237,12 @@ export function AttackModal({ payload, onClose }) {
         ['Carry (Step 2)',    step2CarryEffect],
         ['Evasion penalty',   evasionDm],
         ['Weapon trait',      weaponTraitDm],
+        ...(jammerPenalty !== 0 ? [['EW jamming',       jammerPenalty]] : []),
+        ...(leadingFireDm  !== 0 ? [['Leading Fire',    leadingFireDm]] : []),
       ],
       total,
     }
-  }, [attacker, weaponId, band, step2CarryEffect, evasionDm, weapon])
+  }, [attacker, weaponId, band, step2CarryEffect, evasionDm, weapon, ships, leadingFireDm])
 
   // ── Roll handlers ──────────────────────────────────────────────────────────
 

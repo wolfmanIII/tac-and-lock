@@ -79,6 +79,7 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     sensorLocked:            false,
     sensorLockTarget:        null,
     ewTarget:                null,
+    ewEffect:                0,   // negative DM this ship applies to its jammed target // B3 p.55
     isDestroyed:             false,
     // Signature modifier toggles — GM-controlled // 2300AD B3 p.57
     radiatorsRetracted:      false,
@@ -136,6 +137,7 @@ export const useBattleStore = create((set, get) => {
         sensorLockTarget:         null,
         sensorLocked:             false,
         ewTarget:                 null,
+        ewEffect:                 0,
         hasActedThisPhase:        false,
         initiative:               sh.initiative + bonus,
         initiativeBonusNextRound: 0,
@@ -173,6 +175,7 @@ export const useBattleStore = create((set, get) => {
       round:                 nextRound,
       phase:                 'initiative',
       currentActorIndex:     0,
+      leadingFireDm:         0,
       ships,
       initiativeOrder:       newInitiativeOrder,
       missiles:              stillFlying,
@@ -194,6 +197,7 @@ export const useBattleStore = create((set, get) => {
     rangeBands:            {},   // pairKey → band id
     basicBandPool:         {},   // pairKey → accumulated TAC Speed toward next band change
     pendingMissileImpacts: [],
+    leadingFireDm:         0,   // DM+1/+2 to all attacks this round (Captain action) // B3 p.55
     log:                   [],
     undoStack:             [],
     redoStack:             [],
@@ -803,7 +807,7 @@ export const useBattleStore = create((set, get) => {
 
         set((s) => ({
           ships: s.ships.map((sh) =>
-            sh.id !== attackerId ? sh : { ...sh, ewTarget: targetId },
+            sh.id !== attackerId ? sh : { ...sh, ewTarget: targetId, ewEffect: penalty },
           ),
           log: [...s.log, makeLogEntry({
             round, phase, type: 'action', shipId: attackerId,
@@ -812,6 +816,22 @@ export const useBattleStore = create((set, get) => {
         }))
       },
     ),
+
+    /**
+     * Apply leading fire bonus from Captain's Tactics check. // 2300AD B3 p.55
+     * DM+1 to all attacks; Effect 4+ grants DM+2. Resets at round end.
+     * @param {number} dm — 1 or 2
+     */
+    applyLeadingFire: wh((dm) => Number.isFinite(dm), (dm) => {
+      const { round, phase } = get()
+      set((s) => ({
+        leadingFireDm: Math.max(s.leadingFireDm, dm),
+        log: [...s.log, makeLogEntry({
+          round, phase, type: 'action',
+          message: `🎯 Leading Fire — all gunners gain DM+${dm} this round.`,
+        })],
+      }))
+    }),
 
     // === MISSILES ===
 

@@ -19,6 +19,7 @@ export function ActionModal({ payload, onClose }) {
   const spendEvasion     = useBattleStore((s) => s.spendEvasion)
   const addCriticalHit   = useBattleStore((s) => s.addCriticalHit)
   const updateShip       = useBattleStore((s) => s.updateShip)
+  const applyLeadingFire = useBattleStore((s) => s.applyLeadingFire)
 
   const ship    = ships.find((s) => s.id === shipId)
   const targets = ships.filter((s) => s.id !== shipId && !s.isDestroyed)
@@ -87,6 +88,22 @@ export function ActionModal({ payload, onClose }) {
       case 'active_sensors': // 2300AD B3 p.57 — sets activeSensorsOn flag (+1 Signature)
         if (success) updateShip(shipId, { activeSensorsOn: true })
         break
+
+      case 'leading_fire': { // 2300AD B3 p.55 — Captain coordinates all gunners
+        if (success) {
+          const dm = (rollResult.effect ?? 0) >= 4 ? 2 : 1
+          applyLeadingFire(dm)
+        }
+        break
+      }
+
+      case 'ew_countermeasure': { // 2300AD B3 p.55 — counter incoming EW jam
+        if (success) {
+          const jammer = ships.find((s) => s.ewTarget === shipId)
+          if (jammer) updateShip(jammer.id, { ewTarget: null, ewEffect: 0 })
+        }
+        break
+      }
 
       case 'evasive_action':
         if (success) spendEvasion(shipId, 1)
