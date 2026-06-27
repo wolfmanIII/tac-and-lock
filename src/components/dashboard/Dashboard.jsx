@@ -386,17 +386,13 @@ export default function Dashboard() {
             <img src="/logo.png" alt="TAC &amp; LOCK" />
           </div>
           <div className="flex flex-col gap-0.5">
-            <div className="flex items-baseline gap-3">
-              <h1 className="font-display font-bold text-(--neon-cyan) tracking-widest text-2xl leading-tight">
-                <i>TAC &amp; LOCK</i>
-              </h1>
-              <span className="font-mono text-[10px] text-slate-500 border border-slate-700 rounded px-1.5 py-0.5 tracking-widest">
-                v{__APP_VERSION__}
-              </span>
-            </div>
+            <h1 className="font-display font-bold text-(--neon-cyan) tracking-widest text-2xl leading-tight">
+              <i>TAC &amp; LOCK</i>
+            </h1>
             <span className="font-display text-xs text-slate-400 tracking-widest">TACTICAL INTERFACE // 2300AD SPACE COMBAT</span>
             <span className="font-display text-xs text-slate-400 tracking-widest">SPACE COMBAT SIMULATOR</span>
           </div>
+          <span className="ml-auto text-slate-400 font-mono text-xs">v{__APP_VERSION__}</span>
         </header>
 
         <main className="flex-1 overflow-hidden">
