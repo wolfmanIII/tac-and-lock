@@ -82,6 +82,9 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     sensorLockTarget:        null,
     ewTarget:                null,
     ewEffect:                0,   // negative DM this ship applies to its jammed target // B3 p.55
+    sandArmourBonus:         0,   // temp armour vs next incoming attack (sandcaster reaction) // B3 p.55
+    hazards:                 [],  // active hazards [{ id, label }] — GM-managed, damage_control clears
+    boardingDmNextRound:     0,   // carry-over DM from boarding result table to next round // B3 p.55
     isDestroyed:             false,
     // Signature modifier toggles — GM-controlled // 2300AD B3 p.57
     radiatorsRetracted:      false,
@@ -141,6 +144,8 @@ export const useBattleStore = create((set, get) => {
         sensorLockDm:             0,
         ewTarget:                 null,
         ewEffect:                 0,
+        sandArmourBonus:          0,
+        boardingDmNextRound:      0,
         hasActedThisPhase:        false,
         initiative:               sh.initiative + bonus,
         initiativeBonusNextRound: 0,
@@ -835,6 +840,101 @@ export const useBattleStore = create((set, get) => {
         })],
       }))
     }),
+
+    /**
+     * Deploy sandcaster — adds +1 sandArmourBonus vs next incoming attack. // B3 p.55
+     * Bonus is consumed by AttackModal after rollDamage; resets at round end.
+     * @param {string} shipId
+     */
+    deploySand: wh(
+      (shipId) => !!get().ships.find((s) => s.id === shipId),
+      (shipId) => {
+        const { round, phase } = get()
+        const ship = get().ships.find((s) => s.id === shipId)
+        set((s) => ({
+          ships: s.ships.map((sh) =>
+            sh.id !== shipId ? sh : { ...sh, sandArmourBonus: sh.sandArmourBonus + 1 },
+          ),
+          log: [...s.log, makeLogEntry({
+            round, phase, type: 'action', shipId,
+            message: `⬛ ${ship?.profile.name} deployed sand (+1 armour vs next attack).`,
+          })],
+        }))
+      },
+    ),
+
+    /**
+     * Reduce missile salvo count (point defence result). // B3 p.55
+     * Removes salvo from pendingMissileImpacts if count reaches 0.
+     * @param {string} missileId
+     * @param {number} amount — missiles destroyed
+     */
+    reduceSalvoCount: wh(
+      (missileId) => !!get().pendingMissileImpacts.find((m) => m.id === missileId),
+      (missileId, amount) => {
+        const { round, phase } = get()
+        const salvo = get().pendingMissileImpacts.find((m) => m.id === missileId)
+        const current = salvo?.salvoRemaining ?? salvo?.count ?? 0
+        const newCount = Math.max(0, current - amount)
+        set((s) => ({
+          pendingMissileImpacts: newCount > 0
+            ? s.pendingMissileImpacts.map((m) =>
+                m.id !== missileId ? m : { ...m, salvoRemaining: newCount },
+              )
+            : s.pendingMissileImpacts.filter((m) => m.id !== missileId),
+          log: [...s.log, makeLogEntry({
+            round, phase, type: 'action',
+            message: `🛡 Point Defence destroyed ${amount} missile(s) — salvo now ${newCount}.`,
+          })],
+        }))
+      },
+    ),
+
+    /**
+     * Add a GM-defined hazard to a ship (fire, breach, fuel leak, etc.). // B3 p.55
+     * @param {string} shipId
+     * @param {string} label
+     */
+    addHazard: wh(
+      (shipId) => !!get().ships.find((s) => s.id === shipId),
+      (shipId, label) => {
+        const { round, phase } = get()
+        const ship = get().ships.find((s) => s.id === shipId)
+        const hazard = { id: uuidv7(), label }
+        set((s) => ({
+          ships: s.ships.map((sh) =>
+            sh.id !== shipId ? sh : { ...sh, hazards: [...(sh.hazards ?? []), hazard] },
+          ),
+          log: [...s.log, makeLogEntry({
+            round, phase, type: 'system', shipId,
+            message: `⚠ ${ship?.profile.name}: hazard added — ${label}.`,
+          })],
+        }))
+      },
+    ),
+
+    /**
+     * Remove a hazard from a ship (damage control success). // B3 p.55
+     * @param {string} shipId
+     * @param {string} hazardId
+     */
+    removeHazard: wh(
+      (shipId) => !!get().ships.find((s) => s.id === shipId),
+      (shipId, hazardId) => {
+        const { round, phase } = get()
+        const ship = get().ships.find((s) => s.id === shipId)
+        const hazard = (ship?.hazards ?? []).find((h) => h.id === hazardId)
+        set((s) => ({
+          ships: s.ships.map((sh) =>
+            sh.id !== shipId ? sh : { ...sh, hazards: (sh.hazards ?? []).filter((h) => h.id !== hazardId) },
+          ),
+          log: [...s.log, makeLogEntry({
+            round, phase, type: 'action', shipId,
+            message: `🔧 ${ship?.profile.name}: hazard cleared — ${hazard?.label ?? hazardId}.`,
+          })],
+        }))
+      },
+    ),
 
     // === MISSILES ===
 
