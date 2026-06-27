@@ -110,6 +110,22 @@ describe('getCrewSkill', () => {
   it('null role → 0', () => {
     expect(getCrewSkill(member(null, { pilot: 5 }))).toBe(0)
   })
+
+  it('missing skill key in skills object falls back to 0', () => {
+    // Skills object with no keys at all — ?? 0 fallback fires on every property access
+    const crew = { role: 'pilot', skills: {} }
+    expect(getCrewSkill(crew)).toBe(0)
+  })
+
+  it('missing skill key for captain falls back to 0', () => {
+    const crew = { role: 'captain', skills: { pilot: 3 } } // tactics missing
+    expect(getCrewSkill(crew)).toBe(0)
+  })
+
+  it('missing skill key for marine falls back to 0', () => {
+    const crew = { role: 'marine', skills: {} } // gunCombat missing
+    expect(getCrewSkill(crew)).toBe(0)
+  })
 })
 
 // === buildDefaultAssignments ===
@@ -192,6 +208,18 @@ describe('getAssignedCharacteristic', () => {
   it('returns 7 when crew ID not found in list', () => {
     const assignments = { pilot: 'ghost-id' }
     expect(getAssignedCharacteristic('pilot', assignments, crewList)).toBe(7)
+  })
+
+  it('unknown role falls back to INT characteristic', () => {
+    // ROLE_PRIMARY_CHARACTERISTIC['unknown'] is undefined → ?? 'INT' fires
+    const assignments = { unknown: 'c1' }
+    expect(getAssignedCharacteristic('unknown', assignments, crewList)).toBe(11) // INT = 11
+  })
+
+  it('crew with no characteristics object falls back to 7', () => {
+    const noCharsCrew = [{ ...blankCrewMember('c2'), characteristics: undefined }]
+    const assignments = { pilot: 'c2' }
+    expect(getAssignedCharacteristic('pilot', assignments, noCharsCrew)).toBe(7)
   })
 })
 
