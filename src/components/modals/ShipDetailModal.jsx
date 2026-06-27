@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useBattleStore } from '../../store/battleStore.js'
 import { WEAPONS } from '../../data/weapons.js'
 import { CRITICAL_HIT_SYSTEM_LABELS, SURFACE_FIXTURE_SYSTEM_LABELS } from '../../data/criticalHits.js'
@@ -22,7 +23,11 @@ export function ShipDetailModal({ payload, onClose }) {
   const ships         = useBattleStore((s) => s.ships)
   const rangeBands    = useBattleStore((s) => s.rangeBands)
   const toggleShipFlag = useBattleStore((s) => s.toggleShipFlag)
+  const addHazard      = useBattleStore((s) => s.addHazard)
+  const removeHazard   = useBattleStore((s) => s.removeHazard)
   const ship          = ships.find((s) => s.id === shipId)
+
+  const [hazardInput, setHazardInput] = useState('')
 
   if (!ship) return (
     <div className="p-6">
@@ -202,6 +207,47 @@ export function ShipDetailModal({ payload, onClose }) {
       <div className="flex flex-wrap gap-2">
         {ship.sensorLocked  && <span className="px-2 py-0.5 text-[10px] font-mono bg-sky-900/40 border border-sky-700 text-sky-300 rounded">SENSOR LOCK</span>}
         {ship.ewTarget      && <span className="px-2 py-0.5 text-[10px] font-mono bg-violet-900/40 border border-violet-700 text-violet-300 rounded">EW TARGET</span>}
+      </div>
+
+      {/* Active hazards — GM-managed, cleared by damage_control // B3 p.55 */}
+      <div>
+        <p className="text-[10px] font-display text-slate-500 tracking-widest mb-1.5">ACTIVE HAZARDS</p>
+        {(ship.hazards ?? []).length > 0 ? (
+          <div className="space-y-1 mb-2">
+            {(ship.hazards ?? []).map((h) => (
+              <div key={h.id} className="flex items-center justify-between bg-amber-950/30 border border-amber-900/40 rounded px-2 py-1">
+                <span className="text-[11px] font-mono text-amber-300">{h.label}</span>
+                <button onClick={() => removeHazard(shipId, h.id)}
+                  className="text-[10px] font-mono text-slate-500 hover:text-red-400 transition-colors">✕</button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-[10px] font-mono text-slate-600 italic mb-2">No active hazards</p>
+        )}
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={hazardInput}
+            onChange={(e) => setHazardInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && hazardInput.trim()) {
+                addHazard(shipId, hazardInput.trim())
+                setHazardInput('')
+              }
+            }}
+            placeholder="add hazard…"
+            className="flex-1 bg-slate-800 border border-slate-600 text-slate-200 font-mono text-xs rounded px-2 py-1 focus:border-amber-600 outline-none"
+          />
+          <button
+            disabled={!hazardInput.trim()}
+            onClick={() => { if (hazardInput.trim()) { addHazard(shipId, hazardInput.trim()); setHazardInput('') } }}
+            className="px-3 py-1 text-[10px] font-display tracking-widest border rounded
+              disabled:text-slate-600 disabled:border-slate-800
+              enabled:text-amber-400 enabled:border-amber-800 enabled:hover:bg-amber-900/20">
+            ADD
+          </button>
+        </div>
       </div>
 
       {/* Surface fixture hits */}
