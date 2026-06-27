@@ -439,6 +439,24 @@ Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). Tirare sul
 - Qualsiasi Traveller con la skill Gunner
 - La torretta non può attaccare in quel round
 
+### Point Defence — Gunner (turret/PDC)
+
+**Reaction — Difficult (10+) Gunner (DEX)** // B3 p.55
+
+- Si dichiara appena prima che un salvo di missili impatti.
+- Successo: **Effect missili rimossi dal salvo** (min 1). PDC (Quinn Type 17): DM+4; armi non-PDC vs missili < 10 ton: DM−2.
+- Il salvo è aggiornato automaticamente (`reduceSalvoCount`); se il conteggio scende a 0 il salvo viene cancellato.
+- Un gunner può fare point defence **una volta per round**; l'arma usata non può attaccare nello stesso round.
+
+### Deploy Sand — Gunner
+
+**Reaction — Automatico (no roll)** // B3 p.55
+
+- Si dichiara appena prima che un attacco laser venga risolto.
+- Ogni sandcaster aggiunge **+1 Armour** vs quell'attacco (si accumula con più sandcaster).
+- Il bonus è salvato come `sandArmourBonus` sulla nave difensore e **consumato automaticamente** al termine dell'AttackModal (dopo rollDamage).
+- Reset a 0 a fine round se non consumato.
+
 ### Sensor Operator
 
 - **Active Sensors** — Easy (6+) Electronics (sensors): attiva il sweep attivo dei sensori. Successo: Signature della nave +1 per questo round e i successivi finché non disattivato (flag `activeSensorsOn`). Rivela posizioni nascoste e salvi di missili a Very Long o Distant range. // B3 p.57
@@ -446,11 +464,23 @@ Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). Tirare sul
 - **Electronic Warfare** — Average (8+) Electronics (countermeasures): disturba sensori e fire control del bersaglio. Successo: il bersaglio subisce **DM−max(1, Effect)** a tutti gli attacchi e check sensori questo round. Il penalty è salvato come `ewEffect` sulla nave jammatrice e applicato automaticamente allo step 3 Gunner quando quella nave attacca. // B3 p.55
 - **EW Countermeasures** — Average (8+) Electronics (countermeasures): contrasta un jam in ingresso. Successo opposto: annulla il DM EW subito dalla propria nave questo round (cancella `ewTarget`/`ewEffect` sul jammatore). // B3 p.55
 
+### Damage Control — Engineer / Mechanic
+
+**Average (8+) Mechanic (o Engineer) INT o EDU** // B3 p.55
+
+- Ferma o rallenta un **pericolo attivo**: incendio, breccia di scafo, perdita carburante, radiazione.
+- I pericoli attivi sono tracciati come **Hazards** su ciascuna nave — aggiunti manualmente dal GM (ShipDetailModal, sezione HAZARDS) quando un critical hit genera un effetto secondario continuativo.
+- Successo: rimuove un hazard scelto dalla lista. Effect 4+: il pericolo è **soppresso per 1D round** (GM narrazione; rimane nella lista con tag "soppresso").
+- Fallimento: nessun effetto — il pericolo continua.
+
 ### Boarding Action — Marine
 
 - Solo a **Adjacent range**, durante l'Actions Step
-- Impiega **2D round** per completarsi
-- Risoluzione: entrambi tirano 2D + modificatori; il difensore sottrae il suo totale dall'attaccante
+- Ogni round di boarding si risolve con un **check opposto** (attacker vs defender).
+- **Formula attaccante**: 2D + Gun Combat/Melee + modificatori.
+- **Formula difensore**: 2D + Gun Combat/Melee + modificatori.
+- **Differenza** (attaccante − difensore) determina il risultato dalla tabella sottostante.
+- La VTT gestisce un round di boarding alla volta; il GM traccia i round totali separatamente.
 
 #### Modificatori Boarding Action
 
@@ -465,15 +495,26 @@ Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). Tirare sul
 
 #### Risultati Boarding Action
 
-| Totale (attaccante - difensore) | Risultato |
-| --- | --- |
-| -7 o meno | Attaccanti sconfitti; il difensore può contrattaccare con DM+4 |
-| -4 a -6 | Attaccanti sconfitti; devono ritirarsi o vengono catturati/uccisi |
-| -1 a -3 | Combattimento continua in 1D round; difensore DM+2 al prossimo roll; nave difesa perde 2D Hull |
-| 0 | Combattimento continua in 1D round |
-| 1 a 3 | Combattimento continua in 1D round; attaccante DM+2 al prossimo roll; nave difesa perde 2D Hull |
-| 4 a 6 | Boarding riuscito; nave subisce 1D danno ignorando armatura; 2D round per pacificare |
-| 7 o più | Boarding immediato; il controllo della nave passa agli attaccanti |
+| Differenza (att − dif) | Risultato | Danno Hull automatico |
+| --- | --- | --- |
+| −7 o meno | Attaccanti sconfitti; difensore può contrattaccare con DM+4 | — |
+| −4 a −6 | Attaccanti sconfitti; devono ritirarsi o vengono catturati/uccisi | — |
+| −1 a −3 | Combattimento continua; difensore DM+2 al prossimo round | 2D Hull alla nave difensore |
+| 0 | Combattimento continua | — |
+| 1 a 3 | Combattimento continua; attaccante DM+2 al prossimo round | 2D Hull alla nave difensore |
+| 4 a 6 | Boarding riuscito; 2D round per pacificare | 1D ignorando Armatura |
+| 7 o più | Boarding immediato; controllo della nave passa agli attaccanti | — |
+
+> Il danno Hull segnato come "automatico" viene applicato dalla VTT quando il GM clicca APPLY RESULT. I DM al prossimo round si applicano come `otherDm` al prossimo roll di boarding.
+
+### Repel Boarders — Marine (Reaction)
+
+**Average (8+) Gun Combat/Melee** — difensore
+
+- Reaction: si dichiara quando la propria nave viene abbordante.
+- Fornisce il **tiro difensore** per la risoluzione boarding: 2D + modificatori.
+- Il risultato viene usato nel calcolo (attaccante − difensore) della tabella sopra.
+- **DM+2** se la nave ha marines assegnati ai ruoli di difesa.
 
 ### Reassignment — chiunque
 
