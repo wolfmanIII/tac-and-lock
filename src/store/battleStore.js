@@ -37,7 +37,6 @@ function snapshot(s) {
     currentActorIndex:     s.currentActorIndex,
     round:                 s.round,
     phase:                 s.phase,
-    leadingFireDm:         s.leadingFireDm,
     log:                   structuredClone(s.log),
     pendingMissileImpacts: structuredClone(s.pendingMissileImpacts),
   }
@@ -97,6 +96,8 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     initiativeBreakdown:     null,
     initiativeBonusNextRound: 0,
     hasActedThisPhase:       false,
+    commandBonus:            null, // { role, dm } | null — active this round // 2300AD B3 p.54
+    commandBonusNextRound:   null, // { role, dm } | null — declared in Actions Step, activates next round
   }
 }
 
@@ -149,6 +150,10 @@ export const useBattleStore = create((set, get) => {
         hasActedThisPhase:        false,
         initiative:               sh.initiative + bonus,
         initiativeBonusNextRound: 0,
+        // Commands promotion: a Command declared in round N's Actions Step activates for round N+1,
+        // then clears at the start of N+2 — same two-stage pattern as initiativeBonusNextRound. // B3 p.54
+        commandBonus:             sh.commandBonusNextRound ?? null,
+        commandBonusNextRound:    null,
       }
     })
 
@@ -183,7 +188,6 @@ export const useBattleStore = create((set, get) => {
       round:                 nextRound,
       phase:                 'initiative',
       currentActorIndex:     0,
-      leadingFireDm:         0,
       ships,
       initiativeOrder:       newInitiativeOrder,
       missiles:              stillFlying,
@@ -205,7 +209,6 @@ export const useBattleStore = create((set, get) => {
     rangeBands:            {},   // pairKey → band id
     basicBandPool:         {},   // pairKey → accumulated TAC Speed toward next band change
     pendingMissileImpacts: [],
-    leadingFireDm:         0,   // DM+1/+2 to all attacks this round (Captain action) // B3 p.55
     log:                   [],
     undoStack:             [],
     redoStack:             [],
@@ -826,20 +829,31 @@ export const useBattleStore = create((set, get) => {
     ),
 
     /**
-     * Apply leading fire bonus from Captain's Tactics check. // 2300AD B3 p.55
-     * DM+1 to all attacks; Effect 4+ grants DM+2. Resets at round end.
+     * Captain issues a Command to one crew role of their own ship. // 2300AD B3 p.54
+     * "A captain can issue one command per combat round... On Effect 1–4, the recipient
+     * gains DM+1 to their actions for that combat round. On Effect 5–6, they receive DM+2."
+     * Declared during the Actions Step; activates for the FOLLOWING round (via the
+     * commandBonusNextRound → commandBonus promotion in buildNextRoundState), since the
+     * Manoeuvre/Attack steps of the current round have already passed by the time a ship
+     * reaches its own Actions turn.
+     * @param {string} shipId
+     * @param {string} role — crew role receiving the order (pilot, gunner_turret, etc.)
      * @param {number} dm — 1 or 2
      */
-    applyLeadingFire: wh((dm) => Number.isFinite(dm), (dm) => {
-      const { round, phase } = get()
-      set((s) => ({
-        leadingFireDm: Math.max(s.leadingFireDm, dm),
-        log: [...s.log, makeLogEntry({
-          round, phase, type: 'action',
-          message: `🎯 Leading Fire — all gunners gain DM+${dm} this round.`,
-        })],
-      }))
-    }),
+    applyCommand: wh(
+      (shipId) => !!get().ships.find((s) => s.id === shipId),
+      (shipId, role, dm) => {
+        const { round, phase } = get()
+        const ship = get().ships.find((s) => s.id === shipId)
+        set((s) => ({
+          ships: s.ships.map((sh) => sh.id !== shipId ? sh : { ...sh, commandBonusNextRound: { role, dm } }),
+          log: [...s.log, makeLogEntry({
+            round, phase, type: 'action', shipId,
+            message: `🎖 ${ship?.profile.name}: Command issued to ${role} — DM+${dm} next round.`,
+          })],
+        }))
+      },
+    ),
 
     /**
      * Deploy sandcaster — adds +1 sandArmourBonus vs next incoming attack. // B3 p.55
@@ -1046,7 +1060,6 @@ export const useBattleStore = create((set, get) => {
       phase:                 'setup',
       initiativeOrder:       [],
       currentActorIndex:     0,
-      leadingFireDm:         0,
       ships:                 [],
       missiles:              [],
       rangeBands:            {},
@@ -1060,11 +1073,11 @@ export const useBattleStore = create((set, get) => {
     exportBattleState: () => {
       const {
         id, name, round, phase, initiativeOrder, currentActorIndex,
-        leadingFireDm, ships, missiles, rangeBands, basicBandPool, pendingMissileImpacts, log,
+        ships, missiles, rangeBands, basicBandPool, pendingMissileImpacts, log,
       } = get()
       exportBattle({
         id, name, round, phase, initiativeOrder, currentActorIndex,
-        leadingFireDm, ships, missiles, rangeBands, basicBandPool, pendingMissileImpacts, log,
+        ships, missiles, rangeBands, basicBandPool, pendingMissileImpacts, log,
         savedAt: new Date().toISOString(),
       })
     },
@@ -1078,7 +1091,6 @@ export const useBattleStore = create((set, get) => {
         phase:                 battle.phase ?? 'setup',
         initiativeOrder:       battle.initiativeOrder ?? [],
         currentActorIndex:     battle.currentActorIndex ?? 0,
-        leadingFireDm:         battle.leadingFireDm ?? 0,
         ships:                 battle.ships ?? [],
         missiles:              battle.missiles ?? [],
         rangeBands:            battle.rangeBands ?? {},

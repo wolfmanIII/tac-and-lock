@@ -1,8 +1,12 @@
 import { useState, useMemo } from 'react'
 import { useBattleStore } from '../../store/battleStore.js'
 import { CREW_ACTIONS } from '../../data/crewActions.js'
+import { CREW_SKILLS } from '../../utils/crew.js'
 import { roll2D6, formatCheckResult } from '../../utils/dice.js'
 import { DiceInput } from '../forms/DiceInput.jsx'
+
+/** Roles a Captain can target with a Command — every crew role except themself. // 2300AD B3 p.54 */
+const COMMAND_TARGET_ROLES = Object.keys(CREW_SKILLS).filter((r) => r !== 'captain')
 
 const ALL_ACTIONS = Object.values(CREW_ACTIONS).flat()
 
@@ -38,7 +42,7 @@ export function ActionModal({ payload, onClose }) {
   const spendEvasion         = useBattleStore((s) => s.spendEvasion)
   const addCriticalHit       = useBattleStore((s) => s.addCriticalHit)
   const updateShip           = useBattleStore((s) => s.updateShip)
-  const applyLeadingFire     = useBattleStore((s) => s.applyLeadingFire)
+  const applyCommand         = useBattleStore((s) => s.applyCommand)
   const deploySand           = useBattleStore((s) => s.deploySand)
   const reduceSalvoCount     = useBattleStore((s) => s.reduceSalvoCount)
   const removeHazard         = useBattleStore((s) => s.removeHazard)
@@ -64,6 +68,7 @@ export function ActionModal({ payload, onClose }) {
   const [selectedSalvoId,        setSelectedSalvoId]        = useState(incomingSalvos[0]?.id ?? '')
   const [boardingDefenderTotal,  setBoardingDefenderTotal]  = useState('')
   const [boardingHullDamage,     setBoardingHullDamage]     = useState(null)
+  const [commandRole,            setCommandRole]            = useState(COMMAND_TARGET_ROLES[0])
 
   const action = ALL_ACTIONS.find((a) => a.id === selectedAction)
   const target = ships.find((s) => s.id === targetId)
@@ -150,8 +155,8 @@ export function ActionModal({ payload, onClose }) {
         if (success) updateShip(shipId, { activeSensorsOn: true })
         break
 
-      case 'leading_fire': { // B3 p.55
-        if (success) applyLeadingFire(effect >= 4 ? 2 : 1)
+      case 'commands': { // B3 p.54 — activates next round, see applyCommand
+        if (success) applyCommand(shipId, commandRole, effect >= 5 ? 2 : 1)
         break
       }
 
@@ -294,6 +299,17 @@ export function ActionModal({ payload, onClose }) {
                   {(ship?.hazards ?? []).map((h) => <option key={h.id} value={h.id}>{h.label}</option>)}
                 </select>
               )}
+            </div>
+          )}
+
+          {/* Commands — crew role picker (own ship, not an enemy target) */}
+          {action.id === 'commands' && (
+            <div>
+              <p className="text-[10px] font-display text-slate-500 tracking-widest mb-1">ORDER RECIPIENT (crew role)</p>
+              <select value={commandRole} onChange={(e) => setCommandRole(e.target.value)}
+                className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1 focus:border-sky-400 outline-none">
+                {COMMAND_TARGET_ROLES.map((r) => <option key={r} value={r}>{CREW_SKILLS[r]} ({r})</option>)}
+              </select>
             </div>
           )}
 

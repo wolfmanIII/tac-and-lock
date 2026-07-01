@@ -55,15 +55,16 @@ export const CREW_ACTIONS = {
       requiresTarget: true,
     },
     {
-      id: 'leading_fire',
-      label: 'Leading Fire',
+      id: 'commands',
+      label: 'Commands',
       phase: 'actions',
       reaction: false,
-      skill: 'Tactics (naval)',
+      skill: 'Leadership',
       difficulty: 8,
       difficultyLabel: 'Average (8+)',
-      description: 'Tactics (naval) Average (8+). Coordinate all gunners this round — on success, all attacks gain DM+1. Effect 4+ grants DM+2.',
+      description: 'Leadership (INT or SOC) Average (8+). Issue an order to one crew member. Effect 1–4: DM+1 to their actions next round. Effect 5–6: DM+2. Activates the round AFTER this one (Actions Step is the last step of the round). // 2300AD B3 p.54',
       requiresTarget: false,
+      targetsCrewRole: true, // picks a role of this ship's own crew, not an enemy ship
     },
   ],
 

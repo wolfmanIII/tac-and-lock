@@ -70,12 +70,14 @@ export function ManoeuvreModal({ payload, onClose }) {
     const pilotSkill = getAssignedSkill('pilot', ship.crewAssignments, ship.crew)
     const dexChar    = getAssignedCharacteristic('pilot', ship.crewAssignments, ship.crew, 'DEX')
     const dexDm      = getCharDM(dexChar)
+    // Captain's Command from a previous round, if it targeted this ship's pilot // B3 p.54
+    const commandDm  = ship.commandBonus?.role === 'pilot' ? ship.commandBonus.dm : 0
     const dice       = roll2D6()
-    const total      = dice[0] + dice[1] + pilotSkill + dexDm
+    const total      = dice[0] + dice[1] + pilotSkill + dexDm + commandDm
     const effect     = total - 10  // opposed vs enemy Pilot (assume enemy also rolls ~10)
     const dm         = evasionEffectToDm(effect)
     setEvadingShipId(shipId)
-    setEvasionRoll({ dice, total, effect, dm, pilotSkill, dexDm })
+    setEvasionRoll({ dice, total, effect, dm, pilotSkill, dexDm, commandDm })
     setEvasionDm(shipId, dm)
   }
 
@@ -190,7 +192,8 @@ export function ManoeuvreModal({ payload, onClose }) {
                 {result ? (
                   <>
                     <p className="font-mono text-[10px] text-slate-400">
-                      [{result.dice.join('+')}] +{result.pilotSkill} +dex{result.dexDm} = {result.total}
+                      [{result.dice.join('+')}] +{result.pilotSkill} +dex{result.dexDm}
+                      {result.commandDm ? ` +cmd${result.commandDm}` : ''} = {result.total}
                     </p>
                     <p className={`font-mono text-xs font-bold ${result.dm < 0 ? 'text-sky-400' : result.dm > 0 ? 'text-red-400' : 'text-slate-400'}`}>
                       Evasion DM: {result.dm > 0 ? '+' : ''}{result.dm}

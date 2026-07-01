@@ -168,6 +168,19 @@ export function ShipDetailModal({ payload, onClose }) {
         </div>
       )}
 
+      {/* Captain's Command — active this round */}
+      {ship.commandBonus && (
+        <div className="bg-emerald-950/30 border border-emerald-800/50 rounded px-3 py-2">
+          <p className="text-[10px] font-display text-slate-500 tracking-widest mb-0.5">CAPTAIN'S COMMAND ACTIVE</p>
+          <p className="text-sm font-mono font-bold text-emerald-400">
+            DM+{ship.commandBonus.dm} to {ship.commandBonus.role} this round
+          </p>
+          <p className="text-[9px] font-mono text-slate-600 mt-0.5">
+            Auto-applied to Gunner (turret) and Pilot checks; add manually elsewhere // 2300AD B3 p.54
+          </p>
+        </div>
+      )}
+
       {/* Weapons */}
       {(p.weapons ?? []).length > 0 && (
         <div>

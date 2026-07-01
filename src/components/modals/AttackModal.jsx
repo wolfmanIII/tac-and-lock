@@ -140,7 +140,6 @@ export function AttackModal({ payload, onClose }) {
   const { attackerId } = payload ?? {}
   const ships          = useBattleStore((s) => s.ships)
   const rangeBands     = useBattleStore((s) => s.rangeBands)
-  const leadingFireDm  = useBattleStore((s) => s.leadingFireDm)
   const applyDamage    = useBattleStore((s) => s.applyDamage)
   const addCritical    = useBattleStore((s) => s.addCriticalHit)
   const updateShip     = useBattleStore((s) => s.updateShip)
@@ -240,7 +239,9 @@ export function AttackModal({ payload, onClose }) {
     const jammerPenalty = jammer?.ewEffect ?? 0 // already negative
     // Sensor lock bonus: target is locked → attackers gain DM+sensorLockDm // B3 p.55
     const sensorLockDm = target?.sensorLockDm ?? 0
-    const total = gunnerSkill + intDm + fireControlDm + rangeDm + step2CarryEffect + evasionDm + weaponTraitDm + jammerPenalty + leadingFireDm + sensorLockDm
+    // Captain's Command from a previous round, if it targeted this ship's gunner // B3 p.54
+    const commandDm = attacker.commandBonus?.role === 'gunner_turret' ? attacker.commandBonus.dm : 0
+    const total = gunnerSkill + intDm + fireControlDm + rangeDm + step2CarryEffect + evasionDm + weaponTraitDm + jammerPenalty + commandDm + sensorLockDm
     return {
       rows: [
         ['Gunner skill',      gunnerSkill],
@@ -252,11 +253,11 @@ export function AttackModal({ payload, onClose }) {
         ['Weapon trait',      weaponTraitDm],
         ...(jammerPenalty !== 0 ? [['EW jamming',       jammerPenalty]] : []),
         ...(sensorLockDm  !== 0 ? [['Sensor lock',      sensorLockDm]] : []),
-        ...(leadingFireDm !== 0 ? [['Leading Fire',     leadingFireDm]] : []),
+        ...(commandDm     !== 0 ? [['Command (Captain)', commandDm]] : []),
       ],
       total,
     }
-  }, [attacker, target, weaponId, band, step2CarryEffect, evasionDm, weapon, ships, leadingFireDm])
+  }, [attacker, target, weaponId, band, step2CarryEffect, evasionDm, weapon, ships])
 
   // ── Roll handlers ──────────────────────────────────────────────────────────
 
