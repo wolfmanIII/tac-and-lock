@@ -4,6 +4,7 @@ import { FACTION_COLOR } from '../../data/factions.js'
 import { CRITICAL_HIT_SYSTEM_LABELS, SURFACE_FIXTURE_SYSTEM_LABELS } from '../../data/criticalHits.js'
 import { Tooltip } from '../ui/Tooltip.jsx'
 import { computeEffectiveSignature } from '../../utils/combat.js'
+import { useShipTokenIcon } from './useShipTokenIcon.js'
 
 const SEV_COLOR = ['', 'text-amber-300', 'text-amber-400', 'text-orange-400', 'text-orange-500', 'text-red-500', 'text-red-600']
 
@@ -41,6 +42,7 @@ export function ShipBentoCard({ ship }) {
   const phase = useBattleStore((s) => s.phase)
 
   const shipColor        = ship.color ?? FACTION_COLOR[ship.faction] ?? '#94a3b8'
+  const tokenRef          = useShipTokenIcon({ ...ship, color: shipColor }, 32)
   const activeCrits      = Object.entries(ship.criticalTracks ?? {}).filter(([, sev]) => sev > 0)
   const activeSurface    = Object.entries(ship.surfaceFixtureTracks ?? {}).filter(([, hits]) => hits > 0)
   const isDestroyed      = ship.isDestroyed
@@ -62,7 +64,7 @@ export function ShipBentoCard({ ship }) {
     >
       {/* Header */}
       <div className="flex items-center gap-2 px-3 pt-3 pb-2">
-        <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: shipColor }} />
+        <canvas ref={tokenRef} width={32} height={32} className="shrink-0" />
         <div className="min-w-0 flex-1">
           <p className="font-mono text-sm text-slate-200 font-bold truncate">{ship.profile?.name ?? ship.id}</p>
           <p className="text-[10px] font-mono text-slate-500 truncate">{ship.profile?.class}</p>

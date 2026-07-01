@@ -1,13 +1,60 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useProfilesStore } from '../../store/profilesStore.js'
 import { useBattleStore } from '../../store/battleStore.js'
 import { FACTIONS } from '../../data/factions.js'
 import { RANGE_BANDS } from '../../data/rangeBands.js'
+import {
+  SHIP_SHAPES, SHAPE_LABELS, DEFAULT_TOKEN_SHAPE_BY_CATEGORY,
+  getShapeTracer, getDetailDrawer,
+} from '../battle/shipTokenShapes.js'
 
 const PRESET_COLORS = [
   '#60a5fa', '#f87171', '#4ade80', '#facc15',
   '#c084fc', '#fb923c', '#22d3ee', '#f472b6',
 ]
+
+const PREVIEW_SIZE = 40
+
+function ShapePreview({ shape, selected, onClick }) {
+  const canvasRef = useRef(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const dpr = window.devicePixelRatio || 1
+    canvas.width  = PREVIEW_SIZE * dpr
+    canvas.height = PREVIEW_SIZE * dpr
+    const ctx = canvas.getContext('2d')
+    ctx.scale(dpr, dpr)
+    ctx.clearRect(0, 0, PREVIEW_SIZE, PREVIEW_SIZE)
+    ctx.save()
+    ctx.translate(PREVIEW_SIZE / 2, PREVIEW_SIZE / 2)
+    const radius = PREVIEW_SIZE * 0.42
+    getShapeTracer(shape)(ctx, radius)
+    ctx.fillStyle = selected ? 'rgba(125,211,252,0.75)' : 'rgba(148,163,184,0.5)'
+    ctx.fill()
+    ctx.strokeStyle = selected ? 'rgba(125,211,252,0.9)' : 'rgba(255,255,255,0.2)'
+    ctx.lineWidth = 1
+    ctx.stroke()
+    getDetailDrawer(shape)?.(ctx, radius)
+    ctx.restore()
+  }, [shape, selected])
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex flex-col items-center gap-1 p-1.5 rounded border transition-colors ${
+        selected ? 'border-(--neon-cyan)/60 bg-(--neon-cyan)/10' : 'border-slate-700 hover:border-slate-500'
+      }`}
+    >
+      <canvas ref={canvasRef} style={{ width: PREVIEW_SIZE, height: PREVIEW_SIZE }} />
+      <span className={`font-mono text-[10px] ${selected ? 'text-(--neon-cyan)' : 'text-slate-400'}`}>
+        {SHAPE_LABELS[shape]}
+      </span>
+    </button>
+  )
+}
 
 export function AddShipModal({ onClose }) {
   const profiles = useProfilesStore((s) => s.profiles)
@@ -18,15 +65,22 @@ export function AddShipModal({ onClose }) {
   const [color,      setColor]      = useState('#f87171')
   const [startBand,  setStartBand]  = useState('Long')
   const [filter,     setFilter]     = useState('')
+  const [tokenShape, setTokenShape] = useState(
+    DEFAULT_TOKEN_SHAPE_BY_CATEGORY[profiles[0]?.category] ?? 'courier'
+  )
 
   const filtered = profiles.filter((p) =>
     p.name.toLowerCase().includes(filter.toLowerCase())
   )
   const selected = profiles.find((p) => p.id === selectedId) ?? null
 
+  useEffect(() => {
+    setTokenShape(DEFAULT_TOKEN_SHAPE_BY_CATEGORY[selected?.category] ?? 'courier')
+  }, [selectedId, selected?.category])
+
   function handleConfirm() {
     if (!selected) return
-    addShip(selected, faction, startBand, color)
+    addShip({ ...selected, tokenShape }, faction, startBand, color)
     onClose()
   }
 
@@ -99,6 +153,21 @@ export function AddShipModal({ onClose }) {
               className={`w-6 h-6 rounded-full border-2 transition-all ${
                 color === c ? 'border-white scale-125' : 'border-transparent'
               }`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Token shape */}
+      <div>
+        <p className="text-slate-400 font-mono text-xs mb-1.5">Token shape</p>
+        <div className="grid grid-cols-5 gap-1.5">
+          {Object.keys(SHIP_SHAPES).map((shape) => (
+            <ShapePreview
+              key={shape}
+              shape={shape}
+              selected={tokenShape === shape}
+              onClick={() => setTokenShape(shape)}
             />
           ))}
         </div>
