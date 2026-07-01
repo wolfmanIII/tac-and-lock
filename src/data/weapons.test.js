@@ -37,7 +37,7 @@ describe('WEAPONS — every weapon', () => {
     })
 
     it(`${id}: mount is valid`, () => {
-      expect(['turret', 'barbette', 'bay']).toContain(w.mount)
+      expect(['turret', 'barbette', 'bay', 'drone']).toContain(w.mount)
     })
 
     it(`${id}: rangeDm covers all 7 bands`, () => {

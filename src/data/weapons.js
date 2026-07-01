@@ -12,7 +12,7 @@
  * @typedef {{
  *   id: string,
  *   name: string,
- *   mount: 'turret' | 'barbette' | 'bay',
+ *   mount: 'turret' | 'barbette' | 'bay' | 'drone',
  *   TL: number,
  *   damage: string,      // dice notation, e.g. "2D"
  *   damageBonus: number, // flat bonus per additional weapon in same turret (double/triple rule)
@@ -20,6 +20,9 @@
  *   rangeDm: RangeDmTable,
  *   traits: string[],
  *   notes: string,
+ *   tacSpeed?: number,        // drone/fighter only — closing speed // 2300AD B3 p.61
+ *   enduranceRounds?: number, // drone/fighter only — max rounds before going inert (hours × 10) // 2300AD B3 p.61
+ *   detonationMode?: { damage: string, traits: string[] }, // drone only — optional single-use alt warhead
  * }} WeaponDef
  */
 
@@ -260,6 +263,81 @@ export const WEAPONS = {
     notes: 'Quinn Optronics PDC Type 17. Beam laser cluster. DM+2 vs missiles/drones/fighters at Close. // 2300AD B3 p.60',
   },
 
+  // ── Combat Drones — B3 p.61 (canonical starship-launched drones) ─────────
+  // Remote-piloted "mini-ships" — see doc/drone-combat-redesign-spec.md.
+  // Distinct from aero12/kingfisher below, which are sourced from the vehicle
+  // chapter (p.70/p.110), not the p.61 starship combat drone table.
+
+  ritage1: {
+    id: 'ritage1',
+    name: 'Ritage-1 Combat Drone',
+    mount: 'drone',
+    TL: 11,
+    damage: '1D',
+    damageBonus: 0,
+    optimalRange: 'Adjacent', // closes to impact range // 2300AD B3 p.61
+    tacSpeed: 3,
+    enduranceRounds: 60, // 6 hours // 2300AD B3 p.61
+    rangeDm: {
+      Adjacent:  2,
+      Close:     0,
+      Short:   -20,
+      Medium:  -20,
+      Long:    -20,
+      VeryLong:-20,
+      Distant: -20,
+    },
+    traits: ['Smart'],
+    notes: 'French remote fighter drone. // 2300AD B3 p.61',
+  },
+
+  ritage2: {
+    id: 'ritage2',
+    name: 'Ritage-2 Combat Drone',
+    mount: 'drone',
+    TL: 12,
+    damage: '5D',
+    damageBonus: 0,
+    optimalRange: 'Adjacent',
+    tacSpeed: 4,
+    enduranceRounds: 40, // 4 hours // 2300AD B3 p.61
+    rangeDm: {
+      Adjacent:  2,
+      Close:     0,
+      Short:   -20,
+      Medium:  -20,
+      Long:    -20,
+      VeryLong:-20,
+      Distant: -20,
+    },
+    traits: ['Smart', 'Blast 6', 'Radiation'],
+    notes: 'Nuclear x-ray laser warhead, single-shot — drone is destroyed on use. // 2300AD B3 p.61',
+  },
+
+  whiskey: {
+    id: 'whiskey',
+    name: "'Whiskey' Light Drone",
+    mount: 'drone',
+    TL: 12,
+    damage: '1D', // battery laser mode — repeatable while charge remains
+    damageBonus: 0,
+    optimalRange: 'Adjacent',
+    tacSpeed: 4,
+    enduranceRounds: 20, // 2 hours // 2300AD B3 p.61
+    rangeDm: {
+      Adjacent:  2,
+      Close:     0,
+      Short:   -20,
+      Medium:  -20,
+      Long:    -20,
+      VeryLong:-20,
+      Distant: -20,
+    },
+    traits: ['Smart'],
+    detonationMode: { damage: '3D', traits: ['Smart', 'Blast 3', 'Radiation'] }, // single-use, GM picks mode per round
+    notes: "Kaefer ESA drone: battery laser (repeatable) or detonation laser (single use). // 2300AD B3 p.61",
+  },
+
   autocannon_25mm: {
     id: 'autocannon_25mm',
     name: '25mm Rotary Autocannon',
@@ -354,6 +432,10 @@ export const WEAPON_IDS = [
   'anti_missile_laser',
   'grumbler',
   'allen_bmz50',
+  // 2300AD B3 p.61 — combat drones
+  'ritage1',
+  'ritage2',
+  'whiskey',
   // B3 / 2300AD extended
   'ea1000',
   'autocannon_25mm',
