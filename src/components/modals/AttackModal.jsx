@@ -6,7 +6,7 @@
  * Each step's positive Effect carries as DM to the next step.
  */
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useBattleStore } from '../../store/battleStore.js'
 import { useUIStore }     from '../../store/uiStore.js'
 import { WEAPONS }        from '../../data/weapons.js'
@@ -153,7 +153,9 @@ export function AttackModal({ payload, onClose }) {
   const [targetId,      setTargetId]      = useState(targets[0]?.id ?? '')
   const [weaponIdx,     setWeaponIdx]     = useState(0)
   const [weaponCount,   setWeaponCount]   = useState(1)
-  const [evasionDm,     setEvasionDm]     = useState(0)  // set by GM from target's evasion result
+  // evasionDm auto-reads target.evasionDm (set by ManoeuvreModal's opposed Pilot check // B3 p.54);
+  // GM can still override manually for untracked crew — null override means "use the auto value"
+  const [evasionDmOverride, setEvasionDmOverride] = useState(null)
   const [step1Result,   setStep1Result]   = useState(null)
   const [step2Result,   setStep2Result]   = useState(null)
   const [step3Result,   setStep3Result]   = useState(null)
@@ -163,6 +165,12 @@ export function AttackModal({ payload, onClose }) {
   const target  = ships.find((s) => s.id === targetId)
   const bandKey = attacker && target ? pairKey(attacker.id, target.id) : null
   const band    = bandKey ? (rangeBands[bandKey] ?? 'Long') : 'Long'
+
+  // Reset the manual override whenever the target changes — otherwise the previous
+  // target's evasion value would stay "frozen" onto the newly selected target.
+  useEffect(() => { setEvasionDmOverride(null) }, [targetId])
+
+  const evasionDm = evasionDmOverride ?? (target?.evasionDm ?? 0)
 
   const shipWeapons = attacker?.weapons ?? []
   const weaponSlot  = shipWeapons[weaponIdx] ?? { weaponId: 'll98', count: 1, label: '' }
@@ -179,7 +187,8 @@ export function AttackModal({ payload, onClose }) {
     const sig       = computeEffectiveSignature(target) // // 2300AD B3 p.57
     const sensorQDm = attacker.sensors?.dm ?? 0
     const timeLagDm = SENSOR_TIME_LAG_DM[band] ?? 0
-    const total = sensorSkill + intDm + sig.effective + sensorQDm + timeLagDm
+    // Evade penalizes both Electronics(sensors) and Gunner checks // 2300AD B3 p.54
+    const total = sensorSkill + intDm + sig.effective + sensorQDm + timeLagDm + evasionDm
     const sigLabel = sig.delta !== 0
       ? `Target Signature (${sig.base}${sig.delta > 0 ? '+' : ''}${sig.delta})`
       : 'Target Signature'
@@ -190,10 +199,11 @@ export function AttackModal({ payload, onClose }) {
         [sigLabel,             sig.effective],
         ['Sensor quality',     sensorQDm],
         [`Time-lag (${band})`, timeLagDm],
+        ['Target evasion',     evasionDm],
       ],
       total,
     }
-  }, [attacker, target, band])
+  }, [attacker, target, band, evasionDm])
 
   const step1CarryEffect = step1Result ? Math.max(0, step1Result.effect) : 0
 
@@ -398,18 +408,22 @@ export function AttackModal({ payload, onClose }) {
           )}
         </div>
 
-        {/* Evasion DM (GM entry from target's evasion result) */}
+        {/* Evasion DM — auto-read from target.evasionDm (set by ManoeuvreModal's opposed Pilot check), overridable */}
         <div className="space-y-1">
           <p className="font-mono text-[10px] text-slate-500 tracking-widest uppercase">
-            TARGET EVASION DM <span className="text-slate-600 normal-case">(from opposed Pilot check // B3 p.55)</span>
+            TARGET EVASION DM <span className="text-slate-600 normal-case">(opposed Pilot check // B3 p.54 — applies to Sensor + Gunner checks)</span>
           </p>
           <div className="flex items-center gap-2">
             <input
-              type="number" min={-10} max={0} value={evasionDm}
-              onChange={(e) => setEvasionDm(Math.min(0, Number(e.target.value) || 0))}
+              type="number" min={-10} max={2} value={evasionDm}
+              onChange={(e) => setEvasionDmOverride(Math.min(2, Number(e.target.value) || 0))}
               className="w-20 bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1.5 focus:border-(--neon-cyan)/60 outline-none"
             />
-            <span className="font-mono text-[10px] text-slate-500">0 if no evasion; −1/−2 per B3 p.55 Effect table</span>
+            {evasionDmOverride === null && (target?.evasionDm ?? 0) !== 0 ? (
+              <span className="font-mono text-[10px] text-sky-400">auto da Manoeuvre Step</span>
+            ) : (
+              <span className="font-mono text-[10px] text-slate-500">0 if no evasion; −1/−2, or +1 vs a badly-failed evasion</span>
+            )}
           </div>
         </div>
 
