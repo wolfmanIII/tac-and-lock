@@ -5,7 +5,7 @@
  */
 
 import { test, expect } from '@playwright/test'
-import { clearAppState, addShipsToStore, gotoBattle } from './helpers.js'
+import { clearAppState, addShipsToStore, gotoBattle, advanceToPhase } from './helpers.js'
 
 const SHIPS_WITH_DRONES = [
   { name: 'ISV-2 Trilon', faction: 'players', weapons: [{ weaponId: 'ritage1', count: 4, label: 'Drone bay' }] },
@@ -66,7 +66,7 @@ test.describe('Drone launch', () => {
 
   test('modal shows LAUNCH DRONE header and launcher name', async ({ page }) => {
     await openDroneLaunch(page)
-    await expect(page.getByText('ISV-2 Trilon').first()).toBeVisible()
+    await expect(modalBody(page).getByText('ISV-2 Trilon')).toBeVisible()
   })
 
   test('shows the drone weapon with TAC Speed and Endurance', async ({ page }) => {
@@ -221,5 +221,69 @@ test.describe('Drone attack — Point Defence and Firing Solution', () => {
     })
     expect(state.hull).toBeLessThanOrEqual(hullBefore)
     expect(state.detonated).toBe(true)
+  })
+})
+
+test.describe('Context menu — real right-click, drone items', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+    await addShipsToStore(page, SHIPS_WITH_DRONES)
+  })
+
+  test('right-click own ship in Attack phase shows enabled "Launch drone…"', async ({ page }) => {
+    await advanceToPhase(page, 'attack')
+    await page.locator('.cursor-context-menu').filter({ hasText: 'ISV-2 Trilon' }).click({ button: 'right' })
+    const item = page.getByText('Launch drone…')
+    await expect(item).toBeVisible()
+    await expect(item).toBeEnabled()
+  })
+
+  test('right-click own ship outside Attack phase shows disabled "Launch drone…"', async ({ page }) => {
+    await advanceToPhase(page, 'manoeuvre')
+    await page.locator('.cursor-context-menu').filter({ hasText: 'ISV-2 Trilon' }).click({ button: 'right' })
+    const item = page.getByText('Launch drone…')
+    await expect(item).toBeVisible()
+    await expect(item).toBeDisabled()
+  })
+
+  test('"Resolve drone attack…" only appears once this ship has a drone in range', async ({ page }) => {
+    await advanceToPhase(page, 'attack')
+    await page.locator('.cursor-context-menu').filter({ hasText: 'ISV-2 Trilon' }).click({ button: 'right' })
+    await expect(page.getByText('Resolve drone attack…')).toHaveCount(0)
+    // ContextMenu closes on outside mousedown (no Escape handler) — left-click the background
+    await page.mouse.click(20, 20)
+
+    await page.evaluate(() => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const ships = store.getState().ships
+      store.setState((s) => ({
+        drones: [...s.drones, {
+          id: 'ctx-menu-drone', ownerId: ships[0].id, targetId: ships[1].id, weaponId: 'ritage1',
+          currentBand: 'Close', roundsElapsed: 0, enduranceRounds: 60,
+          destroyed: false, detonated: false, sensorLockSource: null, launchedRound: 1,
+        }],
+      }))
+    })
+    await page.locator('.cursor-context-menu').filter({ hasText: 'ISV-2 Trilon' }).click({ button: 'right' })
+    await expect(page.getByText(/Resolve drone attack.*Close/)).toBeVisible()
+  })
+
+  test('clicking "Resolve drone attack…" opens the DroneAttackModal', async ({ page }) => {
+    await advanceToPhase(page, 'attack')
+    await page.evaluate(() => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const ships = store.getState().ships
+      store.setState((s) => ({
+        drones: [...s.drones, {
+          id: 'ctx-menu-drone-2', ownerId: ships[0].id, targetId: ships[1].id, weaponId: 'ritage1',
+          currentBand: 'Adjacent', roundsElapsed: 0, enduranceRounds: 60,
+          destroyed: false, detonated: false, sensorLockSource: null, launchedRound: 1,
+        }],
+      }))
+    })
+    await page.locator('.cursor-context-menu').filter({ hasText: 'ISV-2 Trilon' }).click({ button: 'right' })
+    await page.getByText(/Resolve drone attack/).click()
+    await expect(page.getByText(/— POINT DEFENCE ·/)).toBeVisible()
   })
 })

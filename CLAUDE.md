@@ -369,6 +369,6 @@ font-mono: 'Share Tech Mono' (body/values)
 ## TESTING
 
 - **Unit tests** (Vitest + jsdom): `src/**/*.test.js` — colocated with source. Cover `utils/` logic: combat, rangeBands, crew. Run: `npm test`.
-- **E2E tests** (Playwright, Chromium): `e2e/*.spec.js` at repo root. 74 tests across 9 spec files. Store injection via `window.__ZUSTAND_*_STORE__` exposed in non-production builds; use `store.setState({...})` to inject state directly (avoids `importBattleState` which requires a File object). Run: `npm run e2e` (requires dev server on :5173).
+- **E2E tests** (Playwright, Chromium): `e2e/*.spec.js` at repo root. 84 tests across 9 spec files. Store injection via `window.__ZUSTAND_*_STORE__` exposed in non-production builds; use `store.setState({...})` to inject state directly (avoids `importBattleState` which requires a File object). Run: `npm run e2e` (requires dev server on :5173).
 - **Do NOT write Vitest tests for React components or Zustand stores** — E2E covers those flows. Unit tests are for pure-logic utils only.
 - `e2e/helpers.js` exports `clearAppState` (full reset including IndexedDB + profiles), `gotoBattle`, `advanceToPhase`, `drainActors` (exhaust all actor turns before advancing phase).

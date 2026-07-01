@@ -118,7 +118,7 @@ Click **🏠** per tornare alla Dashboard — modal di conferma se ci sono dati 
 | Persistence | IndexedDB (autosave) + Browser File API (JSON export/import) |
 | IDs | uuid v7 (time-ordered) |
 | Unit tests | Vitest + jsdom + fake-indexeddb (456 tests) |
-| E2E tests | Playwright (Chromium) — 74 tests, 9 spec files |
+| E2E tests | Playwright (Chromium) — 84 tests, 9 spec files |
 
 ---
 
