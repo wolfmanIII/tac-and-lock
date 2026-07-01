@@ -234,7 +234,6 @@ export const DEFAULT_PROFILES = [
       { weaponId: 'autocannon_25mm',  count: 2, label: '25mm Rotary AC x2 (Retractable)' },
       { weaponId: 'aero12',           count: 10, label: 'Aero-12 Missile x10 (Internal)' },
       { weaponId: 'anti_missile_laser', count: 1, label: 'Anti-Missile Laser (Retractable)' },
-      { weaponId: 'sandcaster',       count: 1, label: 'Decoy Dispenser (Retractable)' },
     ],
     software: ['operations', 'fire_control_2', 'auto_repair_1', 'stutterwarp_control'],
     criticalTracks: blankCriticalTracks(),

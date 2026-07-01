@@ -16,7 +16,6 @@ import {
   isInternalCriticalHit,
   isCriticalHit,
   getNextSeverity,
-  rollSandcasterAbsorption,
   getWeaponTraitAttackDm,
   computeEffectiveSignature,
 } from './combat.js'
@@ -378,48 +377,6 @@ describe('rollDamage', () => {
     // ll98: damageBonus=1; 3 weapons → multiBonus = 1 × (3-1) = 2; gross = 8 + 2 = 10
     const r = rollDamage('ll98', 3, 0)
     expect(r.gross).toBe(10)
-  })
-})
-
-// === rollSandcasterAbsorption ===
-
-describe('rollSandcasterAbsorption', () => {
-  beforeEach(() => vi.spyOn(Math, 'random').mockReturnValue(0.9))
-  afterEach(() => vi.restoreAllMocks())
-
-  // Math.ceil(0.9 * 3) = 3 → each sandcaster gives 3
-
-  it('returns rolls array and armourBonus', () => {
-    const r = rollSandcasterAbsorption(2)
-    expect(r).toHaveProperty('rolls')
-    expect(r).toHaveProperty('armourBonus')
-  })
-
-  it('roll count equals sandcasterCount', () => {
-    expect(rollSandcasterAbsorption(3).rolls).toHaveLength(3)
-    expect(rollSandcasterAbsorption(1).rolls).toHaveLength(1)
-  })
-
-  it('armourBonus = sum of all rolls', () => {
-    const r = rollSandcasterAbsorption(2)
-    expect(r.armourBonus).toBe(r.rolls.reduce((a, b) => a + b, 0))
-  })
-
-  it('0 sandcasters → armourBonus = 0', () => {
-    const r = rollSandcasterAbsorption(0)
-    expect(r.armourBonus).toBe(0)
-    expect(r.rolls).toHaveLength(0)
-  })
-
-  it('each roll is in [1, 3]', () => {
-    vi.restoreAllMocks() // use real random
-    for (let i = 0; i < 50; i++) {
-      const r = rollSandcasterAbsorption(5)
-      for (const roll of r.rolls) {
-        expect(roll).toBeGreaterThanOrEqual(1)
-        expect(roll).toBeLessThanOrEqual(3)
-      }
-    }
   })
 })
 

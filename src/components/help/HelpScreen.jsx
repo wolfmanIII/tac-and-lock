@@ -299,11 +299,11 @@ export function HelpScreen({ onBack } = {}) {
                 ['Effect from Step 2',    'Positive Effect carries forward'],
                 ['EW jamming',            '−max(1, Effect) (applied to attacker)'],
                 ['Sensor Lock',           '+sensorLockDm (on target ship)'],
-                ['Leading Fire',          '+1 or +2 (Captain action this round)'],
+                ['Command (Captain)',     '+1 or +2 if targeting gunner_turret this round'],
                 ['Weapon trait Accurate', '+1'],
                 ['Weapon trait Slow',     '−2'],
-                ['Evasion (reaction)',     '−(Pilot + TAC Speed spent)'],
-                ['Captain assist',        'Difficult (10+) Tactics(naval) INT'],
+                ['Evasion (opposed Pilot)', '−1/−2, or +1 vs a badly-failed evasion — applies to both Sensor and Gunner checks'],
+                ['Captain Tactics assist', 'Optional inline roll, Difficult (10+) Tactics(naval) INT — Effect adds to this check only'],
               ]}
             />
           </Sub>
@@ -311,7 +311,7 @@ export function HelpScreen({ onBack } = {}) {
           <Note>Stationary targets (reaction drive off, in orbit): DM+2 and damage doubled. // B3 p.56</Note>
 
           <Sub title="DAMAGE">
-            <p>Roll weapon damage. Subtract Armour (+ sandArmourBonus if Deploy Sand was used). Apply net to Hull Points.</p>
+            <p>Roll weapon damage. Subtract Armour. Apply net to Hull Points.</p>
             <KV k="Advanced trait"  v="+1 damage per die" />
             <KV k="Obsolete trait"  v="−1 damage per die" />
             <KV k="AP X trait"      v="Ignores X points of Armour" />
@@ -322,19 +322,14 @@ export function HelpScreen({ onBack } = {}) {
         <Section id="reactions" title="Attack Step — Reactions">
           <p>The defender declares reactions before each attack resolves.</p>
 
-          <Sub title="EVASIVE ACTION">
-            <p>Spend <span className="text-slate-200">1 TAC Speed</span> → attack suffers <span className="text-slate-200">DM−(Pilot + TAC Speed spent)</span>.</p>
+          <Sub title="EVADE">
+            <p>Opposed Pilot (DEX) check, declared during the Manoeuvre Step. Effect 1–4: <span className="text-slate-200">DM−1</span>; Effect 5+: <span className="text-slate-200">DM−2</span>; Effect ≤−5: enemy gains <span className="text-slate-200">DM+1</span>. Applies to both the enemy's Sensor Operator and Gunner checks for the rest of the round.</p>
           </Sub>
 
           <Sub title="POINT DEFENCE">
             <p>Against an incoming missile salvo. <span className="text-slate-200">Difficult (10+) Gunner</span> check.</p>
             <p>Success: <span className="text-slate-200">Effect missiles destroyed</span> (min 1). Salvo removed if count reaches 0.</p>
-            <p>Quinn Type 17 PDC has the Point Defence trait: DM+2 vs missiles, drones, fighters.</p>
-          </Sub>
-
-          <Sub title="DEPLOY SAND">
-            <p>Against a laser attack. <span className="text-slate-200">Automatic — no roll.</span></p>
-            <p>Each sandcaster deployed adds <span className="text-slate-200">+1 Armour</span> vs that one attack. Consumed immediately after the attack resolves.</p>
+            <p>Quinn Type 17 PDC has the Point Defence trait: DM+2 vs missiles, drones, fighters (a separate reaction bonus of DM+4 applies to the dedicated Point Defence action itself).</p>
           </Sub>
         </Section>
 
@@ -344,7 +339,8 @@ export function HelpScreen({ onBack } = {}) {
           <p>Select the action, configure options, roll (if required), click <span className="text-slate-200">APPLY RESULT</span>.</p>
 
           <Sub title="CAPTAIN">
-            <KV k="Leading Fire" v="Average (8+) Tactics(naval) INT. Success: all gunners on this ship gain DM+1 this round. Effect ≥ 4 → DM+2. Resets at round end." />
+            <KV k="Commands" v="Average (8+) Leadership (INT or SOC). Order one crew role. Effect 1–4 → DM+1, Effect 5–6 → DM+2 to their actions. Declared in this round's Actions Step, activates for the following round (Manoeuvre + Attack + Actions)." />
+            <KV k="Tactics assist" v="Optional inline roll inside the Attack modal, Difficult (10+) Tactics(naval) INT — adds its Effect to that single Gunner check only." />
           </Sub>
 
           <Sub title="ENGINEER">
@@ -361,7 +357,6 @@ export function HelpScreen({ onBack } = {}) {
 
           <Sub title="GUNNER">
             <KV k="Point Defence"  v="Difficult (10+) Gunner DEX. Pick an incoming salvo. Effect missiles (min 1) destroyed. Salvo removed if count = 0." />
-            <KV k="Deploy Sand"    v="Automatic. Adds +1 sandArmourBonus to this ship vs the next incoming attack." />
             <KV k="Evasive Action" v="Automatic. Spend 1 TAC Speed → apply evasionDm to attacks this round." />
           </Sub>
 
@@ -419,7 +414,6 @@ export function HelpScreen({ onBack } = {}) {
               rows={[
                 ['Point Defence (reaction)', 'Attack step', 'Gunner check — destroys Effect missiles (min 1) from an arriving salvo'],
                 ['Point Defence (crew action)', 'Actions step', 'Same — picks any in-flight salvo targeting this ship'],
-                ['Deploy Sand (reaction)', 'Attack step', '+1 Armour vs the next laser attack — does not affect missiles'],
               ]}
             />
           </Sub>

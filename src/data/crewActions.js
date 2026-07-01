@@ -141,17 +141,6 @@ export const CREW_ACTIONS = {
       description: 'Reaction: Gunner (turret) Difficult (10+) DEX. Each success reduces salvo size by 1. Weapons with Point Defence trait get DM+2 vs missiles at Close range. // 2300AD B3 p.55',
       requiresTarget: false,
     },
-    {
-      id: 'deploy_sand',
-      label: 'Deploy Sand',
-      phase: 'attack',
-      reaction: true,
-      skill: 'Gunner (turret)',
-      difficulty: 0,
-      difficultyLabel: 'Automatic',
-      description: 'Reaction: deploy sandcaster to absorb incoming laser fire. Each sandcaster adds +1 Armour vs one attack. No roll required.',
-      requiresTarget: false,
-    },
   ],
 
   marine: [

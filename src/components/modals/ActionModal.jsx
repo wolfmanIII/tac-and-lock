@@ -43,7 +43,6 @@ export function ActionModal({ payload, onClose }) {
   const addCriticalHit       = useBattleStore((s) => s.addCriticalHit)
   const updateShip           = useBattleStore((s) => s.updateShip)
   const applyCommand         = useBattleStore((s) => s.applyCommand)
-  const deploySand           = useBattleStore((s) => s.deploySand)
   const reduceSalvoCount     = useBattleStore((s) => s.reduceSalvoCount)
   const removeHazard         = useBattleStore((s) => s.removeHazard)
   const applyDamage          = useBattleStore((s) => s.applyDamage)
@@ -162,10 +161,6 @@ export function ActionModal({ payload, onClose }) {
 
       case 'evasive_action':
         if (success) spendEvasion(shipId, 1)
-        break
-
-      case 'deploy_sand': // B3 p.55 — automatic reaction, no roll
-        deploySand(shipId)
         break
 
       case 'point_defence': { // B3 p.55

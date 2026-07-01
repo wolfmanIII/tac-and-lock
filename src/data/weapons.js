@@ -90,27 +90,6 @@ export const WEAPONS = {
     notes: 'Attack roll deferred to missile impact round. Missiles travel N rounds before impact.',
   },
 
-  sandcaster: {
-    id: 'sandcaster',
-    name: 'Sandcaster',
-    mount: 'turret',
-    TL: 5,
-    damage: '0',    // not an attack weapon
-    damageBonus: 0,
-    optimalRange: 'Short',
-    rangeDm: {
-      Adjacent:  0,
-      Close:     0,
-      Short:     0,
-      Medium:    0,
-      Long:      0,
-      VeryLong:  0,
-      Distant:   0,
-    },
-    traits: ['Reaction'],
-    notes: 'Reaction weapon. Absorbs 1D3 laser damage per sandcaster deployed against a salvo. Each linked sandcaster adds +1 Armour vs that attack.',
-  },
-
   particle_barbette: {
     id: 'particle_barbette',
     name: 'Particle Barbette',
@@ -385,6 +364,5 @@ export const WEAPON_IDS = [
   'pulse_laser',
   'beam_laser',
   'missile_rack',
-  'sandcaster',
   'particle_barbette',
 ]

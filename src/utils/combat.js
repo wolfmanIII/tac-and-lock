@@ -301,17 +301,3 @@ export function parseDiceNotation(notation) {
     match[3] ? parseInt(match[3], 10) : 0,
   ]
 }
-
-/**
- * Sandcaster reaction: each sandcaster absorbs 1D3 armour points vs one laser attack.
- * // Trav2022 CRB p.164
- * @param {number} sandcasterCount — number of sandcasters deployed
- * @returns {{ armourBonus: number, rolls: number[] }}
- */
-export function rollSandcasterAbsorption(sandcasterCount) {
-  const rolls = Array.from({ length: sandcasterCount }, () => Math.ceil(Math.random() * 3))
-  return {
-    rolls,
-    armourBonus: rolls.reduce((a, b) => a + b, 0),
-  }
-}

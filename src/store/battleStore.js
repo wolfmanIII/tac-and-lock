@@ -81,7 +81,6 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     sensorLockTarget:        null,
     ewTarget:                null,
     ewEffect:                0,   // negative DM this ship applies to its jammed target // B3 p.55
-    sandArmourBonus:         0,   // temp armour vs next incoming attack (sandcaster reaction) // B3 p.55
     hazards:                 [],  // active hazards [{ id, label }] — GM-managed, damage_control clears
     boardingDmNextRound:     0,   // carry-over DM from boarding result table to next round // B3 p.55
     isDestroyed:             false,
@@ -145,7 +144,6 @@ export const useBattleStore = create((set, get) => {
         sensorLockDm:             0,
         ewTarget:                 null,
         ewEffect:                 0,
-        sandArmourBonus:          0,
         boardingDmNextRound:      0,
         hasActedThisPhase:        false,
         initiative:               sh.initiative + bonus,
@@ -850,28 +848,6 @@ export const useBattleStore = create((set, get) => {
           log: [...s.log, makeLogEntry({
             round, phase, type: 'action', shipId,
             message: `🎖 ${ship?.profile.name}: Command issued to ${role} — DM+${dm} next round.`,
-          })],
-        }))
-      },
-    ),
-
-    /**
-     * Deploy sandcaster — adds +1 sandArmourBonus vs next incoming attack. // B3 p.55
-     * Bonus is consumed by AttackModal after rollDamage; resets at round end.
-     * @param {string} shipId
-     */
-    deploySand: wh(
-      (shipId) => !!get().ships.find((s) => s.id === shipId),
-      (shipId) => {
-        const { round, phase } = get()
-        const ship = get().ships.find((s) => s.id === shipId)
-        set((s) => ({
-          ships: s.ships.map((sh) =>
-            sh.id !== shipId ? sh : { ...sh, sandArmourBonus: sh.sandArmourBonus + 1 },
-          ),
-          log: [...s.log, makeLogEntry({
-            round, phase, type: 'action', shipId,
-            message: `⬛ ${ship?.profile.name} deployed sand (+1 armour vs next attack).`,
           })],
         }))
       },
