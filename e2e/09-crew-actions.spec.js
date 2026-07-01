@@ -1,6 +1,6 @@
 /**
- * Crew actions — leading fire, EW, EW countermeasures.
- * // 2300AD B3 p.55 — Actions Phase crew actions
+ * Crew actions — Commands, EW, EW countermeasures.
+ * // 2300AD B3 p.54–55 — Actions Phase crew actions
  */
 
 import { test, expect } from '@playwright/test'
@@ -57,80 +57,64 @@ async function reachStep3(page, attackerId) {
   await expect(page.getByText('STEP 3 — GUNNER')).toBeVisible()
 }
 
-// === Leading Fire ============================================================
+// === Commands ================================================================
+// "Leading Fire" (Tactics naval, battle-wide DM to all attacks) was not a
+// canonical B3 rule — replaced by Commands (Leadership, per-ship, targets one
+// crew role, activates next round). // 2300AD B3 p.54
 
-test.describe('Leading Fire — applyLeadingFire', () => {
+test.describe('Commands — applyCommand', () => {
   test.beforeEach(async ({ page }) => {
     await clearAppState(page)
     await gotoBattle(page)
   })
 
-  test('applyLeadingFire(1) sets leadingFireDm = 1 on store', async ({ page }) => {
-    await page.evaluate(() => {
-      window.__ZUSTAND_BATTLE_STORE__.getState().applyLeadingFire(1)
-    })
-    const dm = await page.evaluate(() =>
-      window.__ZUSTAND_BATTLE_STORE__.getState().leadingFireDm,
-    )
-    expect(dm).toBe(1)
+  test('applyCommand sets commandBonusNextRound on the issuing ship only, not battle-wide', async ({ page }) => {
+    const { id0, id1 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().applyCommand(id, 'gunner_turret', 1)
+    }, id0)
+    const state = await page.evaluate((ids) => {
+      const ships = window.__ZUSTAND_BATTLE_STORE__.getState().ships
+      return {
+        ship0: ships.find((s) => s.id === ids.id0).commandBonusNextRound,
+        ship1: ships.find((s) => s.id === ids.id1).commandBonusNextRound,
+      }
+    }, { id0, id1 })
+    expect(state.ship0).toEqual({ role: 'gunner_turret', dm: 1 })
+    expect(state.ship1).toBeNull()
   })
 
-  test('applyLeadingFire(2) sets leadingFireDm = 2', async ({ page }) => {
-    await page.evaluate(() => {
-      window.__ZUSTAND_BATTLE_STORE__.getState().applyLeadingFire(2)
-    })
-    const dm = await page.evaluate(() =>
-      window.__ZUSTAND_BATTLE_STORE__.getState().leadingFireDm,
-    )
-    expect(dm).toBe(2)
-  })
-
-  test('applyLeadingFire is idempotent — keeps max value', async ({ page }) => {
-    await page.evaluate(() => {
-      const s = window.__ZUSTAND_BATTLE_STORE__.getState()
-      s.applyLeadingFire(2)
-      s.applyLeadingFire(1) // lower value must not overwrite
-    })
-    const dm = await page.evaluate(() =>
-      window.__ZUSTAND_BATTLE_STORE__.getState().leadingFireDm,
-    )
-    expect(dm).toBe(2)
-  })
-
-  test('leadingFireDm resets to 0 when round advances', async ({ page }) => {
+  test('commandBonusNextRound promotes to commandBonus only after the round advances', async ({ page }) => {
     const { id0, id1 } = await setupShips(page)
     await page.evaluate((ids) => {
       const s = window.__ZUSTAND_BATTLE_STORE__.getState()
-      s.applyLeadingFire(1)
-      // Seed initiative so advancePhase can cycle through to next round
+      s.applyCommand(ids.id0, 'gunner_turret', 2)
       s.setInitiativeOrder([ids.id0, ids.id1])
-      // Fast-forward through all phases to trigger buildNextRoundState
-      s.advancePhase() // setup → initiative (already in setup after gotoBattle)
     }, { id0, id1 })
-    // Manually trigger round advance via store
-    await page.evaluate(() => {
-      const s = window.__ZUSTAND_BATTLE_STORE__.getState()
-      // Drain actors then push through all phases
-      s.advanceActor(); s.advanceActor()  // drain manoeuvre actors in next phases
-    })
-    // Use startNextRound directly
-    await page.evaluate(() => {
-      const s = window.__ZUSTAND_BATTLE_STORE__.getState()
-      s.startNextRound?.()
-    })
-    const dm = await page.evaluate(() =>
-      window.__ZUSTAND_BATTLE_STORE__.getState().leadingFireDm,
-    )
-    expect(dm).toBe(0)
+    // Not active yet — this round's Manoeuvre/Attack already passed by the time it's issued
+    let ship0 = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id),
+    id0)
+    expect(ship0.commandBonus).toBeNull()
+
+    await page.evaluate(() => window.__ZUSTAND_BATTLE_STORE__.getState().startNextRound())
+    ship0 = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id),
+    id0)
+    expect(ship0.commandBonus).toEqual({ role: 'gunner_turret', dm: 2 })
+    expect(ship0.commandBonusNextRound).toBeNull()
   })
 
-  test('AttackModal step 3 shows Leading Fire row when dm > 0', async ({ page }) => {
-    const { id0 } = await setupShips(page)
-    await page.evaluate(() => {
-      window.__ZUSTAND_BATTLE_STORE__.getState().applyLeadingFire(1)
-    })
+  test('AttackModal step 3 shows Command row only for the ship that received it, targeting gunner_turret', async ({ page }) => {
+    const { id0, id1 } = await setupShips(page)
+    await page.evaluate((ids) => {
+      const s = window.__ZUSTAND_BATTLE_STORE__.getState()
+      s.applyCommand(ids.id0, 'gunner_turret', 1)
+      s.setInitiativeOrder([ids.id0, ids.id1])
+    }, { id0, id1 })
+    await page.evaluate(() => window.__ZUSTAND_BATTLE_STORE__.getState().startNextRound())
     await reachStep3(page, id0)
-    await expect(page.getByText('Leading Fire')).toBeVisible()
+    await expect(page.getByText('Command (Captain)')).toBeVisible()
   })
 })
 
@@ -247,102 +231,9 @@ test.describe('EW Countermeasures — ew_countermeasure action', () => {
   })
 })
 
-// === Deploy Sand ============================================================
-
-test.describe('Deploy Sand — deploySand', () => {
-  test.beforeEach(async ({ page }) => {
-    await clearAppState(page)
-    await gotoBattle(page)
-  })
-
-  test('deploySand increments sandArmourBonus by 1', async ({ page }) => {
-    const { id0 } = await setupShips(page)
-    await page.evaluate((id) => {
-      window.__ZUSTAND_BATTLE_STORE__.getState().deploySand(id)
-    }, id0)
-    const ship = await page.evaluate((id) =>
-      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
-    , id0)
-    expect(ship.sandArmourBonus).toBe(1)
-  })
-
-  test('deploySand twice gives sandArmourBonus = 2', async ({ page }) => {
-    const { id0 } = await setupShips(page)
-    await page.evaluate((id) => {
-      const s = window.__ZUSTAND_BATTLE_STORE__.getState()
-      s.deploySand(id)
-      s.deploySand(id)
-    }, id0)
-    const ship = await page.evaluate((id) =>
-      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
-    , id0)
-    expect(ship.sandArmourBonus).toBe(2)
-  })
-
-  test('sandArmourBonus resets to 0 at round end', async ({ page }) => {
-    const { id0 } = await setupShips(page)
-    await page.evaluate((id) => {
-      const s = window.__ZUSTAND_BATTLE_STORE__.getState()
-      s.deploySand(id)
-      s.startNextRound?.()
-    }, id0)
-    const ship = await page.evaluate((id) =>
-      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
-    , id0)
-    expect(ship.sandArmourBonus).toBe(0)
-  })
-})
-
-// === Point Defence — reduceSalvoCount =======================================
-
-test.describe('Point Defence — reduceSalvoCount', () => {
-  test.beforeEach(async ({ page }) => {
-    await clearAppState(page)
-    await gotoBattle(page)
-  })
-
-  async function injectPendingSalvo(page, attackerId, targetId) {
-    return page.evaluate((ids) => {
-      const store = window.__ZUSTAND_BATTLE_STORE__
-      const salvoId = crypto.randomUUID()
-      const current = store.getState()
-      // Use Zustand's public setState to merge — avoids importBattleState (File API dependency)
-      store.setState({
-        pendingMissileImpacts: [
-          ...current.pendingMissileImpacts,
-          { id: salvoId, attackerId: ids.attackerId, targetId: ids.targetId,
-            launchBand: 'Close', currentBand: 'Adjacent',
-            salvoSize: 4, salvoRemaining: 4, attackDmBonus: 0, flightRounds: 1, roundsToImpact: 0 },
-        ],
-      })
-      return salvoId
-    }, { attackerId, targetId })
-  }
-
-  test('reduceSalvoCount(id, 2) decrements salvoRemaining by 2', async ({ page }) => {
-    const { id0, id1 } = await setupShips(page)
-    const salvoId = await injectPendingSalvo(page, id0, id1)
-    await page.evaluate((id) => {
-      window.__ZUSTAND_BATTLE_STORE__.getState().reduceSalvoCount(id, 2)
-    }, salvoId)
-    const salvo = await page.evaluate((id) =>
-      window.__ZUSTAND_BATTLE_STORE__.getState().pendingMissileImpacts.find((m) => m.id === id)
-    , salvoId)
-    expect(salvo?.salvoRemaining).toBe(2)
-  })
-
-  test('reduceSalvoCount by more than count removes the salvo entirely', async ({ page }) => {
-    const { id0, id1 } = await setupShips(page)
-    const salvoId = await injectPendingSalvo(page, id0, id1)
-    await page.evaluate((id) => {
-      window.__ZUSTAND_BATTLE_STORE__.getState().reduceSalvoCount(id, 99)
-    }, salvoId)
-    const impacts = await page.evaluate(() =>
-      window.__ZUSTAND_BATTLE_STORE__.getState().pendingMissileImpacts
-    )
-    expect(impacts.find((m) => m.id === salvoId)).toBeUndefined()
-  })
-})
+// Deploy Sand removed entirely — not a 2300AD B3 mechanic (zero occurrences in
+// the source PDF). Point Defence moved to a per-drone reaction inside
+// DroneAttackModal — see e2e/08-drones.spec.js.
 
 // === Damage Control — hazards ===============================================
 

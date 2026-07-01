@@ -70,7 +70,7 @@ export async function addShipsToStore(page, ships = DEFAULT_SHIPS) {
           signature:       2,
           sensors:         { type: 'Basic Military', dm: 0 },
           computer:        { model: 'TL-10', bandwidth: 20 },
-          weapons:         [],
+          weapons:         def.weapons ?? [],
           software:        ['fire_control_1'],
           crew:            [],
           crewAssignments: {},
