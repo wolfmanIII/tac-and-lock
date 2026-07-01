@@ -17,7 +17,7 @@ const SECTIONS = [
   { id: 'reactions',  label: '— Reactions' },
   { id: 'actions',    label: '— Crew Actions' },
   { id: 'crits',      label: 'Critical Hits' },
-  { id: 'missiles',   label: 'Missiles' },
+  { id: 'missiles',   label: 'Drones / Missiles' },
   { id: 'boarding',   label: 'Boarding' },
   { id: 'signature',  label: 'Signature' },
   { id: 'undo-redo',  label: 'Undo / Redo' },
@@ -198,7 +198,7 @@ export function HelpScreen({ onBack } = {}) {
               ['Setup',      'Add ships to the battle via right-click → Add ship.'],
               ['Initiative', 'Opposed Tactics(naval) check — order fixed for the engagement.'],
               ['Manoeuvre',  'Each ship spends TAC Speed to approach or flee.'],
-              ['Attack',     'Each ship in initiative order fires or launches missiles.'],
+              ['Attack',     'Each ship in initiative order fires, launches drones, or resolves a drone attack.'],
               ['Actions',    'Each ship in initiative order performs one crew action.'],
             ]}
           />
@@ -208,7 +208,7 @@ export function HelpScreen({ onBack } = {}) {
         {/* SETUP */}
         <Section id="setup" title="Setup Phase">
           <p>Right-click the background → <span className="text-slate-200">Add ship</span>. Choose profile, faction, and initial range band.</p>
-          <p>Ships appear as bento cards grouped by faction. Each card shows hull bar, TAC Speed, armour, effective signature, weapons, critical tracks, and inbound missile ETA.</p>
+          <p>Ships appear as bento cards grouped by faction. Each card shows hull bar, TAC Speed, armour, effective signature, weapons, critical tracks, and inbound drone ETA.</p>
           <p>Right-click a card → context menu. Available actions depend on phase and initiative turn.</p>
           <Sub title="CONTEXT MENU GATING">
             <KV k="Ship Sheet"       v="Always available." />

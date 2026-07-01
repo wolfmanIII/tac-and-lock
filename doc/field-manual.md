@@ -1,6 +1,6 @@
 # Tac & Lock — Field Manual
 
-**Version 1.0.0** · 2300AD Space Combat Simulator
+**Version 1.1.0** · 2300AD Space Combat Simulator
 
 ---
 
@@ -16,7 +16,7 @@
 8. [Attack Step — Reactions](#8-attack-step--reactions)
 9. [Actions Step — Crew Actions](#9-actions-step--crew-actions)
 10. [Critical Hits](#10-critical-hits)
-11. [Missiles](#11-missiles)
+11. [Drones & Missiles](#11-drones--missiles)
 12. [Boarding](#12-boarding)
 13. [Signature](#13-signature)
 14. [Undo / Redo](#14-undo--redo)
@@ -94,7 +94,7 @@ Each combat round follows this sequence. The HUD shows the current round and pha
 | **Setup** | Add ships to the battle (right-click background → Add ship). |
 | **Initiative** | Roll opposed Tactics(naval) check — order fixed for the engagement. |
 | **Manoeuvre** | Each ship spends TAC Speed to approach or flee. |
-| **Attack** | Each ship in initiative order fires weapons or launches missiles. |
+| **Attack** | Each ship in initiative order fires weapons, launches drones, or resolves a drone's own Firing Solution once it reaches Close/Adjacent range. |
 | **Actions** | Each ship in initiative order performs one crew action. |
 
 At the end of Actions, the round counter increments and the sequence repeats from Manoeuvre.
@@ -111,7 +111,7 @@ Right-click the background → **Add ship**. A modal opens:
 | Faction | Players / NPC / Neutral — determines card colour coding. |
 | Initial Range Band | The starting distance from all other ships (usually Long). |
 
-Ships are shown as bento cards grouped by faction. Each card shows hull bar, TAC Speed, armour, effective signature, weapons, critical tracks, and inbound missile ETA.
+Ships are shown as bento cards grouped by faction. Each card shows hull bar, TAC Speed, armour, effective signature, weapons, critical tracks, and inbound drone ETA.
 
 Right-click a card to open the context menu. Available actions depend on phase and initiative turn.
 
@@ -187,6 +187,7 @@ Right-click a ship → **Attack…**
 | Sensor quality | Basic Military +0 / Improved +1 / Advanced +2 |
 | Sensor Time-lag | Adjacent +1 / Close +0 / Short −1 / Medium −2 / Long −3 / Very Long −4 / Distant −5 |
 | Sensor Lock (active) | +sensorLockDm |
+| Target evasion | evasionDm (negative — opposed Pilot check, see §8 Evade; applies here too, not just Step 3) |
 | Engineer assist | Routine (8+) Engineer(power) INT — adds Effect as DM |
 
 ### Step 2 — Pilot
@@ -209,11 +210,11 @@ Right-click a ship → **Attack…**
 | Effect from Step 2 | Positive Effect carries forward |
 | EW jamming | ewEffect (negative, applied to attacker) |
 | Sensor Lock | +sensorLockDm (applied on target) |
-| Leading Fire | +leadingFireDm (Captain action this round) |
+| Command (Captain) | +commandBonus, only if the Captain's Command from last round targeted `gunner_turret` (see §9) |
 | Weapon trait Accurate | +1 |
 | Weapon trait Slow | −2 |
-| Evasion | evasionDm (negative, defender reaction) |
-| Captain assist | Difficult (10+) Tactics(naval) INT |
+| Evasion | evasionDm (negative, defender reaction — see §8 Evade) |
+| Captain Tactics Assist | Optional inline roll, Difficult (10+) Tactics(naval) INT — Effect adds to this check only, distinct from Command and not persistent across rounds |
 
 **Hit = total ≥ 10. Effect = total − 10.**
 
@@ -221,7 +222,7 @@ Stationary targets (reaction drive off, in orbit): DM+2, damage doubled. // B3 p
 
 ### Damage
 
-Weapon damage is rolled and reduced by the target's Armour (+ any active sandArmourBonus from Deploy Sand).
+Weapon damage is rolled and reduced by the target's Armour.
 Net damage is applied to Hull Points.
 
 | Weapon trait | Effect |
@@ -236,19 +237,28 @@ Net damage is applied to Hull Points.
 
 The defender can declare reactions before each attack roll.
 
-### Evasive Action
+### Evade
 
-Declared before Step 3 (or at any reaction point). The defending ship spends **1 TAC Speed** to apply **DM−(Pilot skill + TAC Speed spent)** to the attack.
+Declared during the Manoeuvre Step (right-click → Manoeuvre… → EVADE 🎲), not the Attack Step itself — but its effect lasts through the whole round. **Opposed Pilot (DEX) check** against the enemy's own Pilot check (Step 2 of the Firing Solution). // B3 p.54
+
+| Evading pilot's Effect | Effect on all enemy Electronics(sensors) and Gunner checks |
+| ----------------------- | ------------------------------------------------------------ |
+| Effect 1–4 | DM−1 |
+| Effect 5+ | DM−2 |
+| Effect ≤ −5 | Enemy gains DM+1 |
+
+This is **not** "remaining TAC Speed × Pilot skill" as in the Traveller CRB — it's an active opposed check. `AttackModal` reads the result automatically from `target.evasionDm` in both Step 1 and Step 3; the GM can still override manually if needed.
 
 ### Point Defence
 
-Declared against a missile salvo arriving at this ship. Gunner makes a **Difficult (10+) Gunner** check. On success, **Effect missiles** (min 1) are removed from the salvo. If count reaches 0, the salvo is destroyed.
+Declared in the **Drone Attack** modal, against **one incoming drone/missile at a time** — not an abstract salvo. **Difficult (10+) Gunner (DEX)** check.
 
-Quinn Type 17 PDC has the **Point Defence** trait: DM+2 vs missiles, drones, and fighters.
+| Weapon type | DM |
+| ----------- | -- |
+| Conventional mount | DM−2 |
+| PDC (e.g. Quinn Type 17) | DM+4 |
 
-### Deploy Sand
-
-Declared against a laser attack. **Automatic — no roll required.** Each sandcaster deployed adds **+1 Armour** against that one attack. The bonus is consumed immediately after the attack resolves.
+Success destroys that specific drone before it can attack. A PDC-equipped ship can attempt up to TL−4 separate intercepts per round (GM-tracked, not enforced automatically).
 
 ---
 
@@ -262,7 +272,8 @@ Select the action type, choose applicable target/options, roll (if required), th
 
 | Action | Check | Effect |
 | ------ | ----- | ------ |
-| **Leading Fire** | Average (8+) Tactics(naval) INT | All gunners on this ship gain DM+1 this round. Effect ≥ 4 → DM+2. Resets at round end. |
+| **Commands** | Average (8+) Leadership INT/SOC | Order one crew role. Effect 1–4 → DM+1, Effect 5–6 → DM+2 to their actions. Declared in this round's Actions Step, activates for the *following* round (Manoeuvre + Attack + Actions) — the current round's Manoeuvre/Attack steps have already passed. Auto-applied if targeting `gunner_turret` (Step 3 Gunner check) or `pilot` (Evade roll); for other roles the GM adds it manually. |
+| **Tactics Assist** | Difficult (10+) Tactics(naval) INT | Optional inline roll inside the Attack modal's Step 3 — adds its Effect to that single Gunner check only. Distinct from Commands, stacks with it. |
 
 ### Engineer
 
@@ -282,11 +293,11 @@ Select the action type, choose applicable target/options, roll (if required), th
 
 ### Gunner
 
+Point Defence moved to a reaction inside the Drone Attack modal — see §8. It is no longer a general Actions Step crew action, since it must be declared against one specific incoming drone, not chosen freely from the Actions menu.
+
 | Action | Check | Effect |
 | ------ | ----- | ------ |
-| **Point Defence** | Difficult (10+) Gunner DEX | Pick an incoming salvo. Effect missiles (min 1) destroyed. Salvo removed if count = 0. |
-| **Deploy Sand** | Automatic | Adds +1 sandArmourBonus to this ship. Applied vs the next incoming attack, then consumed. |
-| **Evasive Action** | Automatic | Spend 1 TAC Speed → apply evasionDm to attacks this round. |
+| **Evasive Action** | Automatic | Spend 1 TAC Speed to reserve it for this round's Evade (see §8). |
 
 ### Mechanic / Engineer
 
@@ -337,28 +348,39 @@ A successful **Damage Control** action removes one hazard.
 
 ---
 
-## 11. Missiles
+## 11. Drones & Missiles
+
+2300AD B3 has no "salvo" abstraction — each drone/missile is an **individually piloted unit** that closes range on its own TAC Speed and resolves its own 3-step Firing Solution, exactly like a ship. // B3 p.55–56, p.61
 
 ### Launching
 
-Right-click attacker → **Launch Missiles…** Select a target and salvo size (1–6 missiles).
+Right-click attacker → **Launch Drone…** Pick a target, a weapon (Ritage-1, Ritage-2, 'Whiskey', or a vehicle-sourced missile), and how many separate units to launch.
 
-The salvo enters the **Missile Tracker** with estimated rounds to impact (based on current range band).
-Each round the salvo advances one band closer to the target.
+Each unit is tracked independently in the **Drone Tracker** with its own TAC Speed and Endurance (maximum rounds before it goes inert if it never reaches its target). Each round it closes one range band toward its target.
 
-### In-Flight Countermeasures
+| Drone | TL | Damage | TAC Speed | Endurance | Traits |
+| ----- | -- | ------ | --------- | --------- | ------ |
+| Ritage-1 | 11 | 1D | 3 | 60 rounds (6h) | Smart |
+| Ritage-2 | 12 | 5D | 4 | 40 rounds (4h) | Smart, Blast 6, Radiation — single-shot |
+| 'Whiskey' | 12 | 1D laser / 3D detonation | 4 | 20 rounds (2h) | Smart; detonation mode is single-use |
 
-| Method | Who | Effect |
-| ------ | --- | ------ |
-| **Point Defence** (reaction) | Defender, Attack step | Gunner check — destroys Effect missiles (min 1) from an arriving salvo |
-| **Point Defence** (crew action) | Defender, Actions step | Same mechanic — picks any in-flight salvo targeting this ship |
-| **Electronic Warfare** | Sensor operator, Actions step | Increases target Signature (makes salvo easier to intercept); does not directly destroy missiles |
+### Resolving an Attack
 
-### Impact Resolution
+Once a ship's own drone reaches Close/Adjacent range, right-click that ship → **Resolve drone attack…** (or click the drone in the Drone Tracker). This opens the same 3-step Firing Solution as a normal ship attack:
 
-When a salvo reaches Adjacent range, a **⚡ MISSILE IMPACT** modal opens.
+| Step | Who | Check | DM |
+| ---- | --- | ----- | -- |
+| 1 — Sensor | Sensor hand-off (no penalty) or Remote Pilot self-generated (Piloting action, DM−2) | Very Difficult (12+) | +Signature, sensor quality, time-lag |
+| 2 — Position Vessel | Remote Pilot | Difficult (10+), Electronics(remote ops) DEX | +drone TAC Speed, +carry from Step 1 |
+| 3 — Gunner | — | Difficult (10+) | +Fire Control, +range DM at drone's current band, +carry from Step 2, +target's reactive DMs |
 
-Roll 2D + attack DM vs 8+. On a hit, roll weapon damage − target Armour.
+### Point Defence
+
+Resolved inline, at the top of the same modal, before the Firing Solution — one drone at a time. See §8. Success destroys that drone before it can attack.
+
+### Impact
+
+Damage is rolled the same way as a normal weapon hit (Effect does **not** add to damage — B3 p.56 note). After the attack resolves (hit or miss), the drone is consumed. All canonical drones are treated as single-shot in the current model; Ritage-1's multi-shot capacity mentioned in some sources is not yet implemented pending clearer confirmation of the exact mechanic.
 
 ---
 
@@ -464,4 +486,4 @@ Use **↑ EXPORT** and **↓ IMPORT** in the profile panel to share or back up p
 
 ---
 
-*Tac & Lock v1.0.0 — © 2300AD: Mongoose Publishing. VTT tool for personal use at the gaming table.*
+*Tac & Lock v1.1.0 — © 2300AD: Mongoose Publishing. VTT tool for personal use at the gaming table.*
