@@ -160,6 +160,8 @@ export function AttackModal({ payload, onClose }) {
   const [step3Result,   setStep3Result]   = useState(null)
   const [damageResult,  setDamageResult]  = useState(null)
   const [applied,       setApplied]       = useState(false)
+  // Captain Tactics assist — optional, specific to this single Gunner check // 2300AD B3 p.54, p.56
+  const [captainAssistResult, setCaptainAssistResult] = useState(null)
 
   const target  = ships.find((s) => s.id === targetId)
   const bandKey = attacker && target ? pairKey(attacker.id, target.id) : null
@@ -226,6 +228,16 @@ export function AttackModal({ payload, onClose }) {
 
   const step2CarryEffect = step2Result ? Math.max(0, step2Result.effect) : 0
 
+  // Captain Tactics assist DM — only counts on a successful roll, using its Effect (min 0) // B3 p.54, p.56
+  const captainAssistDm = captainAssistResult?.success ? Math.max(0, captainAssistResult.effect) : 0
+
+  const captainAssistDms = useMemo(() => {
+    if (!attacker) return { skill: 0, intDm: 0, total: 0 }
+    const skill  = getAssignedSkill('captain', attacker.crewAssignments, attacker.crew)
+    const intDm  = getCharDM(getAssignedCharacteristic('captain', attacker.crewAssignments, attacker.crew))
+    return { skill, intDm, total: skill + intDm }
+  }, [attacker])
+
   const step3Dms = useMemo(() => {
     if (!attacker || !weapon) return { rows: [], total: 0 }
     const gunnerSkill    = getAssignedSkill('gunner_turret', attacker.crewAssignments, attacker.crew)
@@ -241,7 +253,7 @@ export function AttackModal({ payload, onClose }) {
     const sensorLockDm = target?.sensorLockDm ?? 0
     // Captain's Command from a previous round, if it targeted this ship's gunner // B3 p.54
     const commandDm = attacker.commandBonus?.role === 'gunner_turret' ? attacker.commandBonus.dm : 0
-    const total = gunnerSkill + intDm + fireControlDm + rangeDm + step2CarryEffect + evasionDm + weaponTraitDm + jammerPenalty + commandDm + sensorLockDm
+    const total = gunnerSkill + intDm + fireControlDm + rangeDm + step2CarryEffect + evasionDm + weaponTraitDm + jammerPenalty + commandDm + sensorLockDm + captainAssistDm
     return {
       rows: [
         ['Gunner skill',      gunnerSkill],
@@ -254,10 +266,11 @@ export function AttackModal({ payload, onClose }) {
         ...(jammerPenalty !== 0 ? [['EW jamming',       jammerPenalty]] : []),
         ...(sensorLockDm  !== 0 ? [['Sensor lock',      sensorLockDm]] : []),
         ...(commandDm     !== 0 ? [['Command (Captain)', commandDm]] : []),
+        ...(captainAssistDm !== 0 ? [['Tactics assist',  captainAssistDm]] : []),
       ],
       total,
     }
-  }, [attacker, target, weaponId, band, step2CarryEffect, evasionDm, weapon, ships])
+  }, [attacker, target, weaponId, band, step2CarryEffect, evasionDm, weapon, ships, captainAssistDm])
 
   // ── Roll handlers ──────────────────────────────────────────────────────────
 
@@ -283,6 +296,18 @@ export function AttackModal({ payload, onClose }) {
 
   function manualStep2({ dice, total }) {
     setStep2Result({ dice, base: dice[0] + dice[1], total, effect: total - 10 })
+  }
+
+  function rollCaptainAssist() {
+    const dice   = roll2D6()
+    const base   = dice[0] + dice[1]
+    const total  = base + captainAssistDms.total
+    const effect = total - 10  // Difficult
+    setCaptainAssistResult({ dice, base, total, effect, success: total >= 10 })
+  }
+
+  function manualCaptainAssist({ dice, total }) {
+    setCaptainAssistResult({ dice, base: dice[0] + dice[1], total, effect: total - 10, success: total >= 10 })
   }
 
   function rollStep3() {
@@ -553,6 +578,22 @@ export function AttackModal({ payload, onClose }) {
           </div>
         )}
 
+        {/* Captain Tactics assist — optional, before the main Gunner roll // 2300AD B3 p.54, p.56 */}
+        {!step3Result && (
+          <div className="bg-slate-800/40 border border-slate-700 rounded px-3 py-2 space-y-2">
+            <p className="font-mono text-[10px] text-slate-500 tracking-widest uppercase">
+              Captain assist (optional) · Difficult (10+) · Tactics (naval) · INT
+            </p>
+            <RollBlock
+              dm={captainAssistDms.total}
+              onRoll={rollCaptainAssist}
+              onManual={manualCaptainAssist}
+              result={captainAssistResult}
+              target={10}
+            />
+          </div>
+        )}
+
         <DmBreakdown rows={step3Dms.rows} total={step3Dms.total} />
 
         <RollBlock
@@ -585,7 +626,7 @@ export function AttackModal({ payload, onClose }) {
 
         {step3Result && !hit && (
           <div className="flex gap-2 pt-1">
-            <button onClick={() => { setStep(STEP_PILOT); setStep3Result(null); setDamageResult(null) }}
+            <button onClick={() => { setStep(STEP_PILOT); setStep3Result(null); setDamageResult(null); setCaptainAssistResult(null) }}
               className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-600 hover:border-slate-500 rounded transition-colors">
               ← BACK
             </button>
@@ -598,7 +639,7 @@ export function AttackModal({ payload, onClose }) {
 
         {!step3Result && (
           <div className="flex gap-2 pt-1">
-            <button onClick={() => { setStep(STEP_PILOT); setStep3Result(null); setDamageResult(null) }}
+            <button onClick={() => { setStep(STEP_PILOT); setStep3Result(null); setDamageResult(null); setCaptainAssistResult(null) }}
               className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-600 hover:border-slate-500 rounded transition-colors">
               ← BACK
             </button>
