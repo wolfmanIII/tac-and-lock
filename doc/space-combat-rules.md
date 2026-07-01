@@ -91,6 +91,7 @@ Può esserci **un solo Pilot e un solo Captain**; tutti gli altri ruoli ammetton
 | **Sensor Operator** | Sensori, guerra elettronica |
 | **Turret Gunner** | Uno per torretta |
 | **Bay Gunner** | Uno per weapon bay |
+| **Remote Pilot** | Pilota droni e missili — Electronics (remote ops) // B3 p.53 |
 | **Marine** | Abbordaggio / difesa da abbordaggio |
 | **Passenger** | Nessuna azione di combattimento |
 
@@ -133,8 +134,8 @@ L'attacco è una **catena di check**. Ogni Effect positivo si trasferisce come D
 
 **Step 3 — Gunner**: Difficult (10+) Gunner **INT** — target 10+
 - DM: +Fire Control software rating; +Effect accumulato dagli step 1–2; +weapon trait (Accurate +1, Slow −2)
-- DM aggiuntivi automatici: +`sensorLockDm` (target è sotto Sensor Lock); −`ewEffect` (propria nave è sotto EW jam); +`leadingFireDm` (Captain ha usato Leading Fire questo round)
-- Assist Captain (opzionale): Difficult (10+) Tactics (naval) **INT**
+- DM aggiuntivi automatici: +`sensorLockDm` (target è sotto Sensor Lock); −`ewEffect` (propria nave è sotto EW jam); +evasione bersaglio (applicata anche allo Step 1, non solo qui — B3 p.54); +`commandBonus` se il Capitano ha dato un Command a `gunner_turret` nel round precedente (§12)
+- Assist Captain (opzionale, distinto dal Command): Difficult (10+) Tactics (naval) **INT** — roll inline nello Step 3, il suo Effect si somma solo a quel singolo tiro
 
 > Bersagli stazionari (reaction drive spento, in orbita): DM+2 e **danno doppio**. — B3 p.56
 
@@ -406,11 +407,11 @@ Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). Tirare sul
 
 ### Point Defence — Gunner (turret/PDC)
 
-**Difficult (10+) Gunner (DEX)** — B3 p.55
+**Difficult (10+) Gunner (DEX)** — B3 p.55, rinforzato p.56
 
 - DM−2 per missili e droni sotto 10 tonnellate (arma non PDC)
-- PDC (es. Quinn Type 17): DM+4 invece di DM−2
-- Effect = unità distrutte dal salvo
+- PDC (es. Quinn Type 17): DM+4 invece di DM−2 (confermato indipendentemente su p.55 e p.56 — non va confuso con il trait arma "Point Defence" DM+2, che si applica invece a un attacco normale contro missili/droni/caccia, non a questa reazione)
+- Colpisce **un drone/missile alla volta** — non un intero salvo con un tiro (B3 non descrive un concetto di "salvo"; vedi §13). Una PDC può tentare fino a TL−4 intercettazioni distinte per round (p.56)
 - Solo una volta per round per gunner; arma usata non può attaccare nello stesso round
 
 ---
@@ -419,9 +420,10 @@ Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). Tirare sul
 
 ### Captain
 
-- **Commands**: Routine (8+) Leadership **INT o SOC**. Effect 1–4: DM+1 a un membro crew quel round. Effect 5–6: DM+2. Crew che disobbedisce: DM−1.
-- **Tactics** (assist al Gunner): come da Firing Solution step 3 — Difficult (10+) Tactics (naval) **INT**.
-- **Leading Fire** — Average (8+) Tactics (naval) **INT**: coordina tutti i gunner. Successo: tutti gli attacchi di questa nave guadagnano DM+1 per questo round. Effect ≥ 4: DM+2. Il bonus è cumulativo con altri DM. Reset a fine round. // B3 p.55
+- **Commands**: Average (8+) Leadership **INT o SOC**. Effect 1–4: DM+1 a un membro crew scelto (un ruolo). Effect 5–6: DM+2. Crew che disobbedisce: DM−1. Dichiarato durante l'Actions Step, si attiva per il round **successivo** (Manoeuvre + Attack + Actions), non quello corrente — quegli step sono già passati quando l'azione diventa disponibile. Salvato per-nave come `commandBonusNextRound` → promosso a `commandBonus` all'inizio del round dopo (stesso pattern di `initiativeBonusNextRound`). Applicato automaticamente se il target è `gunner_turret` (AttackModal) o `pilot` (ManoeuvreModal evasione); per gli altri ruoli il GM lo somma a mano.
+- **Tactics** (assist al Gunner): come da Firing Solution step 3 — Difficult (10+) Tactics (naval) **INT**. Roll opzionale inline nello Step 3 dell'AttackModal, distinto da Commands: il suo Effect si somma solo a quel singolo tiro Gunner, non persiste tra round.
+
+> Nota: "Leading Fire" (Tactics naval, bonus a tutti gli attacchi della nave, DM battle-wide) non è una regola B3 — non compare nel manuale a p.54. Era un mix homebrew mai verificato contro il manuale, sostituito da Commands + Tactics assist sopra.
 
 ### Engineer
 
@@ -441,21 +443,14 @@ Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). Tirare sul
 
 ### Point Defence — Gunner (turret/PDC)
 
-**Reaction — Difficult (10+) Gunner (DEX)** // B3 p.55
+**Reaction — Difficult (10+) Gunner (DEX)** // B3 p.55–56
 
-- Si dichiara appena prima che un salvo di missili impatti.
-- Successo: **Effect missili rimossi dal salvo** (min 1). PDC (Quinn Type 17): DM+4; armi non-PDC vs missili < 10 ton: DM−2.
-- Il salvo è aggiornato automaticamente (`reduceSalvoCount`); se il conteggio scende a 0 il salvo viene cancellato.
-- Un gunner può fare point defence **una volta per round**; l'arma usata non può attaccare nello stesso round.
+- Si dichiara nel `DroneAttackModal`, prima o al posto della risoluzione dell'attacco, contro **un drone/missile specifico alla volta** — non un intero salvo con un tiro (B3 non ha un concetto di "salvo"; ogni drone/missile è un'unità pilotata individualmente, vedi §13).
+- Successo: `interceptDrone(droneId)` distrugge quel drone.
+- PDC (Quinn Type 17): DM+4; armi non-PDC vs missili/droni < 10 ton: DM−2 (`getPointDefenceDm`, `utils/combat.js`).
+- Un gunner può fare point defence **una volta per round**; l'arma usata non può attaccare nello stesso round. Una PDC può tentare fino a TL−4 intercettazioni distinte per round (GM-tracked, non enforced automaticamente).
 
-### Deploy Sand — Gunner
-
-**Reaction — Automatico (no roll)** // B3 p.55
-
-- Si dichiara appena prima che un attacco laser venga risolto.
-- Ogni sandcaster aggiunge **+1 Armour** vs quell'attacco (si accumula con più sandcaster).
-- Il bonus è salvato come `sandArmourBonus` sulla nave difensore e **consumato automaticamente** al termine dell'AttackModal (dopo rollDamage).
-- Reset a 0 a fine round se non consumato.
+> Nota: "Deploy Sand"/sandcaster non è una regola 2300AD B3 — ricerca a testo pieno del manuale (114 pagine) non trova alcuna occorrenza di "sand". Era un'importazione integrale dal Traveller CRB, che la gerarchia regole del progetto autorizza solo per le tabelle di crit interno e i weapon traits, non per meccaniche intere. Rimosso.
 
 ### Sensor Operator
 
@@ -522,50 +517,36 @@ Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). Tirare sul
 
 ---
 
-## 13. Combattimento Missilistico
+## 13. Combattimento Droni/Missili — 2300AD B3 p.55–56, p.61
+
+> Ricerca a testo pieno del manuale (114 pagine, `pdftotext`): **zero occorrenze** di "salvo". Missili e droni sono **unità pilotate a distanza che eseguono la Firing Solution completa a 3 step**, non un "lancia e dimentica, un tiro all'impatto" con bonus per missile rimanente (quel modello è preso dal Traveller CRB p.169 e non corrisponde a B3). Vedi `doc/drone-combat-redesign-spec.md` per l'analisi completa.
 
 ### Lancio
 
-- Missili verso bersagli a **Adjacent o Close**: perdono il trait **Smart**
-- Si lanciano in **salvo** (tutti i missili vs singolo bersaglio nello stesso round)
-- I missili raggiungono il bersaglio dopo un numero di round dipendente dalla distanza di lancio:
+- Ogni drone/missile è un'**unità individuale** (`launchDrone`) — lanciarne N significa creare N unità distinte, non un contatore di salvo.
+- Statistiche canoniche (p.61): Ritage-1 (TAC Speed 3, Endurance 6h = 60 round), Ritage-2 (TAC Speed 4, Endurance 4h = 40 round, single-shot), 'Whiskey' (TAC Speed 4, Endurance 2h = 20 round, batteria ripetibile o detonazione single-use).
+- Ogni round, il drone si avvicina di una fascia verso il bersaglio (come il Manoeuvre Step di una nave, semplificato a "chiude sempre alla massima velocità" — vedi `doc/drone-combat-redesign-spec.md` §2.3), finché non raggiunge Close/Adjacent (fascia d'ingaggio) o supera la propria Endurance (va inerte).
 
-| Range al lancio | Round all'impatto |
-| --- | --- |
-| Adjacent | 1 round |
-| Close | 1 round |
-| Short | 2 round |
-| Medium | 3 round |
-| Long | 4 round |
-| Very Long | 5 round |
-| Distant | 6 round |
+### Firing Solution del drone — B3 p.55–56
 
-Dopo 10 round senza impatto: missili esauriti, diventano inerti.
+**Step 1 — Sensor/Firing Solution generation**: due opzioni —
+- **Hand-off** da un Sensor Operator di una nave/drone sensore vicino: nessuna penalità aggiuntiva; DM−1 se la piattaforma sensori è a Long range o oltre (lightspeed lag).
+- **Self-generated**: il Remote Pilot della nave lanciante usa un'azione di Piloting al posto di Electronics(sensors), **DM−2** al check. Stesso target 12+ in entrambi i casi.
 
-### Rilevare il lancio
+**Step 2 — Position Vessel**: Remote Pilot, **Electronics (remote ops) DEX**, Difficult (10+), +TAC Speed del drone, +carry Effect Step 1. Droni hanno DM+2 fisso a questo check (subject to comms lag); caccia pilotati <100 ton hanno DM+1 (semplificazione: non ancora automatizzato).
 
-- Routine (6+) Electronics (sensors) alla nave che riceve (se il lanciatore è già rilevato)
-- Average (8+) se il lanciatore non è ancora stato rilevato
-- DM+1 per ogni 10 missili nel salvo (max DM+6)
-- Missili non rilevati: Average (8+) all'inizio di ogni round successivo
+**Step 3 — Gunner**: Difficult (10+), +Fire Control della nave lanciante, +range DM alla fascia corrente del drone, +carry Effect Step 2, +DM reattivi del bersaglio (evasione, sensor lock, EW).
 
 ### Contromisure
 
-- **Electronic Warfare**: Difficult (10+) Electronics (sensors); Effect = missili rimossi dal salvo
-- **Fuga**: aumentare la fascia di distanza (raro, guadagna tempo per EW o jump)
-- **Point Defence**: Gunner (turret) check appena prima dell'impatto
-
-### Attacco dei missili
-
-- Formula: nessun Gunner skill, nessun modificatore di range
-- **DM+1 per ogni missile rimanente nel salvo**
-- Smart: usa TL del missile o della nave lanciante, il più alto
-- Missili da Distant range: DM-2 all'attacco
+- **Point Defence**: vedi §11/§12 — intercetta **un drone alla volta**, non un intero salvo.
+- **Electronic Warfare**: Difficult (10+) Electronics (sensors) contro il sensor operator che fornisce l'hand-off (non ancora automatizzato nel drone attack modal).
+- **Fuga**: aumentare la fascia di distanza (raro, guadagna tempo).
 
 ### Impatto
 
-- Danno: roll danno singolo missile; l'Effect del check **non si somma al danno** (come per le armi normali — B3 p.56 nota)
-- Ogni missile nel salvo che supera la PD può colpire; roll separato per missile se necessario (semplificazione: 1 roll per salvo)
+- Danno: roll danno singolo (`rollDamage`, con `detonationMode` per Whiskey se il GM sceglie la modalità detonazione). L'Effect del check **non si somma al danno** (come per le armi normali — B3 p.56 nota).
+- Dopo l'attacco (hit o miss), il drone viene consumato (`detonateDrone`) — tutti i droni canonici attuali sono warhead single-shot nella modellazione corrente; vedi `doc/drone-combat-redesign-spec.md` §3 per la nota sulla possibile natura multi-shot di Ritage-1/Whiskey batteria, non ancora implementata per mancanza di conferma testuale precisa.
 
 ---
 
@@ -619,8 +600,10 @@ Le statistiche rilevanti per il combattimento spaziale:
 | Step 2 | Pilot | Pilot | **DEX** |
 | Step 3 | Gunner | Gunner | **INT** |
 | Point Defence | Gunner | Gunner | **DEX** |
+| Commands (target) | qualsiasi ruolo | — | — |
 | Captain assist (step 3) | Captain | Tactics (naval) | **INT** |
 | Engineer assist | Engineer | Engineer (power) | **INT** (step 1) / **INT** (step 2) |
+| Drone Step 2 (Position Vessel) | Remote Pilot | Electronics (remote ops) | **DEX** |
 
 ### Software rilevanti per il combattimento — 2300AD B3 p.44
 

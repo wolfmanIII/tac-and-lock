@@ -243,7 +243,7 @@ Come Trav2022 CRB p.158–159, con queste sostituzioni:
 11. **Strict Scope**: Stay within discussed scope. Do not add extra features unless requested.
 12. **Tailwind v4 Syntax**: Canonical class syntax — `(--var)` not `[var(--var)]`, `bg-linear-to-t` not `bg-gradient-to-t`. No `tailwind.config.js` — use CSS `@theme` for custom tokens.
 13. **No External State Libraries**: Do not introduce Redux, Jotai, Context-based state — Zustand only.
-14. **Game Rules Fidelity**: Tutti i calcoli meccanici (DM, danno, TAC Speed, range bands, critical hits) devono corrispondere a **2300AD B3 p.52–62** come fonte primaria, con Trav2022 CRB usato solo per tabelle crit interno (p.158–159) e weapon traits (p.75). Segnalare qualsiasi ambiguità prima di implementare. Software validi in 2300AD: `stutterwarp_control`, `fire_control_1/2/3`, `auto_repair_1/2`, `operations`, `intellect`, `archive` — NON `manoeuvre` o `evade_N`. Funzioni chiave in `utils/combat.js` già implementate: `getWeaponTraitAttackDm(traits)` (Accurate +1, Slow −2 all'attacco), `computeEffectiveSignature(ship)` (firma effettiva con tutti i modificatori dinamici B3 p.57), `computeAttackDMs(params)` (include weaponTraitDm), `rollDamage(weaponId, count, armour)` (Advanced/Obsolete per die). **Tutte le azioni Actions Phase sono implementate** in `store/battleStore.js` e `ActionModal.jsx`: `applySensorLock` → `sensorLockDm = max(1, effect)` su bersaglio; `applyEW` → `ewEffect = -max(1, effect)` su jammatore + `ewTarget`; `applyLeadingFire(dm)` → `leadingFireDm` a livello battaglia (max 2); `deploySand(shipId)` → `sandArmourBonus += 1` (consumato da AttackModal dopo rollDamage); `reduceSalvoCount(missileId, amount)` → riduce `salvoRemaining` in `pendingMissileImpacts`, rimuove se 0; `addHazard(shipId, label)` / `removeHazard(shipId, hazardId)` → `ship.hazards[]` GM-managed (ShipDetailModal). Boarding: `boardingDmNextRound` carry-over su nave vincitrice, reset a fine round. `updateShip(shipId, { ewTarget: null, ewEffect: 0 })` per cancellare un jam.
+14. **Game Rules Fidelity**: Tutti i calcoli meccanici (DM, danno, TAC Speed, range bands, critical hits) devono corrispondere a **2300AD B3 p.52–62** come fonte primaria, con Trav2022 CRB usato solo per tabelle crit interno (p.158–159) e weapon traits (p.75). Segnalare qualsiasi ambiguità prima di implementare — verificare contro il PDF sorgente in `doc/`, non fidarsi della sola documentazione derivata. Software validi in 2300AD: `stutterwarp_control`, `fire_control_1/2/3`, `auto_repair_1/2`, `operations`, `intellect`, `archive` — NON `manoeuvre` o `evade_N`. Funzioni chiave in `utils/combat.js` già implementate: `getWeaponTraitAttackDm(traits)` (Accurate +1, Slow −2 all'attacco), `getPointDefenceDm(traits)` (DM+4 armi PDC / DM−2 non-PDC per l'azione di intercettazione, distinto dal trait "Point Defence" DM+2 — B3 p.55 + p.56), `computeEffectiveSignature(ship)` (firma effettiva con tutti i modificatori dinamici B3 p.57), `computeAttackDMs(params)` (include weaponTraitDm), `rollDamage(weaponId, count, armour, overrides?)` (Advanced/Obsolete per die; `overrides` per warhead alternativi come Whiskey detonation mode). **Tutte le azioni Actions Phase sono implementate** in `store/battleStore.js` e `ActionModal.jsx`: `applySensorLock` → `sensorLockDm = max(1, effect)` su bersaglio; `applyEW` → `ewEffect = -max(1, effect)` su jammatore + `ewTarget`; `applyCommand(shipId, role, dm)` → `commandBonusNextRound` per-nave, promosso a `commandBonus` al round successivo (stesso pattern di `initiativeBonusNextRound` — B3 p.54, sostituisce il precedente "Leading Fire" non canonico); `addHazard(shipId, label)` / `removeHazard(shipId, hazardId)` → `ship.hazards[]` GM-managed (ShipDetailModal). Combattimento droni/missili: `launchDrone(ownerId, targetId, weaponId)` crea un'unità individuale (nessun concetto di "salvo" — B3 p.55–56); `interceptDrone(droneId)` risolve Point Defence uno-a-uno; `detonateDrone(droneId)` consuma l'unità dopo l'attacco (hit o miss). Boarding: `boardingDmNextRound` carry-over su nave vincitrice, reset a fine round. `updateShip(shipId, { ewTarget: null, ewEffect: 0 })` per cancellare un jam.
 
 ## CRITICAL RULES
 
@@ -270,16 +270,16 @@ src/
 │   │   └── useProfileImport.js   ← Hook: import profiles from file
 │   ├── battle/
 │   │   ├── BattleView.jsx        ← Layout principale: fascie + bento cards per nave
-│   │   ├── ShipBentoCard.jsx     ← Card nave: hull bar, TAC Speed, SIG effettiva, critici, missili ETA
-│   │   └── MissileTracker.jsx    ← Salvi missili in volo con round all'impatto
+│   │   ├── ShipBentoCard.jsx     ← Card nave: hull bar, TAC Speed, SIG effettiva, critici, droni ETA
+│   │   └── DroneTracker.jsx      ← Droni/missili individuali in volo o in range (no salvo)
 │   ├── modals/
 │   │   ├── Modal.jsx             ← Generic modal wrapper
 │   │   ├── ShipProfileModal.jsx  ← Crea/modifica profilo nave
 │   │   ├── AddShipModal.jsx      ← Aggiunge nave alla battaglia (scegli fascia iniziale)
-│   │   ├── ManoeuvreModal.jsx    ← Manovra: approach/flee + costo thrust per coppia
-│   │   ├── AttackModal.jsx       ← Risoluzione attacco + Reactions panel
-│   │   ├── MissileLaunchModal.jsx← Lancio salvo + stepper count
-│   │   ├── MissileImpactModal.jsx← Impatto salvo: attacco + danno
+│   │   ├── ManoeuvreModal.jsx    ← Manovra: approach/flee + costo thrust per coppia + Evade
+│   │   ├── AttackModal.jsx       ← Risoluzione attacco (Firing Solution nave) + Captain Tactics Assist
+│   │   ├── DroneLaunchModal.jsx  ← Lancio drone/missile individuale (no salvo)
+│   │   ├── DroneAttackModal.jsx  ← Firing Solution drone (hand-off/self, remote pilot, gunner) + Point Defence uno-a-uno
 │   │   ├── CriticalHitModal.jsx  ← Estrazione location + applicazione effetti severity
 │   │   ├── ActionModal.jsx       ← Azioni crew (Overload, Repair, EW, Sensor Lock, ecc.)
 │   │   ├── CrewAssignmentModal.jsx← Assegna crew a ruoli
@@ -289,7 +289,7 @@ src/
 │   │   ├── HUD.jsx               ← Round/fase/iniziativa overlay + exit confirm
 │   │   ├── BattleLog.jsx         ← Log eventi collassabile, color-coded
 │   │   ├── PhaseTracker.jsx      ← Step corrente (Manoeuvre/Attack/Actions)
-│   │   ├── ContextMenu.jsx       ← Right-click menu (phase-gated: Attack/Missiles solo in Attack phase, Action solo in Actions phase)
+│   │   ├── ContextMenu.jsx       ← Right-click menu (phase-gated: Attack/Launch drone solo in Attack phase, Action solo in Actions phase; Resolve drone attack per drone propri in range)
 │   │   ├── Tooltip.jsx           ← Portal-based tooltip generico
 │   │   ├── ErrorBoundary.jsx     ← Global React error boundary
 │   │   └── LegalFooter.jsx       ← Disclaimer Mongoose Publishing fisso
@@ -300,18 +300,17 @@ src/
 │   └── useAutosave.js            ← IndexedDB autosave + restore on mount
 ├── store/
 │   ├── profilesStore.js          ← Ship profiles (CRUD + import/export JSON)
-│   ├── battleStore.js            ← Stato battaglia (navi, fascia, missili, round, fase, leadingFireDm, undo/redo)
+│   ├── battleStore.js            ← Stato battaglia (navi, fascia, drones[] individuali, round, fase, commandBonus, undo/redo)
 │   └── uiStore.js                ← Modal open state, nave selezionata, context menu
 ├── utils/
-│   ├── combat.js                 ← getWeaponTraitAttackDm, computeEffectiveSignature, computeAttackDMs, rollDamage, crits
-│   ├── rangeBands.js             ← Logica fascie: thrust cost, movement, pairKey, basicBandPool
-│   ├── missiles.js               ← Lancio, round all'impatto, contromisure, EW
-│   ├── crew.js                   ← Crew helpers (getCrewSkill, role assignment)
+│   ├── combat.js                 ← getWeaponTraitAttackDm, getPointDefenceDm, computeEffectiveSignature, computeAttackDMs, rollDamage, crits
+│   ├── rangeBands.js             ← Logica fascie: thrust cost, movement, pairKey, basicBandPool (riusata anche per l'avvicinamento dei droni)
+│   ├── crew.js                   ← Crew helpers (getCrewSkill, role assignment, incluso remote_pilot)
 │   ├── dice.js                   ← Dice rolling + result formatting
 │   ├── io.js                     ← JSON import/export via File API
 │   └── db.js                     ← IndexedDB wrapper (openDB, get, put, delete)
 └── data/
-    ├── weapons.js                ← Armi canoniche 2300AD: tipo, TL, range, danno, traits
+    ├── weapons.js                ← Armi canoniche 2300AD: tipo, TL, range, danno, traits, droni (tacSpeed/enduranceRounds)
     ├── rangeBands.js             ← Definizioni 7 fascie: nome, distanza, thrustCost, attackDM, timeLagDM
     ├── criticalHits.js           ← Location table (2D) + effetti per severity 1–6 × 11 sistemi
     ├── crewActions.js            ← Definizioni azioni Actions phase per ruolo
@@ -369,7 +368,7 @@ font-mono: 'Share Tech Mono' (body/values)
 
 ## TESTING
 
-- **Unit tests** (Vitest + jsdom): `src/**/*.test.js` — colocated with source. Cover `utils/` logic: combat, rangeBands, missiles, crew. Run: `npm test`.
+- **Unit tests** (Vitest + jsdom): `src/**/*.test.js` — colocated with source. Cover `utils/` logic: combat, rangeBands, crew. Run: `npm test`.
 - **E2E tests** (Playwright, Chromium): `e2e/*.spec.js` at repo root. 79 tests across 9 spec files. Store injection via `window.__ZUSTAND_*_STORE__` exposed in non-production builds; use `store.setState({...})` to inject state directly (avoids `importBattleState` which requires a File object). Run: `npm run e2e` (requires dev server on :5173).
 - **Do NOT write Vitest tests for React components or Zustand stores** — E2E covers those flows. Unit tests are for pure-logic utils only.
 - `e2e/helpers.js` exports `clearAppState` (full reset including IndexedDB + profiles), `gotoBattle`, `advanceToPhase`, `drainActors` (exhaust all actor turns before advancing phase).
