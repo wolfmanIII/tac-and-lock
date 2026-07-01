@@ -1,8 +1,8 @@
 import { create } from 'zustand'
 import { v7 as uuidv7 } from 'uuid'
-import { pairKey, resolveBasicBandMovement } from '../utils/rangeBands.js'
+import { pairKey, resolveBasicBandMovement, getCloserBand } from '../utils/rangeBands.js'
 import { FACTION_COLOR } from '../data/factions.js'
-import { advanceMissileOneRound, makeMissileSalvo } from '../utils/missiles.js'
+import { WEAPONS } from '../data/weapons.js'
 import { exportBattle, importBattle } from '../utils/io.js'
 import { rollInitiative } from '../utils/combat.js'
 
@@ -30,7 +30,7 @@ function makeLogEntry({ round, phase, type, message, shipId = null }) {
 function snapshot(s) {
   return {
     ships:                 structuredClone(s.ships),
-    missiles:              structuredClone(s.missiles),
+    drones:                structuredClone(s.drones),
     rangeBands:            structuredClone(s.rangeBands),
     basicBandPool:         structuredClone(s.basicBandPool),
     initiativeOrder:       [...s.initiativeOrder],
@@ -38,7 +38,6 @@ function snapshot(s) {
     round:                 s.round,
     phase:                 s.phase,
     log:                   structuredClone(s.log),
-    pendingMissileImpacts: structuredClone(s.pendingMissileImpacts),
   }
 }
 
@@ -117,18 +116,41 @@ export const useBattleStore = create((set, get) => {
   }
 
   /**
+   * Advance a single drone one round: close one range band toward its target
+   * (like a ship's own Manoeuvre Step, simplified to "always closes at max
+   * TAC Speed" — see doc/drone-combat-redesign-spec.md §2.3), or mark it
+   * detonated (gone inert) once its Endurance is exceeded. // 2300AD B3 p.61
+   * @param {object} drone
+   * @returns {object}
+   */
+  function advanceDroneOneRound(drone) {
+    if (drone.destroyed || drone.detonated) return drone
+    const roundsElapsed = drone.roundsElapsed + 1
+    if (roundsElapsed > drone.enduranceRounds) {
+      return { ...drone, roundsElapsed, detonated: true } // endurance exceeded — inert
+    }
+    if (drone.currentBand === 'Adjacent' || drone.currentBand === 'Close') {
+      return { ...drone, roundsElapsed } // already within engagement range — holds position
+    }
+    return { ...drone, roundsElapsed, currentBand: getCloserBand(drone.currentBand) ?? drone.currentBand }
+  }
+
+  /**
    * Build state for the start of the next round.
-   * Advances missiles, resets per-round ship fields, increments round counter.
+   * Advances drones, resets per-round ship fields, increments round counter.
    * @param {object} s — current state
    * @returns {Partial<object>}
    */
   function buildNextRoundState(s) {
     const nextRound = s.round + 1
 
-    // Advance all in-flight missiles by one round
-    const advanced   = s.missiles.map((m) => advanceMissileOneRound(m))
-    const arrived    = advanced.filter((m) => m.arrived)
-    const stillFlying = advanced.filter((m) => !m.arrived)
+    // Advance all in-flight drones by one round // 2300AD B3 p.61
+    const advancedDrones  = s.drones.map(advanceDroneOneRound)
+    const newlyInRange    = advancedDrones.filter((d, i) =>
+      !d.destroyed && !d.detonated &&
+      (d.currentBand === 'Close' || d.currentBand === 'Adjacent') &&
+      !(s.drones[i].currentBand === 'Close' || s.drones[i].currentBand === 'Adjacent'),
+    )
 
     // Apply captain leadership bonuses, reset per-round ship state. // 2300AD B3 p.53
     const anyBonus = s.ships.some((sh) => (sh.initiativeBonusNextRound ?? 0) !== 0)
@@ -172,12 +194,12 @@ export const useBattleStore = create((set, get) => {
         type:  'system',
         message: `── Round ${nextRound} begins ──`,
       }),
-      ...(arrived.length > 0
+      ...(newlyInRange.length > 0
         ? [makeLogEntry({
             round: nextRound,
             phase: 'initiative',
             type:  'system',
-            message: `⚠ ${arrived.length} missile salvo(s) arriving this round.`,
+            message: `⚠ ${newlyInRange.length} drone(s) closed to engagement range.`,
           })]
         : []),
     ]
@@ -188,8 +210,7 @@ export const useBattleStore = create((set, get) => {
       currentActorIndex:     0,
       ships,
       initiativeOrder:       newInitiativeOrder,
-      missiles:              stillFlying,
-      pendingMissileImpacts: [...s.pendingMissileImpacts, ...arrived],
+      drones:                advancedDrones,
       log,
     }
   }
@@ -203,10 +224,9 @@ export const useBattleStore = create((set, get) => {
     initiativeOrder:       [],
     currentActorIndex:     0,
     ships:                 [],
-    missiles:              [],
+    drones:                [], // launched combat drones/missiles // 2300AD B3 p.61
     rangeBands:            {},   // pairKey → band id
     basicBandPool:         {},   // pairKey → accumulated TAC Speed toward next band change
-    pendingMissileImpacts: [],
     log:                   [],
     undoStack:             [],
     redoStack:             [],
@@ -854,33 +874,6 @@ export const useBattleStore = create((set, get) => {
     ),
 
     /**
-     * Reduce missile salvo count (point defence result). // B3 p.55
-     * Removes salvo from pendingMissileImpacts if count reaches 0.
-     * @param {string} missileId
-     * @param {number} amount — missiles destroyed
-     */
-    reduceSalvoCount: wh(
-      (missileId) => !!get().pendingMissileImpacts.find((m) => m.id === missileId),
-      (missileId, amount) => {
-        const { round, phase } = get()
-        const salvo = get().pendingMissileImpacts.find((m) => m.id === missileId)
-        const current = salvo?.salvoRemaining ?? salvo?.count ?? 0
-        const newCount = Math.max(0, current - amount)
-        set((s) => ({
-          pendingMissileImpacts: newCount > 0
-            ? s.pendingMissileImpacts.map((m) =>
-                m.id !== missileId ? m : { ...m, salvoRemaining: newCount },
-              )
-            : s.pendingMissileImpacts.filter((m) => m.id !== missileId),
-          log: [...s.log, makeLogEntry({
-            round, phase, type: 'action',
-            message: `🛡 Point Defence destroyed ${amount} missile(s) — salvo now ${newCount}.`,
-          })],
-        }))
-      },
-    ),
-
-    /**
      * Add a GM-defined hazard to a ship (fire, breach, fuel leak, etc.). // B3 p.55
      * @param {string} shipId
      * @param {string} label
@@ -926,84 +919,96 @@ export const useBattleStore = create((set, get) => {
       },
     ),
 
-    // === MISSILES ===
+    // === DRONES / MISSILES — 2300AD B3 p.55–56, p.61 ===
+    // See doc/drone-combat-redesign-spec.md — each launched drone/missile is an
+    // individually tracked unit that closes range on its own TAC Speed and resolves
+    // its own 3-step Firing Solution, rather than an abstract CRB-style "salvo".
 
     /**
-     * Launch a missile salvo.
-     * @param {string} attackerId
+     * Launch a single combat drone/missile at a target. // 2300AD B3 p.61
+     * Each unit is tracked individually — launch multiple times for a multi-drone strike.
+     * @param {string} ownerId — launching ship
      * @param {string} targetId
-     * @param {number} salvoSize
-     * @param {number} [attackDmBonus]
+     * @param {string} weaponId — 'ritage1' | 'ritage2' | 'whiskey' | 'aero12' | 'kingfisher'
      */
-    launchMissiles: wh(
-      (attackerId, targetId) =>
-        !!get().ships.find((s) => s.id === attackerId) &&
+    launchDrone: wh(
+      (ownerId, targetId) =>
+        !!get().ships.find((s) => s.id === ownerId) &&
         !!get().ships.find((s) => s.id === targetId),
-      (attackerId, targetId, salvoSize, attackDmBonus = 0) => {
+      (ownerId, targetId, weaponId) => {
         const { round, phase, rangeBands } = get()
-        const key         = pairKey(attackerId, targetId)
-        const launchBand  = rangeBands[key] ?? 'Long'
-        const attacker    = get().ships.find((s) => s.id === attackerId)
+        const weapon      = WEAPONS[weaponId]
+        const launchBand  = rangeBands[pairKey(ownerId, targetId)] ?? 'Long'
+        const owner       = get().ships.find((s) => s.id === ownerId)
         const target      = get().ships.find((s) => s.id === targetId)
 
-        const salvo = makeMissileSalvo({
+        const drone = {
           id: uuidv7(),
-          attackerId,
+          ownerId,
           targetId,
-          launchBand,
-          salvoSize,
-          attackDmBonus,
-          round,
-        })
+          weaponId,
+          currentBand:      launchBand,
+          roundsElapsed:    0,
+          enduranceRounds:  weapon?.enduranceRounds ?? 10,
+          destroyed:        false,
+          detonated:        false,
+          sensorLockSource: null, // null = self-generated Firing Solution (DM-2) // B3 p.55
+          launchedRound:    round,
+        }
 
         set((s) => ({
-          missiles: [...s.missiles, salvo],
+          drones: [...s.drones, drone],
           log: [...s.log, makeLogEntry({
-            round, phase, type: 'attack', shipId: attackerId,
-            message: `🚀 ${attacker?.profile.name} launched ${salvoSize} missile(s) at ${target?.profile.name} from ${launchBand} (impact in ${salvo.flightRounds} round(s)).`,
+            round, phase, type: 'attack', shipId: ownerId,
+            message: `🚀 ${owner?.profile.name} launched ${weapon?.name ?? weaponId} at ${target?.profile.name} from ${launchBand}.`,
           })],
         }))
       },
     ),
 
     /**
-     * Resolve point defence against an arriving salvo.
-     * @param {string} salvoId
-     * @param {number} destroyed — missiles destroyed by PD
+     * Point Defence intercepts a single drone/missile. // 2300AD B3 p.55–56
+     * One check per target — a PDC can attempt up to TL-4 of these per round (GM-tracked).
+     * @param {string} droneId
      */
-    applyPointDefence: wh(
-      (salvoId) => !!get().missiles.find((m) => m.id === salvoId),
-      (salvoId, destroyed) => {
+    interceptDrone: wh(
+      (droneId) => !!get().drones.find((d) => d.id === droneId),
+      (droneId) => {
         const { round, phase } = get()
-        const salvo = get().missiles.find((m) => m.id === salvoId)
-        if (!salvo) return
-
-        const remaining = Math.max(0, salvo.salvoRemaining - destroyed)
+        const drone  = get().drones.find((d) => d.id === droneId)
+        const weapon = WEAPONS[drone?.weaponId]
         set((s) => ({
-          missiles: s.missiles.map((m) =>
-            m.id !== salvoId ? m : { ...m, salvoRemaining: remaining },
-          ),
-          pendingMissileImpacts: s.pendingMissileImpacts.map((m) =>
-            m.id !== salvoId ? m : { ...m, salvoRemaining: remaining },
-          ),
+          drones: s.drones.map((d) => d.id !== droneId ? d : { ...d, destroyed: true }),
           log: [...s.log, makeLogEntry({
             round, phase, type: 'action',
-            message: `🛡 Point defence destroyed ${destroyed} missile(s) — ${remaining} remaining.`,
+            message: `🛡 Point Defence destroyed ${weapon?.name ?? drone?.weaponId ?? 'drone'}.`,
           })],
         }))
       },
     ),
 
     /**
-     * Mark a missile salvo as resolved (after impact damage applied).
-     * @param {string} salvoId
+     * Mark a drone/missile as consumed after its attack resolves (hit or miss).
+     * The drone is consumed after any resolved attack attempt — these are all
+     * single-shot warheads in the current canonical set; see doc/drone-combat-redesign-spec.md §3.
+     * Damage itself is applied by the caller via applyDamage, same as AttackModal. // 2300AD B3 p.56
+     * @param {string} droneId
      */
-    resolveMissileImpact: wh((salvoId) => {
-      set((s) => ({
-        pendingMissileImpacts: s.pendingMissileImpacts.filter((m) => m.id !== salvoId),
-        missiles:              s.missiles.filter((m) => m.id !== salvoId),
-      }))
-    }),
+    detonateDrone: wh(
+      (droneId) => !!get().drones.find((d) => d.id === droneId),
+      (droneId) => {
+        const { round, phase } = get()
+        const drone  = get().drones.find((d) => d.id === droneId)
+        const weapon = WEAPONS[drone?.weaponId]
+        set((s) => ({
+          drones: s.drones.map((d) => d.id !== droneId ? d : { ...d, detonated: true }),
+          log: [...s.log, makeLogEntry({
+            round, phase, type: 'attack', shipId: drone?.targetId,
+            message: `${weapon?.name ?? drone?.weaponId ?? 'Drone'} attack resolved.`,
+          })],
+        }))
+      },
+    ),
 
     // === ROUND / PHASE ADVANCEMENT ===
 
@@ -1037,10 +1042,9 @@ export const useBattleStore = create((set, get) => {
       initiativeOrder:       [],
       currentActorIndex:     0,
       ships:                 [],
-      missiles:              [],
+      drones:                [],
       rangeBands:            {},
       basicBandPool:         {},
-      pendingMissileImpacts: [],
       log:                   [],
       undoStack:             [],
       redoStack:             [],
@@ -1049,11 +1053,11 @@ export const useBattleStore = create((set, get) => {
     exportBattleState: () => {
       const {
         id, name, round, phase, initiativeOrder, currentActorIndex,
-        ships, missiles, rangeBands, basicBandPool, pendingMissileImpacts, log,
+        ships, drones, rangeBands, basicBandPool, log,
       } = get()
       exportBattle({
         id, name, round, phase, initiativeOrder, currentActorIndex,
-        ships, missiles, rangeBands, basicBandPool, pendingMissileImpacts, log,
+        ships, drones, rangeBands, basicBandPool, log,
         savedAt: new Date().toISOString(),
       })
     },
@@ -1068,10 +1072,9 @@ export const useBattleStore = create((set, get) => {
         initiativeOrder:       battle.initiativeOrder ?? [],
         currentActorIndex:     battle.currentActorIndex ?? 0,
         ships:                 battle.ships ?? [],
-        missiles:              battle.missiles ?? [],
+        drones:                battle.drones ?? [],
         rangeBands:            battle.rangeBands ?? {},
         basicBandPool:         battle.basicBandPool ?? {},
-        pendingMissileImpacts: battle.pendingMissileImpacts ?? [],
         log:                   battle.log ?? [],
         undoStack:             [],
         redoStack:             [],
@@ -1090,7 +1093,9 @@ export const useBattleStore = create((set, get) => {
       return get().basicBandPool[pairKey(shipAId, shipBId)] ?? 0
     },
 
-    /** Whether any missile salvos are pending impact. */
-    hasPendingImpacts: () => get().pendingMissileImpacts.length > 0,
+    /** Whether any drones/missiles are in engagement range awaiting resolution. */
+    hasPendingImpacts: () => get().drones.some((d) =>
+      !d.destroyed && !d.detonated && (d.currentBand === 'Close' || d.currentBand === 'Adjacent'),
+    ),
   }
 })

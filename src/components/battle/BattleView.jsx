@@ -87,7 +87,7 @@ function RangeBandRow({ ship1, ship2, band, onSet, onMnv }) {
 
 export default function BattleView() {
   const ships           = useBattleStore((s) => s.ships)
-  const missiles        = useBattleStore((s) => s.missiles)
+  const drones          = useBattleStore((s) => s.drones)
   const rangeBands      = useBattleStore((s) => s.rangeBands)
   const setRangeBand    = useBattleStore((s) => s.setRangeBand)
   const { openModal, showContextMenu } = useUIStore()
@@ -151,8 +151,8 @@ export default function BattleView() {
 
       <div className="max-w-4xl mx-auto space-y-6">
 
-        {/* Missile tracker */}
-        {missiles.length > 0 && <MissileTracker />}
+        {/* Drone/missile tracker */}
+        {drones.length > 0 && <MissileTracker />}
 
         {/* DISTANCES — range band matrix */}
         {trackedPairs.length > 0 && (

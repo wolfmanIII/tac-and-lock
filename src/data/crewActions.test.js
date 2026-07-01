@@ -80,22 +80,4 @@ describe('evasive_action // B3 p.55', () => {
   })
 })
 
-describe('point_defence // B3 p.55', () => {
-  const action = ALL_CREW_ACTIONS.find((a) => a.id === 'point_defence')
-
-  it('exists in gunner actions', () => {
-    expect(action).toBeDefined()
-  })
-
-  it('difficulty is 10 (Difficult — not Average 8)', () => {
-    expect(action.difficulty).toBe(10)
-  })
-
-  it('is a reaction', () => {
-    expect(action.reaction).toBe(true)
-  })
-
-  it('phase is attack', () => {
-    expect(action.phase).toBe('attack')
-  })
-})
+// point_defence moved to an inline drone-attack reaction — see doc/drone-combat-redesign-spec.md

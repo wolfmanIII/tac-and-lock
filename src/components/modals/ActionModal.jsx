@@ -34,7 +34,6 @@ export function ActionModal({ payload, onClose }) {
   const { shipId } = payload ?? {}
 
   const ships                = useBattleStore((s) => s.ships)
-  const pendingMissileImpacts = useBattleStore((s) => s.pendingMissileImpacts)
   const reduceCritical       = useBattleStore((s) => s.reduceCriticalSeverity)
   const repairHull           = useBattleStore((s) => s.repairHull)
   const applySensorLock      = useBattleStore((s) => s.applySensorLock)
@@ -43,18 +42,11 @@ export function ActionModal({ payload, onClose }) {
   const addCriticalHit       = useBattleStore((s) => s.addCriticalHit)
   const updateShip           = useBattleStore((s) => s.updateShip)
   const applyCommand         = useBattleStore((s) => s.applyCommand)
-  const reduceSalvoCount     = useBattleStore((s) => s.reduceSalvoCount)
   const removeHazard         = useBattleStore((s) => s.removeHazard)
   const applyDamage          = useBattleStore((s) => s.applyDamage)
 
   const ship    = ships.find((s) => s.id === shipId)
   const targets = ships.filter((s) => s.id !== shipId && !s.isDestroyed)
-
-  // Incoming salvos targeting this ship (for point_defence)
-  const incomingSalvos = useMemo(
-    () => pendingMissileImpacts.filter((m) => m.targetId === shipId),
-    [pendingMissileImpacts, shipId],
-  )
 
   const [selectedAction,         setSelectedAction]         = useState(null)
   const [targetId,               setTargetId]               = useState(targets[0]?.id ?? '')
@@ -64,7 +56,6 @@ export function ActionModal({ payload, onClose }) {
   const [critSystem,             setCritSystem]             = useState('')
   const [repairMode,             setRepairMode]             = useState('system') // 'system' | 'hull'
   const [selectedHazardId,       setSelectedHazardId]       = useState('')
-  const [selectedSalvoId,        setSelectedSalvoId]        = useState(incomingSalvos[0]?.id ?? '')
   const [boardingDefenderTotal,  setBoardingDefenderTotal]  = useState('')
   const [boardingHullDamage,     setBoardingHullDamage]     = useState(null)
   const [commandRole,            setCommandRole]            = useState(COMMAND_TARGET_ROLES[0])
@@ -162,13 +153,6 @@ export function ActionModal({ payload, onClose }) {
       case 'evasive_action':
         if (success) spendEvasion(shipId, 1)
         break
-
-      case 'point_defence': { // B3 p.55
-        if (success && selectedSalvoId) {
-          reduceSalvoCount(selectedSalvoId, Math.max(1, effect))
-        }
-        break
-      }
 
       case 'boarding_action': { // B3 p.55
         if (!boardingResult) break
@@ -305,24 +289,6 @@ export function ActionModal({ payload, onClose }) {
                 className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1 focus:border-sky-400 outline-none">
                 {COMMAND_TARGET_ROLES.map((r) => <option key={r} value={r}>{CREW_SKILLS[r]} ({r})</option>)}
               </select>
-            </div>
-          )}
-
-          {/* Point Defence — incoming salvo picker */}
-          {action.id === 'point_defence' && (
-            <div>
-              <p className="text-[10px] font-display text-slate-500 tracking-widest mb-1">INCOMING SALVO</p>
-              {incomingSalvos.length === 0 ? (
-                <p className="text-xs font-mono text-slate-500 italic">No missile salvos targeting this ship.</p>
-              ) : (
-                <select value={selectedSalvoId} onChange={(e) => setSelectedSalvoId(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1 focus:border-sky-400 outline-none">
-                  {incomingSalvos.map((m) => {
-                    const launcher = ships.find((s) => s.id === m.attackerId)
-                    return <option key={m.id} value={m.id}>{m.count} missile(s) from {launcher?.profile?.name ?? '?'} — {m.roundsToImpact}R</option>
-                  })}
-                </select>
-              )}
             </div>
           )}
 

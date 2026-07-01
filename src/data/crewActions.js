@@ -129,19 +129,9 @@ export const CREW_ACTIONS = {
     },
   ],
 
-  gunner: [
-    {
-      id: 'point_defence',
-      label: 'Point Defence',
-      phase: 'attack',
-      reaction: true,
-      skill: 'Gunner (turret) DEX',
-      difficulty: 10,
-      difficultyLabel: 'Difficult (10+)',
-      description: 'Reaction: Gunner (turret) Difficult (10+) DEX. Each success reduces salvo size by 1. Weapons with Point Defence trait get DM+2 vs missiles at Close range. // 2300AD B3 p.55',
-      requiresTarget: false,
-    },
-  ],
+  // Point Defence moved to an inline reaction inside the drone/missile attack
+  // resolution flow (DroneAttackModal) — see doc/drone-combat-redesign-spec.md.
+  // It intercepts one specific drone at a time, not an abstract "salvo".
 
   marine: [
     {

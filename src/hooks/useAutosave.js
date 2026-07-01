@@ -52,13 +52,13 @@ export function useAutosave() {
       try {
         const {
           id, name, round, phase, initiativeOrder, currentActorIndex,
-          ships, missiles, rangeBands, basicBandPool, pendingMissileImpacts, log,
+          ships, drones, rangeBands, basicBandPool, log,
         } = battleStore
 
         if (ships.length > 0) {
           await dbPut(STORE_BATTLE, BATTLE_KEY, {
             id, name, round, phase, initiativeOrder, currentActorIndex,
-            ships, missiles, rangeBands, basicBandPool, pendingMissileImpacts, log,
+            ships, drones, rangeBands, basicBandPool, log,
           })
         }
 

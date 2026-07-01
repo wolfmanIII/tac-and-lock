@@ -34,7 +34,7 @@ export function HUD() {
   const ships               = useBattleStore((s) => s.ships)
   const initiativeOrder     = useBattleStore((s) => s.initiativeOrder)
   const currentActorIndex   = useBattleStore((s) => s.currentActorIndex)
-  const pendingMissileImpacts = useBattleStore((s) => s.pendingMissileImpacts)
+  const drones              = useBattleStore((s) => s.drones)
   const undoStack           = useBattleStore((s) => s.undoStack)
   const redoStack           = useBattleStore((s) => s.redoStack)
   const advancePhase        = useBattleStore((s) => s.advancePhase)
@@ -53,20 +53,26 @@ export function HUD() {
 
   const allActorsGone = initiativeOrder.length === 0 || currentActorIndex >= initiativeOrder.length
 
+  // Drones/missiles that have closed to engagement range and still need a GM resolution // 2300AD B3 p.61
+  const dronesInRange = useMemo(
+    () => drones.filter((d) => !d.destroyed && !d.detonated && (d.currentBand === 'Close' || d.currentBand === 'Adjacent')),
+    [drones],
+  )
+
   const canAdvance = useMemo(() => {
-    if (pendingMissileImpacts.length > 0) return false
-    if (phase === 'setup')                return ships.length > 0
-    if (phase === 'initiative')           return initiativeOrder.length > 0
-    if (ACTOR_TURN_PHASES.has(phase))     return allActorsGone
+    if (dronesInRange.length > 0)     return false
+    if (phase === 'setup')            return ships.length > 0
+    if (phase === 'initiative')       return initiativeOrder.length > 0
+    if (ACTOR_TURN_PHASES.has(phase)) return allActorsGone
     return true
-  }, [phase, ships, initiativeOrder, pendingMissileImpacts, allActorsGone])
+  }, [phase, ships, initiativeOrder, dronesInRange, allActorsGone])
 
   useEffect(() => { if (canAdvance) setBlockMsg(null) }, [canAdvance])
 
   const handleAdvance = useCallback(() => {
     if (!canAdvance) {
-      if (pendingMissileImpacts.length > 0) {
-        setBlockMsg(`Resolve ${pendingMissileImpacts.length} pending impact${pendingMissileImpacts.length !== 1 ? 's' : ''} first.`)
+      if (dronesInRange.length > 0) {
+        setBlockMsg(`Resolve ${dronesInRange.length} drone(s) in engagement range first.`)
       } else if (phase === 'setup') {
         setBlockMsg('Add at least one ship first.')
       } else if (phase === 'initiative') {
@@ -78,7 +84,7 @@ export function HUD() {
     }
     setBlockMsg(null)
     advancePhase()
-  }, [canAdvance, advancePhase, phase, pendingMissileImpacts, allActorsGone])
+  }, [canAdvance, advancePhase, phase, dronesInRange, allActorsGone])
 
   useEffect(() => {
     const onKey = (e) => {
@@ -143,10 +149,10 @@ export function HUD() {
         )
       )}
 
-      {/* Pending missile impacts */}
-      {pendingMissileImpacts.length > 0 && (
+      {/* Drones/missiles in engagement range awaiting resolution */}
+      {dronesInRange.length > 0 && (
         <p className="font-mono text-xs text-amber-400 animate-pulse pointer-events-none pl-1">
-          ⚡ {pendingMissileImpacts.length} impact{pendingMissileImpacts.length !== 1 ? 's' : ''} unresolved
+          ⚡ {dronesInRange.length} drone{dronesInRange.length !== 1 ? 's' : ''} in range, unresolved
         </p>
       )}
 
