@@ -1,6 +1,6 @@
 # Tac & Lock — Field Manual
 
-**Version 1.1.0** · 2300AD Space Combat Simulator
+**Version 1.1.1** · 2300AD Space Combat Simulator
 
 ---
 
@@ -109,9 +109,10 @@ Right-click the background → **Add ship**. A modal opens:
 | ----- | ----- |
 | Profile | Which saved ship profile to use. |
 | Faction | Players / NPC / Neutral — determines card colour coding. |
+| Token Shape | Frigate / Scout / Freighter / Courier / Alien — hull silhouette shown on the bento card, pre-selected from the profile's catalog category. |
 | Initial Range Band | The starting distance from all other ships (usually Long). |
 
-Ships are shown as bento cards grouped by faction. Each card shows hull bar, TAC Speed, armour, effective signature, weapons, critical tracks, and inbound drone ETA.
+Ships are shown as bento cards grouped by faction, each with a ship-token silhouette. Each card shows hull bar, TAC Speed, armour, effective signature, weapons, critical tracks, and inbound drone ETA.
 
 Right-click a card to open the context menu. Available actions depend on phase and initiative turn.
 
@@ -486,4 +487,4 @@ Use **↑ EXPORT** and **↓ IMPORT** in the profile panel to share or back up p
 
 ---
 
-*Tac & Lock v1.1.0 — © 2300AD: Mongoose Publishing. VTT tool for personal use at the gaming table.*
+*Tac & Lock v1.1.1 — © 2300AD: Mongoose Publishing. VTT tool for personal use at the gaming table.*
