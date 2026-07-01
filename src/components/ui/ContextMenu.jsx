@@ -55,10 +55,17 @@ function BackgroundMenu({ x, y, menuRef, close }) {
 function ShipMenu({ x, y, menuRef, shipId, close }) {
   const openModal         = useUIStore((s) => s.openModal)
   const ships             = useBattleStore((s) => s.ships)
+  const drones            = useBattleStore((s) => s.drones)
   const phase             = useBattleStore((s) => s.phase)
   const initiativeOrder   = useBattleStore((s) => s.initiativeOrder)
   const currentActorIndex = useBattleStore((s) => s.currentActorIndex)
   const ship = ships.find((s) => s.id === shipId)
+
+  // This ship's own drones that have closed to engagement range // 2300AD B3 p.61
+  const ownDronesInRange = drones.filter((d) =>
+    d.ownerId === shipId && !d.destroyed && !d.detonated &&
+    (d.currentBand === 'Close' || d.currentBand === 'Adjacent'),
+  )
 
   const isCurrentActor = initiativeOrder[currentActorIndex] === shipId
   const hasActed       = ship?.hasActedThisPhase ?? false
@@ -86,11 +93,21 @@ function ShipMenu({ x, y, menuRef, shipId, close }) {
       <MenuItem icon="📊" label="Ship sheet"         onClick={() => { openModal('ship-detail',     { shipId }); close() }} />
       <MenuItem icon="🎯" label="Attack…"            onClick={() => { openModal('attack',          { attackerId: shipId }); close() }}
         disabled={!canAttack} hint={attackHint} />
-      <MenuItem icon="🚀" label="Launch missiles…"   onClick={() => { openModal('missile-launch',  { attackerId: shipId }); close() }}
+      <MenuItem icon="🚀" label="Launch drone…"      onClick={() => { openModal('drone-launch',    { attackerId: shipId }); close() }}
         disabled={!canAttack} hint={attackHint} />
       <MenuItem icon="⚡" label="Crew action…"       onClick={() => { openModal('action',          { shipId }); close() }}
         disabled={!canAction} hint={actionHint} />
       <MenuItem icon="👥" label="Assign crew…"       onClick={() => { openModal('crew-assignment', { shipId }); close() }} />
+      {ownDronesInRange.length > 0 && (
+        <>
+          <MenuDivider />
+          {ownDronesInRange.map((d) => (
+            <MenuItem key={d.id} icon="💥" label={`Resolve drone attack (${d.currentBand})…`}
+              onClick={() => { openModal('drone-attack', { droneId: d.id }); close() }}
+              disabled={!canAttack} hint={attackHint} />
+          ))}
+        </>
+      )}
       <MenuDivider />
       <MenuItem icon="🗑" label="Remove from battle" danger onClick={() => { useBattleStore.getState().removeShip(shipId); close() }} />
     </MenuShell>

@@ -13,6 +13,7 @@ export const CREW_SKILLS = {
   gunner_turret:   'Gunner (turret)',
   gunner_bay:      'Gunner (bay)',
   marine:          'Gun Combat',
+  remote_pilot:    'Electronics (remote ops)', // pilots and fights drones/fighters // 2300AD B3 p.53, p.55
 }
 
 /**
@@ -47,6 +48,7 @@ export function blankCrewMember(id, name = 'Unknown') {
       mechanic:        0,
       gunCombat:       0,
       melee:           0,
+      remoteOps:       0,
     },
     characteristics: {
       STR: 7,
@@ -73,6 +75,7 @@ export function getCrewSkill(crew) {
     gunner_turret:   crew.skills.gunner          ?? 0,
     gunner_bay:      crew.skills.gunner          ?? 0,
     marine:          crew.skills.gunCombat       ?? 0,
+    remote_pilot:    crew.skills.remoteOps       ?? 0,
   }
   return skillMap[crew.role] ?? 0
 }
@@ -124,6 +127,7 @@ export const ROLE_PRIMARY_CHARACTERISTIC = {
   gunner_turret:   'INT', // Firing Solution Step 3; Point Defence uses DEX // B3 p.56, p.55
   gunner_bay:      'INT', // same as turret gunner
   marine:          'STR', // boarding actions
+  remote_pilot:    'DEX', // drone/fighter Pilot-equivalent checks // 2300AD B3 p.55
 }
 
 /**

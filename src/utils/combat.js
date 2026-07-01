@@ -89,6 +89,19 @@ export function getWeaponTraitAttackDm(traits = []) {
   return dm
 }
 
+/**
+ * Point Defence reaction DM — the dedicated intercept action, distinct from the
+ * "Point Defence" weapon trait's DM+2 (which applies to normal attacks vs
+ * missiles/drones/fighters, not this reaction). // 2300AD B3 p.55, reinforced p.56
+ * "Point defence requires a Difficult (10+) Gunner check (DEX), with DM-2 for missiles
+ * and drones under 10 tons. If a PDC is used, it receives DM+4 instead of DM-2."
+ * @param {string[]} traits — traits of the weapon used to intercept
+ * @returns {number}
+ */
+export function getPointDefenceDm(traits = []) {
+  return traits.includes('Point Defence') ? 4 : -2
+}
+
 export function computeAttackDMs({
   gunnerSkill,
   gunnerIntDm     = 0,
@@ -166,11 +179,13 @@ function resolveArmour(traits, armour) {
  * @param {string} weaponId
  * @param {number} weaponCount — number of same weapon type in turret (1–3)
  * @param {number} armour      — target's current armour value
+ * @param {{ damage?: string, traits?: string[] }} [overrides] — e.g. a drone's detonationMode
  * @returns {{ rolls: number[], bonus: number, gross: number, armour: number, net: number }}
  */
-export function rollDamage(weaponId, weaponCount = 1, armour = 0) {
-  const weapon = WEAPONS[weaponId]
-  if (!weapon) return { rolls: [], bonus: 0, gross: 0, armour: 0, net: 0 }
+export function rollDamage(weaponId, weaponCount = 1, armour = 0, overrides = null) {
+  const base = WEAPONS[weaponId]
+  if (!base) return { rolls: [], bonus: 0, gross: 0, armour: 0, net: 0 }
+  const weapon = overrides ? { ...base, ...overrides } : base
 
   const [n, sides, flatBonus] = parseDiceNotation(weapon.damage)
   const rolls = Array.from({ length: n }, () => Math.floor(Math.random() * sides) + 1)

@@ -11,7 +11,7 @@ import { pairKey } from '../../utils/rangeBands.js'
 import { RANGE_BAND_ORDER } from '../../data/rangeBands.js'
 import { FACTION_COLOR } from '../../data/factions.js'
 import { ShipBentoCard } from './ShipBentoCard.jsx'
-import { MissileTracker } from './MissileTracker.jsx'
+import { DroneTracker } from './DroneTracker.jsx'
 
 // ── Faction constants ─────────────────────────────────────────────────────────
 
@@ -152,7 +152,7 @@ export default function BattleView() {
       <div className="max-w-4xl mx-auto space-y-6">
 
         {/* Drone/missile tracker */}
-        {drones.length > 0 && <MissileTracker />}
+        {drones.length > 0 && <DroneTracker />}
 
         {/* DISTANCES — range band matrix */}
         {trackedPairs.length > 0 && (

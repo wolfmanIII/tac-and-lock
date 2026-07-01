@@ -18,8 +18,8 @@ import { ManoeuvreModal }      from './components/modals/ManoeuvreModal.jsx'
 import { AttackModal }         from './components/modals/AttackModal.jsx'
 import { CriticalHitModal }    from './components/modals/CriticalHitModal.jsx'
 import { ActionModal }         from './components/modals/ActionModal.jsx'
-import { MissileLaunchModal }  from './components/modals/MissileLaunchModal.jsx'
-import { MissileImpactModal }  from './components/modals/MissileImpactModal.jsx'
+import { DroneLaunchModal }    from './components/modals/DroneLaunchModal.jsx'
+import { DroneAttackModal }    from './components/modals/DroneAttackModal.jsx'
 import { ShipDetailModal }     from './components/modals/ShipDetailModal.jsx'
 import { ShipProfileModal }    from './components/modals/ShipProfileModal.jsx'
 import { CrewAssignmentModal } from './components/modals/CrewAssignmentModal.jsx'
@@ -32,8 +32,8 @@ const MODAL_MAP = {
   'attack':           AttackModal,
   'critical-hit':     CriticalHitModal,
   'action':           ActionModal,
-  'missile-launch':   MissileLaunchModal,
-  'missile-impact':   MissileImpactModal,
+  'drone-launch':     DroneLaunchModal,
+  'drone-attack':     DroneAttackModal,
   'ship-detail':      ShipDetailModal,
   'ship-profile':     ShipProfileModal,
   'crew-assignment':  CrewAssignmentModal,
