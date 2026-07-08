@@ -15,17 +15,69 @@ import { CatalogPanel }     from './CatalogPanel.jsx'
 import { useProfileImport } from './useProfileImport.js'
 import { Tooltip }          from '../ui/Tooltip.jsx'
 import { FACTIONS, FACTION_COLOR } from '../../data/factions.js'
-import { RANGE_BANDS }      from '../../data/rangeBands.js'
+import { RANGE_BANDS, RANGE_BAND_ORDER } from '../../data/rangeBands.js'
+import { pairKey }          from '../../utils/rangeBands.js'
 import { useShipTokenIcon } from '../battle/useShipTokenIcon.js'
 
 const PHASE_LABEL = {
   setup: 'SETUP', initiative: 'INITIATIVE', manoeuvre: 'MANOEUVRE', attack: 'ATTACK', actions: 'ACTIONS',
 }
 
+const ROSTER_TOKEN_SIZE = 40
+
 /** Ship token silhouette for a roster row — same icon as the battle bento card. */
 function RosterShipToken({ ship, fallbackColor }) {
-  const tokenRef = useShipTokenIcon({ ...ship, color: ship.color ?? fallbackColor }, 32)
-  return <canvas ref={tokenRef} width={32} height={32} className="shrink-0" />
+  const tokenRef = useShipTokenIcon({ ...ship, color: ship.color ?? fallbackColor }, ROSTER_TOKEN_SIZE)
+  return <canvas ref={tokenRef} width={ROSTER_TOKEN_SIZE} height={ROSTER_TOKEN_SIZE} className="shrink-0" />
+}
+
+/** TAC Speed / Armour mini-column. */
+function RosterCombatStats({ ship }) {
+  return (
+    <div className="w-24 shrink-0 leading-tight">
+      <p className="font-mono text-xs text-slate-300">TAC SPD {ship.currentTacSpeed ?? '—'}</p>
+      <p className="font-mono text-xs text-slate-300">ARMOUR {ship.currentArmour ?? '—'}</p>
+    </div>
+  )
+}
+
+/** Nearest enemy range band — 2300AD has no hex/vector mode, only the band system. */
+function nearestEnemyRangeBand(ship, ships, rangeBands) {
+  const enemies = ships.filter((s) => s.id !== ship.id && s.faction !== ship.faction)
+  if (enemies.length === 0) return null
+  let nearestIdx = RANGE_BAND_ORDER.length - 1
+  for (const enemy of enemies) {
+    const band = rangeBands?.[pairKey(ship.id, enemy.id)] ?? 'Distant'
+    const idx = RANGE_BAND_ORDER.indexOf(band)
+    if (idx !== -1 && idx < nearestIdx) nearestIdx = idx
+  }
+  return RANGE_BAND_ORDER[nearestIdx]
+}
+
+/** Range-to-nearest-enemy telemetry mini-column. */
+function RosterTelemetry({ band }) {
+  return (
+    <div className="w-28 shrink-0 leading-tight">
+      <p className="font-mono text-xs text-slate-300">RANGE</p>
+      <p className="font-mono text-xs text-slate-300">{band ?? '—'}</p>
+    </div>
+  )
+}
+
+/** Dogfight/destroyed status mini-column — defaults to COMBAT/NEUTRAL. */
+function RosterStatus({ ship, band }) {
+  const badge = ship.isDestroyed
+    ? { label: '💥 DESTROYED', className: 'text-red-400' }
+    : (band === 'Adjacent' || band === 'Close')
+      ? { label: '⚔ DOGFIGHT', className: 'text-amber-400' }
+      : ship.faction === 'neutral'
+        ? { label: '○ NEUTRAL', className: 'text-slate-400' }
+        : { label: '● COMBAT', className: 'text-(--neon-cyan)' }
+  return (
+    <div className="w-24 shrink-0 leading-tight">
+      <p className={`font-mono text-xs font-bold truncate ${badge.className}`}>{badge.label}</p>
+    </div>
+  )
 }
 
 // ── Tiny icon button ──────────────────────────────────────────────────────
@@ -208,12 +260,13 @@ function StatusLine({ label, value, active = true }) {
 }
 
 function SessionPanel({ onEnterBattle, onLoadBattle, loading, onFieldManual }) {
-  const ships   = useBattleStore((s) => s.ships)
-  const drones  = useBattleStore((s) => s.drones)
-  const round   = useBattleStore((s) => s.round)
-  const phase   = useBattleStore((s) => s.phase)
-  const name    = useBattleStore((s) => s.name)
-  const savedAt = useBattleStore((s) => s.savedAt)
+  const ships      = useBattleStore((s) => s.ships)
+  const drones     = useBattleStore((s) => s.drones)
+  const round      = useBattleStore((s) => s.round)
+  const phase      = useBattleStore((s) => s.phase)
+  const name       = useBattleStore((s) => s.name)
+  const savedAt    = useBattleStore((s) => s.savedAt)
+  const rangeBands = useBattleStore((s) => s.rangeBands)
   const { exportBattleState, resetBattle } = useBattleStore()
 
   const byFaction = ships.reduce((acc, ship) => {
@@ -340,6 +393,7 @@ function SessionPanel({ onEnterBattle, onLoadBattle, loading, onFieldManual }) {
                           const cur  = s.currentHull ?? hull
                           const pct  = hull > 0 ? Math.max(0, cur / hull) : 1
                           const bar  = pct > 0.6 ? '#22c55e' : pct > 0.3 ? '#eab308' : '#ef4444'
+                          const band = nearestEnemyRangeBand(s, ships, rangeBands)
                           return (
                             <div key={s.id} className="flex items-center gap-2.5">
                               <RosterShipToken ship={s} fallbackColor={FACTION_COLOR[fId] ?? '#64748b'} />
@@ -347,6 +401,9 @@ function SessionPanel({ onEnterBattle, onLoadBattle, loading, onFieldManual }) {
                                 <p className="font-mono text-xs text-slate-200 font-bold truncate">{s.profile?.name ?? '?'}</p>
                                 <p className="font-mono text-xs text-slate-400 truncate">{s.profile?.class ?? '—'}</p>
                               </div>
+                              <RosterCombatStats ship={s} />
+                              <RosterTelemetry band={band} />
+                              <RosterStatus ship={s} band={band} />
                               <div className="w-14 h-1 bg-slate-800 rounded-full overflow-hidden shrink-0">
                                 <div className="h-full rounded-full" style={{ width: `${pct * 100}%`, backgroundColor: bar }} />
                               </div>
