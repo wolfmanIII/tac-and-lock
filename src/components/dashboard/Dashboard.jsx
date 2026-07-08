@@ -497,8 +497,8 @@ export default function Dashboard() {
             <img src="/logo.png" alt="TAC &amp; LOCK" />
           </div>
           <div className="flex flex-col gap-0.5">
-            <h1 className="font-display font-bold italic text-(--neon-cyan) tracking-widest text-3xl leading-tight">
-              Tac &amp; Lock
+            <h1 className="font-display font-bold italic text-(--neon-cyan) tracking-widest text-2xl leading-tight">
+              TAC &amp; LOCK
             </h1>
             <span className="font-display text-xs text-slate-400 tracking-widest">TACTICAL INTERFACE // 2300AD SPACE COMBAT</span>
             <span className="font-display text-xs text-slate-400 tracking-widest">SPACE COMBAT SIMULATOR</span>
