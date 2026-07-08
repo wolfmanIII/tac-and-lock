@@ -1,6 +1,6 @@
 # Tac & Lock — Field Manual
 
-**Version 1.1.3** · 2300AD Space Combat Simulator
+**Version 1.2.0** · 2300AD Space Combat Simulator
 
 ---
 
@@ -36,7 +36,7 @@ Where B3 and CRB diverge, **B3 wins**.
 
 Combat uses **range bands** — no hex grid, no velocity vectors.
 The seven bands (Adjacent → Distant) define all spatial relationships between ships.
-Ships spend TAC Speed to move between bands.
+Ships move between bands via an opposed Pilot check (Open/Close); TAC Speed is a fixed DM added to the roll, never spent.
 
 ---
 
@@ -105,7 +105,7 @@ Each combat round follows this sequence. The HUD shows the current round and pha
 | ----- | ----------- |
 | **Setup** | Add ships to the battle (right-click background → Add ship). |
 | **Initiative** | Roll opposed Tactics(naval) check — order fixed for the engagement. |
-| **Manoeuvre** | Each ship spends TAC Speed to approach or flee. |
+| **Manoeuvre** | Each ship's Pilot may attempt an opposed check to approach (Close) or flee (Open). |
 | **Attack** | Each ship in initiative order fires weapons, launches drones, or resolves a drone's own Firing Solution once it reaches Close/Adjacent range. |
 | **Actions** | Each ship in initiative order performs one crew action. |
 
@@ -154,33 +154,19 @@ Right-click background → **Roll Initiative**. The modal shows all ships.
 
 ## 6. Manoeuvre Step
 
-Each ship in initiative order may spend TAC Speed to change range bands. // B3 p.52
+Each ship's Pilot may attempt to Open (flee) or Close (approach) against one opposing ship — an **opposed Pilot (DEX) check**, adding the ship's TAC Speed as a fixed DM. // 2300AD B3 p.54
 
 Right-click a ship → **Manoeuvre…**
 
 | Control | Action |
 | ------- | ------ |
-| **⬇ APPROACH** | Move toward the target ship (costs TAC Speed from the shared pool). |
-| **⬆ FLEE** | Move away from the target ship. |
-| **APPLY** | Pool meets the band cost — band shifts, TAC Speed spent. |
-| **ALLOCATE** | Pool below cost — TAC Speed allocated, band unchanged. Progress bar shows % toward next change. |
-| **GM SET** | Override — sets the band directly with no TAC Speed cost. Use for initial placement. |
+| **Acting ship picker** | Pick which of the two ships is attempting the manoeuvre. |
+| **◀ CLOSE (approach) / OPEN (flee) ▶** | Pick the direction, relative to the acting ship. |
+| **ROLL 🎲** | Both ships roll an opposed Pilot check: 2D6 + Pilot skill + DEX DM + TAC Speed each. |
+| **APPLY** | On success, the band shifts by the check's Effect in the attempted direction. On failure, the Effect is available for the enemy to close/open instead — the GM decides ("if desired") via a checkbox. |
+| **GM SET** | Override — sets the band directly, no roll. Use for initial placement. |
 
-TAC Speed **accumulates across rounds** within the same band pair. A ship that cannot cover the full cost in one round contributes partial thrust; the band changes when the pool is met.
-
-### Band Costs // B3 p.52
-
-| Band | Distance | TAC Speed cost |
-| ---- | -------- | -------------- |
-| Adjacent | < 100 km | 1 |
-| Close | ≤ 150,000 km | 1 |
-| Short | ≤ 300,000 km | 2 |
-| Medium | ≤ 450,000 km | 5 |
-| Long | ≤ 600,000 km | 10 |
-| Very Long | ≤ 750,000 km | 25 |
-| Distant | > 750,000 km | 50 |
-
-TAC Speed reserved for evasion is **not** spent here — it is declared as a reaction during the Attack Step.
+TAC Speed is a **fixed DM**, never spent or depleted — Pilot can be used multiple times per round (unlike Gunner), so a ship isn't limited to one manoeuvre attempt per round. // 2300AD B3 p.53–54
 
 ---
 
@@ -209,7 +195,7 @@ Right-click a ship → **Attack…**
 
 | DM source | Value |
 | --------- | ----- |
-| TAC Speed available | +tacSpeedAvailable |
+| TAC Speed | +currentTacSpeed (fixed DM, never spent) |
 | Engineer assist | Routine (8+) Engineer(power) INT |
 | Effect from Step 1 | Positive Effect carries forward |
 
@@ -292,7 +278,7 @@ Select the action type, choose applicable target/options, roll (if required), th
 
 | Action | Check | Effect |
 | ------ | ----- | ------ |
-| **Overload Stutterwarp** | Difficult (10+) Engineer(stutterwarp) INT | Success: TAC Speed +1 this round. Failure: critical hit on Stutterwarp system. |
+| **Overload Stutterwarp** | Difficult (10+) Engineer(stutterwarp) INT | Success: Effect 1–4 → TAC Speed +1, Effect 5–6 → +2 this round. Failure: critical hit on Stutterwarp system. |
 | **Emergency Repair** | Average (8+) Engineer INT/EDU | *System mode*: reduce one critical hit severity by 1. *Hull mode*: restore 1 Hull Point. |
 
 ### Sensor Operator
@@ -306,11 +292,9 @@ Select the action type, choose applicable target/options, roll (if required), th
 
 ### Gunner
 
-Point Defence moved to a reaction inside the Drone Attack modal — see §8. It is no longer a general Actions Step crew action, since it must be declared against one specific incoming drone, not chosen freely from the Actions menu.
+Point Defence moved to a reaction inside the Drone Attack modal — see §8. It is no longer a general Actions Step crew action, since it must be declared against one specific incoming drone, not chosen freely from the Actions menu. Gunner has no other Actions Step action.
 
-| Action | Check | Effect |
-| ------ | ----- | ------ |
-| **Evasive Action** | Automatic | Spend 1 TAC Speed to reserve it for this round's Evade (see §8). |
+Evasion (opposed Pilot check, B3 p.55) is resolved directly in the Manoeuvre Step's **Manoeuvre…** modal (see §6/§8), not as an Actions Step crew action — Pilot has no entry in this menu.
 
 ### Mechanic / Engineer
 
@@ -499,4 +483,4 @@ Use **↑ EXPORT** and **↓ IMPORT** in the profile panel to share or back up p
 
 ---
 
-*Tac & Lock v1.1.3 — © 2300AD: Mongoose Publishing. VTT tool for personal use at the gaming table.*
+*Tac & Lock v1.2.0 — © 2300AD: Mongoose Publishing. VTT tool for personal use at the gaming table.*
