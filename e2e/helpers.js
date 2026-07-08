@@ -83,6 +83,18 @@ export async function addShipsToStore(page, ships = DEFAULT_SHIPS) {
 }
 
 /**
+ * Reset the profiles store to the factory DEFAULT_PROFILES (with `category`
+ * fields), so modals that key off profile category (e.g. AddShipModal's
+ * token shape picker) have realistic data to work with.
+ * @param {import('@playwright/test').Page} page
+ */
+export async function resetProfilesToDefaults(page) {
+  await page.evaluate(() => {
+    window.__ZUSTAND_PROFILES_STORE__.getState().resetToDefaults()
+  })
+}
+
+/**
  * Go to battle screen.
  * @param {import('@playwright/test').Page} page
  */

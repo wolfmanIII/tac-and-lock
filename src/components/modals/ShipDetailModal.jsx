@@ -6,6 +6,7 @@ import { FACTION_COLOR } from '../../data/factions.js'
 import { RANGE_BAND_ORDER } from '../../data/rangeBands.js'
 import { pairKey } from '../../utils/rangeBands.js'
 import { computeEffectiveSignature } from '../../utils/combat.js'
+import { useShipTokenIcon } from '../battle/useShipTokenIcon.js'
 
 const SEV_COLOR = ['text-slate-500', 'text-yellow-400', 'text-orange-400', 'text-red-400', 'text-red-500', 'text-red-600', 'text-red-700']
 
@@ -26,6 +27,8 @@ export function ShipDetailModal({ payload, onClose }) {
   const addHazard      = useBattleStore((s) => s.addHazard)
   const removeHazard   = useBattleStore((s) => s.removeHazard)
   const ship          = ships.find((s) => s.id === shipId)
+  const shipColor     = ship?.color ?? FACTION_COLOR[ship?.faction] ?? '#94a3b8'
+  const tokenRef      = useShipTokenIcon({ ...ship, color: shipColor }, 40)
 
   const [hazardInput, setHazardInput] = useState('')
 
@@ -54,10 +57,13 @@ export function ShipDetailModal({ payload, onClose }) {
   return (
     <div className="p-6 space-y-5" style={{ minWidth: 480, maxWidth: 600 }}>
       {/* Header */}
-      <div className={`border-l-4 pl-3 ${factionColor}`}>
-        <p className="font-display text-sky-300 text-base tracking-widest">{p.name}</p>
-        <p className="text-xs font-mono text-slate-400">{p.class} · {ship.faction ?? '—'}</p>
-        {ship.isDestroyed && <p className="text-[10px] font-display text-red-500 tracking-widest mt-1">DESTROYED</p>}
+      <div className={`flex items-center gap-3 border-l-4 pl-3 ${factionColor}`}>
+        <canvas ref={tokenRef} width={40} height={40} className="shrink-0" />
+        <div className="min-w-0">
+          <p className="font-display text-sky-300 text-base tracking-widest">{p.name}</p>
+          <p className="text-xs font-mono text-slate-400">{p.class} · {ship.faction ?? '—'}</p>
+          {ship.isDestroyed && <p className="text-[10px] font-display text-red-500 tracking-widest mt-1">DESTROYED</p>}
+        </div>
       </div>
 
       {/* Hull */}
