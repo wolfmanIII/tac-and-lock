@@ -1,6 +1,6 @@
 # Tac & Lock — Field Manual
 
-**Version 1.2.0** · 2300AD Space Combat Simulator
+**Version 1.2.1** · 2300AD Space Combat Simulator
 
 ---
 
@@ -483,4 +483,4 @@ Use **↑ EXPORT** and **↓ IMPORT** in the profile panel to share or back up p
 
 ---
 
-*Tac & Lock v1.2.0 — © 2300AD: Mongoose Publishing. VTT tool for personal use at the gaming table.*
+*Tac & Lock v1.2.1 — © 2300AD: Mongoose Publishing. VTT tool for personal use at the gaming table.*
