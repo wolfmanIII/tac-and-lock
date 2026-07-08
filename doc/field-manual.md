@@ -1,6 +1,6 @@
 # Tac & Lock — Field Manual
 
-**Version 1.1.1** · 2300AD Space Combat Simulator
+**Version 1.1.2** · 2300AD Space Combat Simulator
 
 ---
 
@@ -56,7 +56,19 @@ The Dashboard is the pre-battle lobby. Left panel: ship profiles. Right panel: o
 | **↑ EXPORT** | Save all profiles to a `.json` file. |
 | **📖 OFFICIAL CATALOG** | Browse canonical 2300AD vessels and add them to profiles. |
 
-### 2.2 Operations Console
+### 2.2 Tactical Display
+
+The right panel mirrors the current session at a glance, even before entering battle.
+
+| Field | Notes |
+| ----- | ----- |
+| PROTOCOL / RANGE SYSTEM | Fixed ruleset identifiers. |
+| ROUND / PHASE | Current round and phase of the active session. |
+| VESSELS / DRONES | Ship and drone/missile counts in the active roster. |
+| SESSION / SAVED | Session name and timestamp of the last autosave. |
+| SHIP ROSTER | Ships grouped by faction (Players / NPC / Neutral), each with its token silhouette, name, class, and hull bar. |
+
+### 2.3 Operations Console
 
 | Control | Action |
 | ------- | ------ |
@@ -66,7 +78,7 @@ The Dashboard is the pre-battle lobby. Left panel: ship profiles. Right panel: o
 | **CLEAR** | Reset battle state (confirmation required). |
 | **📖 FIELD MANUAL** | Opens this manual. |
 
-### 2.3 Ship Profile Form
+### 2.4 Ship Profile Form
 
 Each profile stores the ship's combat statistics, weapons, sensors, computer, software, and crew.
 
@@ -487,4 +499,4 @@ Use **↑ EXPORT** and **↓ IMPORT** in the profile panel to share or back up p
 
 ---
 
-*Tac & Lock v1.1.1 — © 2300AD: Mongoose Publishing. VTT tool for personal use at the gaming table.*
+*Tac & Lock v1.1.2 — © 2300AD: Mongoose Publishing. VTT tool for personal use at the gaming table.*
