@@ -185,7 +185,6 @@ Right-click a ship → **Attack…**
 | Target Signature | +Signature rating |
 | Sensor quality | Basic Military +0 / Improved +1 / Advanced +2 |
 | Sensor Time-lag | Adjacent +1 / Close +0 / Short −1 / Medium −2 / Long −3 / Very Long −4 / Distant −5 |
-| Sensor Lock (active) | +sensorLockDm |
 | Target evasion | evasionDm (negative — opposed Pilot check, see §8 Evade; applies here too, not just Step 3) |
 | Engineer assist | Routine (8+) Engineer(power) INT — adds Effect as DM |
 
@@ -207,8 +206,7 @@ Right-click a ship → **Attack…**
 | --------- | ----- |
 | Fire Control software | +1 per level (Fire Control/1 = +1, /2 = +2, /3 = +3) |
 | Effect from Step 2 | Positive Effect carries forward |
-| EW jamming | ewEffect (negative, applied to attacker) |
-| Sensor Lock | +sensorLockDm (applied on target) |
+| EW jamming | −1 (Effect 1–4) / −2 (Effect 5–6) / +1 if the jammer badly failed (Effect ≤−5) |
 | Command (Captain) | +commandBonus, only if the Captain's Command from last round targeted `gunner_turret` (see §9) |
 | Weapon trait Accurate | +1 |
 | Weapon trait Slow | −2 |
@@ -285,7 +283,6 @@ Select the action type, choose applicable target/options, roll (if required), th
 
 | Action | Check | Effect |
 | ------ | ----- | ------ |
-| **Sensor Lock** | Average (8+) Electronics(sensors) INT | Target ship gains sensorLockDm = max(1, Effect). All attacks vs that ship gain this DM. Resets at round end. |
 | **Electronic Warfare** | Difficult (10+) Electronics(comms) INT | Effect 1–4: jammed ship suffers DM−1 to Gunner checks. Effect 5–6: DM−2. Effect ≤−5: jam backfires, jammed ship instead gains DM+1. Resets at round end. // 2300AD B3 p.54 |
 | **EW Countermeasures** | Average (8+) Electronics(countermeasures) INT | Clears an active EW jam on this ship. |
 | **Active Sensors** | Easy (6+) Electronics(sensors) | Activates active sensor sweep. Signature +1 while active (flag persists until toggled off in Ship Sheet). |

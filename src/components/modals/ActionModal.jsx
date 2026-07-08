@@ -36,7 +36,6 @@ export function ActionModal({ payload, onClose }) {
   const ships                = useBattleStore((s) => s.ships)
   const reduceCritical       = useBattleStore((s) => s.reduceCriticalSeverity)
   const repairHull           = useBattleStore((s) => s.repairHull)
-  const applySensorLock      = useBattleStore((s) => s.applySensorLock)
   const applyEW              = useBattleStore((s) => s.applyEW)
   const addCriticalHit       = useBattleStore((s) => s.addCriticalHit)
   const updateShip           = useBattleStore((s) => s.updateShip)
@@ -102,10 +101,6 @@ export function ActionModal({ payload, onClose }) {
     const effect  = rollResult?.effect  ?? 0
 
     switch (action.id) {
-      case 'sensor_lock':
-        if (success && target) applySensorLock(shipId, target.id, effect)
-        break
-
       case 'electronic_warfare':
         // Effect banding (incl. the Effect ≤−5 backfire) is resolved inside applyEW,
         // so this fires on both success and failure — not gated on `success`. // B3 p.54

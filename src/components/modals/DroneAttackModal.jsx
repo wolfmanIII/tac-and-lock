@@ -189,17 +189,15 @@ export function DroneAttackModal({ payload, onClose }) {
       : owner.software?.includes('fire_control_1') ? 1 : 0
     const rangeDm = getRangeDM(drone.weaponId, drone.currentBand)
     const evasionDm    = target.evasionDm ?? 0
-    const sensorLockDm = target.sensorLockDm ?? 0
     const jammer = ships.find((s) => s.ewTarget === owner.id)
     const jammerPenalty = jammer?.ewEffect ?? 0
-    const total = fireControlDm + rangeDm + step2CarryEffect + evasionDm + sensorLockDm + jammerPenalty
+    const total = fireControlDm + rangeDm + step2CarryEffect + evasionDm + jammerPenalty
     return {
       rows: [
         ['Fire Control', fireControlDm],
         [`Range (${drone.currentBand})`, rangeDm],
         ['Carry (Step 2)', step2CarryEffect],
         ['Evasion penalty', evasionDm],
-        ...(sensorLockDm !== 0 ? [['Sensor lock', sensorLockDm]] : []),
         ...(jammerPenalty !== 0 ? [['EW jamming', jammerPenalty]] : []),
       ],
       total,

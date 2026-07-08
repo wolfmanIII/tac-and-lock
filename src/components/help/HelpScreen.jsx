@@ -260,7 +260,6 @@ export function HelpScreen({ onBack } = {}) {
                 ['Target Signature',  '+Signature rating'],
                 ['Sensor quality',    'Basic Military +0 / Improved +1 / Advanced +2'],
                 ['Sensor Time-lag',   'Adj +1 / Close +0 / Short −1 / Med −2 / Long −3 / VL −4 / Dist −5'],
-                ['Sensor Lock',       '+sensorLockDm (if active)'],
                 ['Engineer assist',   'Routine (8+) Engineer(power) — adds Effect as DM'],
               ]}
             />
@@ -283,8 +282,7 @@ export function HelpScreen({ onBack } = {}) {
               rows={[
                 ['Fire Control software', '+1 per level (FC/1 = +1, /2 = +2, /3 = +3)'],
                 ['Effect from Step 2',    'Positive Effect carries forward'],
-                ['EW jamming',            '−max(1, Effect) (applied to attacker)'],
-                ['Sensor Lock',           '+sensorLockDm (on target ship)'],
+                ['EW jamming',            '−1 (Effect 1–4) / −2 (Effect 5–6) / +1 if jammer badly failed (Effect ≤−5)'],
                 ['Command (Captain)',     '+1 or +2 if targeting gunner_turret this round'],
                 ['Weapon trait Accurate', '+1'],
                 ['Weapon trait Slow',     '−2'],
@@ -334,7 +332,6 @@ export function HelpScreen({ onBack } = {}) {
           </Sub>
 
           <Sub title="SENSOR OPERATOR">
-            <KV k="Sensor Lock"       v="Average (8+) Electronics(sensors) INT. Success: target gains sensorLockDm = max(1, Effect). All attacks vs that ship gain this DM. Resets at round end." />
             <KV k="Electronic Warfare" v="Difficult (10+) Electronics(comms) INT. Effect 1–4: target suffers DM−1 to Gunner checks. Effect 5–6: DM−2. Effect ≤−5: jam backfires, target instead gains DM+1. Resets at round end." />
             <KV k="EW Countermeasures" v="Average (8+) Electronics(countermeasures) INT. Success: clears an active EW jam on this ship." />
             <KV k="Active Sensors"    v="Easy (6+) Electronics(sensors). Signature +1 while active (toggle off in Ship Sheet)." />

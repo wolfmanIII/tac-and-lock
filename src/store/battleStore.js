@@ -72,9 +72,6 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     surfaceFixtureTracks: { ...(profile.surfaceFixtureTracks ?? {}) },
     crew:               structuredClone(profile.crew ?? []),
     crewAssignments:    { ...(profile.crewAssignments ?? {}) },
-    sensorLocked:            false,
-    sensorLockDm:            0,   // DM bonus to attacks vs this ship when sensor-locked // B3 p.55
-    sensorLockTarget:        null,
     ewTarget:                null,
     ewEffect:                0,   // negative DM this ship applies to its jammed target // B3 p.55
     hazards:                 [],  // active hazards [{ id, label }] — GM-managed, damage_control clears
@@ -156,9 +153,6 @@ export const useBattleStore = create((set, get) => {
       return {
         ...sh,
         evasionDm:                0,
-        sensorLockTarget:         null,
-        sensorLocked:             false,
-        sensorLockDm:             0,
         ewTarget:                 null,
         ewEffect:                 0,
         boardingDmNextRound:      0,
@@ -743,36 +737,6 @@ export const useBattleStore = create((set, get) => {
     ),
 
     // === ACTIONS PHASE ===
-
-    /**
-     * Apply a Sensor Lock on a target ship.
-     * @param {string} attackerId
-     * @param {string} targetId
-     * @param {number} effect — check effect (used for DM bonus)
-     */
-    applySensorLock: wh(
-      (attackerId, targetId) =>
-        !!get().ships.find((s) => s.id === attackerId) &&
-        !!get().ships.find((s) => s.id === targetId),
-      (attackerId, targetId, effect) => {
-        const { round, phase } = get()
-        const attacker = get().ships.find((s) => s.id === attackerId)
-        const target   = get().ships.find((s) => s.id === targetId)
-        const dmBonus  = Math.max(1, effect)
-
-        set((s) => ({
-          ships: s.ships.map((sh) => {
-            if (sh.id === attackerId) return { ...sh, sensorLockTarget: targetId }
-            if (sh.id === targetId)   return { ...sh, sensorLocked: true, sensorLockDm: dmBonus }
-            return sh
-          }),
-          log: [...s.log, makeLogEntry({
-            round, phase, type: 'action', shipId: attackerId,
-            message: `📡 ${attacker?.profile.name} sensor locked ${target?.profile.name} (DM+${dmBonus} to attacks).`,
-          })],
-        }))
-      },
-    ),
 
     /**
      * Apply Electronic Warfare against a target. // 2300AD B3 p.54

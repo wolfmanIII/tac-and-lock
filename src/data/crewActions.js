@@ -19,20 +19,15 @@
 // ManoeuvreModal during the Manoeuvre Step, not as an Actions-phase crew
 // action — there is no separate "pilot" role entry here.
 
+// Note: "Sensor Lock" is not a 2300AD B3 action — it only exists in the
+// Traveller 2022 CRB (flat DM+2, persists until broken by enemy EW), and B3
+// p.52-62 has no equivalent. Deliberately not implemented; the closest B3
+// concept (Scan Target's range-band reduction for the Firing Solution) is a
+// different mechanic and is not currently modeled either.
+
 /** @type {Record<string, CrewAction[]>} */
 export const CREW_ACTIONS = {
   captain: [
-    {
-      id: 'sensor_lock',
-      label: 'Sensor Lock',
-      phase: 'actions',
-      reaction: false,
-      skill: 'Electronics (sensors)',
-      difficulty: 8,
-      difficultyLabel: 'Average (8+)',
-      description: 'Electronics (sensors) Average (8+). On success, all attacks vs locked target gain DM+Effect (min +1) this round. Lock ends at round end.',
-      requiresTarget: true,
-    },
     {
       id: 'commands',
       label: 'Commands',
@@ -56,7 +51,7 @@ export const CREW_ACTIONS = {
       skill: 'Engineer (stutterwarp)',
       difficulty: 10,
       difficultyLabel: 'Hard (10+)',
-      description: 'Push the tactical stutterwarp past safe limits. Hard (10+). Success: +1 TAC Speed this round. Failure: DM-2 roll on stutterwarp critical track.',
+      description: 'Push the tactical stutterwarp past safe limits. Hard (10+). Success: Effect 1–4 → +1 TAC Speed, Effect 5–6 → +2 this round. Failure: DM-2 roll on stutterwarp critical track.',
       requiresTarget: false,
     },
     {

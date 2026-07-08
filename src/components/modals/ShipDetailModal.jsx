@@ -220,8 +220,7 @@ export function ShipDetailModal({ payload, onClose }) {
 
       {/* Status flags */}
       <div className="flex flex-wrap gap-2">
-        {ship.sensorLocked  && <span className="px-2 py-0.5 text-[10px] font-mono bg-sky-900/40 border border-sky-700 text-sky-300 rounded">SENSOR LOCK</span>}
-        {ship.ewTarget      && <span className="px-2 py-0.5 text-[10px] font-mono bg-violet-900/40 border border-violet-700 text-violet-300 rounded">EW TARGET</span>}
+        {ship.ewTarget && <span className="px-2 py-0.5 text-[10px] font-mono bg-violet-900/40 border border-violet-700 text-violet-300 rounded">EW TARGET</span>}
       </div>
 
       {/* Active hazards — GM-managed, cleared by damage_control // B3 p.55 */}

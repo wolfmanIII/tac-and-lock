@@ -56,11 +56,6 @@ export function ShipBentoCard({ ship }) {
           <p className="text-[10px] font-mono text-slate-500 truncate">{ship.profile?.class}</p>
         </div>
         <div className="flex items-center gap-1 shrink-0 flex-wrap justify-end">
-          {ship.sensorLocked && (
-            <Tooltip content="Sensor locked — attackers gain DM bonus">
-              <span className="text-[10px] text-amber-400 border border-amber-800 rounded px-1">LOCK</span>
-            </Tooltip>
-          )}
           {ship.ewTarget && (
             <Tooltip content="This ship is jamming a target">
               <span className="text-[10px] text-purple-400 border border-purple-800 rounded px-1">EW</span>
