@@ -11,7 +11,7 @@ const COMMAND_TARGET_ROLES = Object.keys(CREW_SKILLS).filter((r) => r !== 'capta
 const ALL_ACTIONS = Object.values(CREW_ACTIONS).flat()
 
 /** Actions that show APPLY on failure too (have a failure-path store effect). */
-const HAS_FAILURE_EFFECT = new Set(['overload_stutterwarp'])
+const HAS_FAILURE_EFFECT = new Set(['overload_stutterwarp', 'electronic_warfare'])
 
 /** Boarding result table — diff = attacker_total − defender_total. // B3 p.55 */
 function getBoardingResult(diff) {
@@ -107,7 +107,9 @@ export function ActionModal({ payload, onClose }) {
         break
 
       case 'electronic_warfare':
-        if (success && target) applyEW(shipId, target.id, effect)
+        // Effect banding (incl. the Effect ≤−5 backfire) is resolved inside applyEW,
+        // so this fires on both success and failure — not gated on `success`. // B3 p.54
+        if (target) applyEW(shipId, target.id, effect)
         break
 
       case 'ew_countermeasure': {

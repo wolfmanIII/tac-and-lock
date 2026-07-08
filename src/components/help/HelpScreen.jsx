@@ -329,21 +329,22 @@ export function HelpScreen({ onBack } = {}) {
           </Sub>
 
           <Sub title="ENGINEER">
-            <KV k="Overload Stutterwarp" v="Difficult (10+) Engineer(stutterwarp) INT. Success: TAC Speed +1 this round. Failure: critical hit on Stutterwarp." />
+            <KV k="Overload Stutterwarp" v="Difficult (10+) Engineer(stutterwarp) INT. Success: Effect 1–4 → TAC Speed +1, Effect 5–6 → +2 this round. Failure: critical hit on Stutterwarp." />
             <KV k="Emergency Repair"     v="Average (8+) Engineer INT/EDU. System mode: reduce one critical severity by 1. Hull mode: restore 1 Hull Point." />
           </Sub>
 
           <Sub title="SENSOR OPERATOR">
             <KV k="Sensor Lock"       v="Average (8+) Electronics(sensors) INT. Success: target gains sensorLockDm = max(1, Effect). All attacks vs that ship gain this DM. Resets at round end." />
-            <KV k="Electronic Warfare" v="Average (8+) Electronics(countermeasures) INT. Success: target suffers DM−max(1, Effect) on all attacks. Resets at round end." />
+            <KV k="Electronic Warfare" v="Difficult (10+) Electronics(comms) INT. Effect 1–4: target suffers DM−1 to Gunner checks. Effect 5–6: DM−2. Effect ≤−5: jam backfires, target instead gains DM+1. Resets at round end." />
             <KV k="EW Countermeasures" v="Average (8+) Electronics(countermeasures) INT. Success: clears an active EW jam on this ship." />
             <KV k="Active Sensors"    v="Easy (6+) Electronics(sensors). Signature +1 while active (toggle off in Ship Sheet)." />
           </Sub>
 
           <Sub title="GUNNER">
-            <KV k="Point Defence"  v="Moved to the Drone Attack modal — see REACTIONS above. Intercepts one drone at a time, not a crew action." />
-            <KV k="Evasive Action" v="Automatic. Spend 1 TAC Speed → apply evasionDm to attacks this round." />
+            <KV k="Point Defence" v="Moved to the Drone Attack modal — see REACTIONS above. Intercepts one drone at a time, not a crew action." />
           </Sub>
+
+          <Note>Evasion (opposed Pilot check, B3 p.55) is resolved in the Manoeuvre Step's Manoeuvre… modal, not here — Pilot has no Actions Step entry.</Note>
 
           <Sub title="MECHANIC / ENGINEER">
             <KV k="Damage Control" v="Average (8+) Mechanic INT/EDU. Pick an active hazard (fire, breach, fuel leak, radiation). Success removes it. Effect ≥ 4: suppressed 1D rounds." />

@@ -775,7 +775,10 @@ export const useBattleStore = create((set, get) => {
     ),
 
     /**
-     * Apply Electronic Warfare against a target.
+     * Apply Electronic Warfare against a target. // 2300AD B3 p.54
+     * Effect 1–4 → target suffers DM−1; Effect 5–6 → DM−2 (capped, not
+     * linear with Effect). Effect ≤−5 → the jam backfires and the target
+     * instead gains DM+1, having triangulated the jammer's emissions.
      * @param {string} attackerId
      * @param {string} targetId
      * @param {number} effect — check effect
@@ -788,7 +791,7 @@ export const useBattleStore = create((set, get) => {
         const { round, phase } = get()
         const attacker = get().ships.find((s) => s.id === attackerId)
         const target   = get().ships.find((s) => s.id === targetId)
-        const penalty  = -Math.max(1, effect)
+        const penalty  = effect >= 5 ? -2 : effect >= 0 ? -1 : effect <= -5 ? 1 : 0
 
         set((s) => ({
           ships: s.ships.map((sh) =>
@@ -796,7 +799,11 @@ export const useBattleStore = create((set, get) => {
           ),
           log: [...s.log, makeLogEntry({
             round, phase, type: 'action', shipId: attackerId,
-            message: `📡 ${attacker?.profile.name} jamming ${target?.profile.name} (DM${penalty} to attacks/sensors).`,
+            message: penalty < 0
+              ? `📡 ${attacker?.profile.name} jamming ${target?.profile.name} (DM${penalty} to ${target?.profile.name}'s attacks).`
+              : penalty > 0
+                ? `📡 ${attacker?.profile.name}'s jam on ${target?.profile.name} backfired — ${target?.profile.name} gains DM+1 to attacks.`
+                : `📡 ${attacker?.profile.name} jamming attempt on ${target?.profile.name} had no effect.`,
           })],
         }))
       },
