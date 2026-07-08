@@ -37,17 +37,28 @@ test.describe('ManoeuvreModal', () => {
     await expect(page.getByText('Long').first()).toBeVisible()
   })
 
-  test('APPROACH / HOLD / FLEE intent buttons are visible', async ({ page }) => {
+  test('acting-ship picker shows both ship names', async ({ page }) => {
     await openManoeuvre(page)
-    await expect(page.getByText('◀ APPROACH')).toBeVisible()
-    await expect(page.getByText('HOLD')).toBeVisible()
-    await expect(page.getByText('FLEE ▶')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'ISV-2 Trilon' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Kaefer Geist' })).toBeVisible()
   })
 
-  test('selecting APPROACH shows TAC SPEED SPENT row', async ({ page }) => {
+  test('selecting acting ship shows CLOSE / OPEN intent buttons', async ({ page }) => {
     await openManoeuvre(page)
-    await page.getByText('◀ APPROACH').click()
-    await expect(page.getByText('TAC SPEED SPENT')).toBeVisible()
+    await page.getByRole('button', { name: 'ISV-2 Trilon' }).click()
+    await expect(page.getByText('◀ CLOSE (approach)')).toBeVisible()
+    await expect(page.getByText('OPEN (flee) ▶')).toBeVisible()
+  })
+
+  test('picking acting ship + intent shows ROLL button, rolling shows the opposed check breakdown', async ({ page }) => {
+    await openManoeuvre(page)
+    await page.getByRole('button', { name: 'ISV-2 Trilon' }).click()
+    await page.getByText('◀ CLOSE (approach)').click()
+    await expect(page.getByRole('button', { name: 'ROLL 🎲' })).toBeVisible()
+    await page.getByRole('button', { name: 'ROLL 🎲' }).click()
+    // Breakdown lines for both ships' opposed Pilot checks
+    await expect(page.getByText('ISV-2 Trilon:', { exact: false })).toBeVisible()
+    await expect(page.getByText('Kaefer Geist:', { exact: false })).toBeVisible()
   })
 
   test('GM Override section is always present', async ({ page }) => {

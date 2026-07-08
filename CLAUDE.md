@@ -21,7 +21,7 @@ Senior Frontend Engineer. Vite + React specialist. Write efficient, maintainable
 
 Local VTT lite (Virtual Tabletop) per il combattimento spaziale di **2300AD** (Mongoose Publishing, 2021), basato sul **Traveller 2022 Core Rulebook**. GM-operated, designed for shared-screen sessions.
 
-Il combattimento usa **fascie di distanza** (range bands) — nessuna griglia esagonale, nessun movimento vettoriale. Le 7 fasce (Adjacent → Distant) definiscono tutte le relazioni spaziali. Le navi spendono Thrust per muoversi tra fasce.
+Il combattimento usa **fascie di distanza** (range bands) — nessuna griglia esagonale, nessun movimento vettoriale. Le 7 fasce (Adjacent → Distant) definiscono tutte le relazioni spaziali. Il movimento tra fasce è un **check Pilot (DEX) contrapposto** (Open/Close, TAC Speed come DM fisso, mai speso) — l'Effect del check determina quante fasce si guadagnano o si perdono // 2300AD B3 p.54.
 
 Riferimenti regole:
 
@@ -56,15 +56,17 @@ Regole complete in `doc/space-combat-rules.md`.
 
 > Scala light-second. Ogni fascia = ½ light second (~150.000 km). Cinque volte la scala Trav2022 CRB.
 
-| Fascia | Distanza (km) | TAC Speed per muoversi |
-| --- | --- | --- |
-| Adjacent | < 100 | 1 |
-| Close | ≤ 150.000 | 1 |
-| Short | 150.001 – 300.000 | 2 |
-| Medium | 301.000 – 450.000 | 5 |
-| Long | 450.001 – 600.000 | 10 |
-| Very Long | 600.001 – 750.000 | 25 |
-| Distant | > 750.000 | 50 |
+| Fascia | Distanza (km) |
+| --- | --- |
+| Adjacent | < 100 |
+| Close | ≤ 150.000 |
+| Short | 150.001 – 300.000 |
+| Medium | 301.000 – 450.000 |
+| Long | 450.001 – 600.000 |
+| Very Long | 600.001 – 750.000 |
+| Distant | > 750.000 |
+
+Non esiste una tabella di "costo TAC Speed per fascia" nel testo — il movimento è un check Pilot (DEX) contrapposto (Open/Close, B3 p.54), non un costo fisso. TAC Speed si somma al check come DM, non si spende mai. Vedi `utils/rangeBands.js:moveBands` e `ManoeuvreModal.jsx`.
 
 ### Range Modifiers (attacco) — 2300AD B3 p.57
 
@@ -304,14 +306,14 @@ src/
 │   └── uiStore.js                ← Modal open state, nave selezionata, context menu
 ├── utils/
 │   ├── combat.js                 ← getWeaponTraitAttackDm, getPointDefenceDm, computeEffectiveSignature, computeAttackDMs, rollDamage, crits
-│   ├── rangeBands.js             ← Logica fascie: thrust cost, movement, pairKey, basicBandPool (riusata anche per l'avvicinamento dei droni)
+│   ├── rangeBands.js             ← Logica fascie: moveBands (Effect → spostamento), pairKey (riusata anche per l'avvicinamento dei droni)
 │   ├── crew.js                   ← Crew helpers (getCrewSkill, role assignment, incluso remote_pilot)
 │   ├── dice.js                   ← Dice rolling + result formatting
 │   ├── io.js                     ← JSON import/export via File API
 │   └── db.js                     ← IndexedDB wrapper (openDB, get, put, delete)
 └── data/
     ├── weapons.js                ← Armi canoniche 2300AD: tipo, TL, range, danno, traits, droni (tacSpeed/enduranceRounds)
-    ├── rangeBands.js             ← Definizioni 7 fascie: nome, distanza, thrustCost, attackDM, timeLagDM
+    ├── rangeBands.js             ← Definizioni 7 fascie: nome, distanza, attackDM, timeLagDM
     ├── criticalHits.js           ← Location table (2D) + effetti per severity 1–6 × 11 sistemi
     ├── crewActions.js            ← Definizioni azioni Actions phase per ruolo
     ├── software.js               ← Software: nome, TL, bandwidth, effetto in combattimento
@@ -330,7 +332,6 @@ Il progetto è il sibling diretto di `~/projects/react/thrust-and-drift`. Riusar
 | **`wh()` wrapper** | `battleStore.js` | Pushes undo snapshot automatico prima di ogni mutazione |
 | **`_skipHistory`** | battleStore actions | Evita snapshot cascata su mutazioni interne |
 | **`pairKey(id1,id2)`** | `utils/rangeBands.js` | Chiave order-independent per coppie di navi |
-| **`basicBandPool`** | battleStore | TAC Speed accumulato per coppia — persiste fino al cambio di fascia |
 | **`buildNextRoundState(s)`** | battleStore | Funzione pura che avanza il round; condivisa tra `advancePhase` e `startNextRound` |
 | **`makeLogEntry()`** | utils | Factory per LogEntry con shape consistente |
 | **`ShipBentoCard`** | `BasicBattleView.jsx` | Layout bento card per nave — questo È il view principale di tac-and-lock |

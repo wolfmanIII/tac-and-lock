@@ -9,10 +9,7 @@ import {
   getBandIndex,
   getCloserBand,
   getFartherBand,
-  getTacSpeedCostOneStep,
-  getTacSpeedCostTo,
-  canMoveOnce,
-  resolveBasicBandMovement,
+  moveBands,
   isDogfightRange,
   RANGE_BAND_ORDER,
 } from './rangeBands.js'
@@ -114,133 +111,37 @@ describe('getFartherBand', () => {
   })
 })
 
-// === getTacSpeedCostOneStep ===
-// Cost = destination band's tacSpeedCost // 2300AD B3 p.52
+// === moveBands ===
+// Applies the Effect of an opposed Pilot check (Open/Close) to a band. // 2300AD B3 p.54
 
-describe('getTacSpeedCostOneStep', () => {
-  it('Adjacent → closer: Infinity (already at edge)', () => {
-    expect(getTacSpeedCostOneStep('Adjacent', 'closer')).toBe(Infinity)
+describe('moveBands', () => {
+  it('moves one band closer', () => {
+    expect(moveBands('Short', 'closer', 1)).toBe('Close')
   })
 
-  it('Distant → farther: Infinity (already at edge)', () => {
-    expect(getTacSpeedCostOneStep('Distant', 'farther')).toBe(Infinity)
+  it('moves one band farther', () => {
+    expect(moveBands('Short', 'farther', 1)).toBe('Medium')
   })
 
-  it('Close → closer: cost 1 (entering Adjacent)', () => {
-    expect(getTacSpeedCostOneStep('Close', 'closer')).toBe(1)
+  it('moves multiple bands in one call (large Effect)', () => {
+    expect(moveBands('Distant', 'closer', 3)).toBe('Medium')
   })
 
-  it('Short → closer: cost 1 (entering Close)', () => {
-    expect(getTacSpeedCostOneStep('Short', 'closer')).toBe(1)
+  it('count 0 → no movement', () => {
+    expect(moveBands('Short', 'closer', 0)).toBe('Short')
   })
 
-  it('Adjacent → farther: cost 1 (entering Close)', () => {
-    expect(getTacSpeedCostOneStep('Adjacent', 'farther')).toBe(1)
+  it('clamped at Adjacent — cannot go past the near edge', () => {
+    expect(moveBands('Close', 'closer', 5)).toBe('Adjacent')
   })
 
-  it('Close → farther: cost 2 (entering Short)', () => {
-    expect(getTacSpeedCostOneStep('Close', 'farther')).toBe(2)
+  it('clamped at Distant — cannot go past the far edge', () => {
+    expect(moveBands('Long', 'farther', 5)).toBe('Distant')
   })
 
-  it('Medium → farther: cost 10 (entering Long)', () => {
-    expect(getTacSpeedCostOneStep('Medium', 'farther')).toBe(10)
-  })
-})
-
-// === getTacSpeedCostTo ===
-
-describe('getTacSpeedCostTo', () => {
-  it('same band → 0 cost', () => {
-    expect(getTacSpeedCostTo('Close', 'Close')).toBe(0)
-    expect(getTacSpeedCostTo('Distant', 'Distant')).toBe(0)
-  })
-
-  it('Adjacent → Close = 1', () => {
-    expect(getTacSpeedCostTo('Adjacent', 'Close')).toBe(1)
-  })
-
-  it('Adjacent → Short = 1 + 2 = 3', () => {
-    expect(getTacSpeedCostTo('Adjacent', 'Short')).toBe(3)
-  })
-
-  it('Close → Medium = 2 + 5 = 7', () => {
-    expect(getTacSpeedCostTo('Close', 'Medium')).toBe(7)
-  })
-
-  it('Short → Long = 5 + 10 = 15', () => {
-    expect(getTacSpeedCostTo('Short', 'Long')).toBe(15)
-  })
-
-  it('reverse direction: Long → Short = 5 + 2 = 7', () => {
-    // moving closer: Long→Medium (cost 5) + Medium→Short (cost 2) = 7
-    expect(getTacSpeedCostTo('Long', 'Short')).toBe(7)
-  })
-
-  it('unknown band → Infinity', () => {
-    expect(getTacSpeedCostTo('Warp', 'Close')).toBe(Infinity)
-    expect(getTacSpeedCostTo('Close', 'Warp')).toBe(Infinity)
-  })
-})
-
-// === canMoveOnce ===
-
-describe('canMoveOnce', () => {
-  it('exact TAC Speed = can move', () => {
-    expect(canMoveOnce('Adjacent', 'Close', 1)).toBe(true)
-  })
-
-  it('more TAC Speed than needed = can move', () => {
-    expect(canMoveOnce('Adjacent', 'Close', 5)).toBe(true)
-  })
-
-  it('not enough TAC Speed = cannot move', () => {
-    expect(canMoveOnce('Close', 'Medium', 6)).toBe(false) // needs 7
-  })
-
-  it('same band = trivially true at any speed', () => {
-    expect(canMoveOnce('Short', 'Short', 0)).toBe(true)
-  })
-})
-
-// === resolveBasicBandMovement ===
-
-describe('resolveBasicBandMovement', () => {
-  it('hold intent → band and pool unchanged', () => {
-    const r = resolveBasicBandMovement('Short', 3, 'hold', 5)
-    expect(r.newBand).toBe('Short')
-    expect(r.newPool).toBe(3) // pool unchanged
-  })
-
-  it('pool not yet reaching threshold → no band change', () => {
-    // cost to enter Close from Short = 1; pool 0 + netTacSpeed 0 = 0 < 1
-    const r = resolveBasicBandMovement('Short', 0, 'closer', 0)
-    expect(r.newBand).toBe('Short')
-    expect(r.newPool).toBe(0)
-  })
-
-  it('pool accumulates across calls without band change', () => {
-    // entering Medium from Short costs 5; contribute 3 this round
-    const r = resolveBasicBandMovement('Short', 0, 'farther', 3)
-    expect(r.newBand).toBe('Short')
-    expect(r.newPool).toBe(3)
-  })
-
-  it('pool reaches threshold → band changes and excess carries over', () => {
-    // entering Close from Short costs 1; pool=0, netTacSpeed=3 → 3 >= 1 → band changes
-    const r = resolveBasicBandMovement('Short', 0, 'closer', 3)
-    expect(r.newBand).toBe('Close')
-    expect(r.newPool).toBe(2) // 3 - 1
-  })
-
-  it('pool exactly meets threshold → band changes, pool = 0', () => {
-    const r = resolveBasicBandMovement('Short', 0, 'closer', 1)
-    expect(r.newBand).toBe('Close')
-    expect(r.newPool).toBe(0)
-  })
-
-  it('already at edge going farther — stays put', () => {
-    const r = resolveBasicBandMovement('Distant', 0, 'farther', 100)
-    expect(r.newBand).toBe('Distant')
+  it('already at edge, moving further that way — stays put', () => {
+    expect(moveBands('Distant', 'farther', 3)).toBe('Distant')
+    expect(moveBands('Adjacent', 'closer', 3)).toBe('Adjacent')
   })
 })
 

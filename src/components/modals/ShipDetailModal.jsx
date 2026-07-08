@@ -89,11 +89,7 @@ export function ShipDetailModal({ payload, onClose }) {
         </div>
         <div>
           <p className="text-[10px] font-display text-slate-500 tracking-widest">TAC SPEED</p>
-          <p className="text-slate-200">{ship.currentTacSpeed ?? p.tacSpeed} / {p.tacSpeed}</p>
-        </div>
-        <div>
-          <p className="text-[10px] font-display text-slate-500 tracking-widest">TAC AVAIL</p>
-          <p className="text-sky-300">{ship.tacSpeedAvailable ?? p.tacSpeed}</p>
+          <p className="text-slate-200">{ship.currentTacSpeed ?? p.tacSpeed}</p>
         </div>
         <div>
           <p className="text-[10px] font-display text-slate-500 tracking-widest">SENSORS</p>

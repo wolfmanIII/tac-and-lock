@@ -52,14 +52,14 @@ export function useAutosave() {
       try {
         const {
           id, name, round, phase, initiativeOrder, currentActorIndex,
-          ships, drones, rangeBands, basicBandPool, log,
+          ships, drones, rangeBands, log,
         } = battleStore
 
         if (ships.length > 0) {
           const savedAt = new Date().toISOString()
           await dbPut(STORE_BATTLE, BATTLE_KEY, {
             id, name, round, phase, initiativeOrder, currentActorIndex,
-            ships, drones, rangeBands, basicBandPool, log, savedAt,
+            ships, drones, rangeBands, log, savedAt,
           })
           useBattleStore.setState({ savedAt })
         }

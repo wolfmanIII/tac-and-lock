@@ -1,9 +1,21 @@
 import { useState } from 'react'
 import { useBattleStore } from '../../store/battleStore.js'
-import { RANGE_BANDS, RANGE_BAND_MOVE_COST } from '../../data/rangeBands.js'
+import { RANGE_BANDS } from '../../data/rangeBands.js'
 import { pairKey, getCloserBand, getFartherBand } from '../../utils/rangeBands.js'
 import { getAssignedSkill, getAssignedCharacteristic } from '../../utils/crew.js'
 import { getCharDM, roll2D6 } from '../../utils/dice.js'
+
+/** Opposed Pilot (DEX) check for one ship — TAC Speed is a fixed DM, never spent. // 2300AD B3 p.54 */
+function rollPilotCheck(ship) {
+  const pilotSkill = getAssignedSkill('pilot', ship.crewAssignments, ship.crew)
+  const dexChar    = getAssignedCharacteristic('pilot', ship.crewAssignments, ship.crew, 'DEX')
+  const dexDm      = getCharDM(dexChar)
+  const tacSpeed   = ship.currentTacSpeed ?? 0
+  const commandDm  = ship.commandBonus?.role === 'pilot' ? ship.commandBonus.dm : 0
+  const dice       = roll2D6()
+  const total      = dice[0] + dice[1] + pilotSkill + dexDm + tacSpeed + commandDm
+  return { dice, pilotSkill, dexDm, tacSpeed, commandDm, total }
+}
 
 export function ManoeuvreModal({ payload, onClose }) {
   const { shipAId, shipBId, shipId } = payload ?? {}
@@ -31,8 +43,10 @@ export function ManoeuvreModal({ payload, onClose }) {
   )
 
   const [pairIdx,     setPairIdx]    = useState(0)
-  const [intent,      setIntent]     = useState('hold')
-  const [tacSpeed,    setTacSpeed]   = useState(1)
+  const [actingShipId, setActingShipId] = useState(null)
+  const [intent,       setIntent]       = useState(null) // 'closer' (Close) | 'farther' (Open)
+  const [manoeuvreRoll, setManoeuvreRoll] = useState(null)
+  const [applyEnemyChoice, setApplyEnemyChoice] = useState(false)
   const [directBand,  setDirectBand] = useState(null)
   // Evasion — B3 p.55: opposed Pilot check (DEX), Effect → DM table
   const [evadingShipId, setEvadingShipId] = useState(null)
@@ -55,6 +69,9 @@ export function ManoeuvreModal({ payload, onClose }) {
   const bandDef = RANGE_BANDS.find((bd) => bd.id === current)
   const closer  = getCloserBand(current)
   const farther = getFartherBand(current)
+
+  const actingShip = actingShipId ? (actingShipId === a.id ? a : b) : null
+  const otherShip   = actingShipId ? (actingShipId === a.id ? b : a) : null
 
   /** B3 p.55 — Effect of opposed Pilot check → DM applied to all incoming attacks. */
   function evasionEffectToDm(effect) {
@@ -87,11 +104,41 @@ export function ManoeuvreModal({ payload, onClose }) {
     setEvasionDm(shipId, 0)
   }
 
+  /** Opposed Pilot check (DEX), TAC Speed as DM — Open/Close. // 2300AD B3 p.54 */
+  function rollManoeuvre() {
+    if (!actingShip || !otherShip) return
+    const actingCheck = rollPilotCheck(actingShip)
+    const otherCheck  = rollPilotCheck(otherShip)
+    const effect      = actingCheck.total - otherCheck.total
+    setManoeuvreRoll({ actingCheck, otherCheck, effect })
+    setApplyEnemyChoice(false)
+  }
+
+  function clearManoeuvreRoll() {
+    setManoeuvreRoll(null)
+    setApplyEnemyChoice(false)
+  }
+
   function applyManoeuvre() {
     if (directBand && directBand !== current) {
       setRangeBand(a.id, b.id, directBand)
-    } else if (intent !== 'hold') {
-      manoeuvre(a.id, b.id, intent, tacSpeed)
+      onClose()
+      return
+    }
+    if (manoeuvreRoll && intent && actingShipId) {
+      const bandsChanged = Math.abs(manoeuvreRoll.effect)
+      if (bandsChanged > 0) {
+        if (manoeuvreRoll.effect > 0) {
+          // Acting ship's Pilot won the opposed check.
+          manoeuvre(a.id, b.id, actingShipId, intent, bandsChanged)
+        } else if (applyEnemyChoice) {
+          // Acting ship failed — "if desired", the enemy capitalizes: range moves
+          // the opposite way, credited to the other ship. // 2300AD B3 p.54
+          const otherShipId = actingShipId === a.id ? b.id : a.id
+          const reverseDirection = intent === 'closer' ? 'farther' : 'closer'
+          manoeuvre(a.id, b.id, otherShipId, reverseDirection, bandsChanged)
+        }
+      }
     }
     onClose()
   }
@@ -104,7 +151,7 @@ export function ManoeuvreModal({ payload, onClose }) {
           <div className="flex gap-1">
             {relevantPairs.map((_, i) => (
               <button key={i} className={`w-6 h-6 text-xs border rounded ${i === pairIdx ? 'border-sky-500 text-sky-300' : 'border-slate-700 text-slate-500'}`}
-                onClick={() => { setPairIdx(i); setIntent('hold'); setDirectBand(null) }}>
+                onClick={() => { setPairIdx(i); setActingShipId(null); setIntent(null); setManoeuvreRoll(null); setDirectBand(null) }}>
                 {i + 1}
               </button>
             ))}
@@ -123,41 +170,90 @@ export function ManoeuvreModal({ payload, onClose }) {
         <p className="text-xs font-mono text-slate-500">{bandDef?.distance}</p>
       </div>
 
-      {/* Movement options */}
+      {/* Manoeuvre — opposed Pilot check // 2300AD B3 p.54 */}
       <div>
-        <p className="text-[10px] font-display text-slate-500 tracking-widest mb-2">INTENT</p>
-        <div className="grid grid-cols-3 gap-2">
-          {(['closer', 'hold', 'farther'] ).map((opt) => (
+        <p className="text-[10px] font-display text-slate-500 tracking-widest mb-2">
+          MANOEUVRE — OPPOSED PILOT (DEX) // 2300AD B3 p.54
+        </p>
+        <div className="grid grid-cols-2 gap-2 mb-2">
+          {[a, b].map((ship) => (
             <button
-              key={opt}
-              disabled={(opt === 'closer' && !closer) || (opt === 'farther' && !farther)}
-              className={`py-2 text-xs font-display tracking-widest border rounded transition-colors
-                ${intent === opt ? 'border-sky-500 text-sky-300 bg-sky-900/30' : 'border-slate-700 text-slate-400 hover:border-slate-500'}
-                disabled:opacity-30 disabled:cursor-not-allowed`}
-              onClick={() => { setIntent(opt); setDirectBand(null) }}
+              key={ship.id}
+              disabled={(!closer && !farther)}
+              className={`py-1.5 text-xs font-mono border rounded transition-colors truncate
+                ${actingShipId === ship.id ? 'border-sky-500 text-sky-300 bg-sky-900/30' : 'border-slate-700 text-slate-400 hover:border-slate-500'}`}
+              onClick={() => { setActingShipId(ship.id); setManoeuvreRoll(null) }}
             >
-              {opt === 'closer' ? '◀ APPROACH' : opt === 'farther' ? 'FLEE ▶' : 'HOLD'}
+              {ship.profile?.name ?? ship.id}
             </button>
           ))}
         </div>
-      </div>
-
-      {intent !== 'hold' && (
-        <div>
-          <p className="text-[10px] font-display text-slate-500 tracking-widest mb-2">
-            TAC SPEED SPENT (cost: {RANGE_BAND_MOVE_COST[intent === 'closer' ? closer : farther] ?? '?'})
-          </p>
-          <div className="flex gap-2">
-            {[1,2,3,4,5,6].map((n) => (
-              <button
-                key={n}
-                className={`flex-1 py-1.5 text-xs font-mono border rounded ${tacSpeed === n ? 'border-sky-500 text-sky-300 bg-sky-900/30' : 'border-slate-700 text-slate-400'}`}
-                onClick={() => setTacSpeed(n)}
-              >{n}</button>
-            ))}
+        {actingShipId && (
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            <button
+              disabled={!closer}
+              className={`py-2 text-xs font-display tracking-widest border rounded transition-colors
+                ${intent === 'closer' ? 'border-sky-500 text-sky-300 bg-sky-900/30' : 'border-slate-700 text-slate-400 hover:border-slate-500'}
+                disabled:opacity-30 disabled:cursor-not-allowed`}
+              onClick={() => { setIntent('closer'); setManoeuvreRoll(null) }}
+            >
+              ◀ CLOSE (approach)
+            </button>
+            <button
+              disabled={!farther}
+              className={`py-2 text-xs font-display tracking-widest border rounded transition-colors
+                ${intent === 'farther' ? 'border-sky-500 text-sky-300 bg-sky-900/30' : 'border-slate-700 text-slate-400 hover:border-slate-500'}
+                disabled:opacity-30 disabled:cursor-not-allowed`}
+              onClick={() => { setIntent('farther'); setManoeuvreRoll(null) }}
+            >
+              OPEN (flee) ▶
+            </button>
           </div>
-        </div>
-      )}
+        )}
+
+        {actingShipId && intent && !manoeuvreRoll && (
+          <button
+            onClick={rollManoeuvre}
+            className="w-full py-1.5 text-xs font-display tracking-widest text-slate-400 border border-slate-600 hover:border-sky-600 hover:text-sky-400 rounded transition-colors"
+          >
+            ROLL 🎲
+          </button>
+        )}
+
+        {manoeuvreRoll && (
+          <div className="rounded border border-slate-700 bg-slate-800/30 p-2 space-y-1.5">
+            <p className="font-mono text-[10px] text-slate-400">
+              {actingShip.profile?.name}: [{manoeuvreRoll.actingCheck.dice.join('+')}] +{manoeuvreRoll.actingCheck.pilotSkill} +dex{manoeuvreRoll.actingCheck.dexDm} +tac{manoeuvreRoll.actingCheck.tacSpeed}
+              {manoeuvreRoll.actingCheck.commandDm ? ` +cmd${manoeuvreRoll.actingCheck.commandDm}` : ''} = {manoeuvreRoll.actingCheck.total}
+            </p>
+            <p className="font-mono text-[10px] text-slate-400">
+              {otherShip.profile?.name}: [{manoeuvreRoll.otherCheck.dice.join('+')}] +{manoeuvreRoll.otherCheck.pilotSkill} +dex{manoeuvreRoll.otherCheck.dexDm} +tac{manoeuvreRoll.otherCheck.tacSpeed}
+              {manoeuvreRoll.otherCheck.commandDm ? ` +cmd${manoeuvreRoll.otherCheck.commandDm}` : ''} = {manoeuvreRoll.otherCheck.total}
+            </p>
+            {manoeuvreRoll.effect > 0 ? (
+              <p className="font-mono text-xs font-bold text-sky-400">
+                {actingShip.profile?.name} succeeds — Effect {manoeuvreRoll.effect}: moves {Math.abs(manoeuvreRoll.effect)} band(s) {intent === 'closer' ? 'closer' : 'farther'}.
+              </p>
+            ) : manoeuvreRoll.effect < 0 ? (
+              <>
+                <p className="font-mono text-xs font-bold text-red-400">
+                  {actingShip.profile?.name} fails — Effect {manoeuvreRoll.effect}: {otherShip.profile?.name} may {intent === 'closer' ? 'open the range' : 'close the range'} by {Math.abs(manoeuvreRoll.effect)} band(s), if desired.
+                </p>
+                <label className="flex items-center gap-2 font-mono text-[10px] text-slate-400">
+                  <input type="checkbox" checked={applyEnemyChoice} onChange={(e) => setApplyEnemyChoice(e.target.checked)} />
+                  Enemy takes the opportunity
+                </label>
+              </>
+            ) : (
+              <p className="font-mono text-xs font-bold text-slate-400">Tied check — no range change.</p>
+            )}
+            <button onClick={clearManoeuvreRoll}
+              className="text-[9px] font-mono text-slate-500 hover:text-slate-300 underline">
+              re-roll
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* GM override: set band directly */}
       <div>
@@ -169,7 +265,7 @@ export function ManoeuvreModal({ payload, onClose }) {
               className={`py-1 text-[10px] font-mono border rounded transition-colors
                 ${directBand === bd.id ? 'border-sky-500 text-sky-300 bg-sky-900/30' :
                   current === bd.id ? 'border-slate-600 text-slate-300 bg-slate-800/50' : 'border-slate-800 text-slate-500 hover:border-slate-600'}`}
-              onClick={() => { setDirectBand(bd.id === current ? null : bd.id); setIntent('hold') }}
+              onClick={() => setDirectBand(bd.id === current ? null : bd.id)}
             >
               {bd.label}
             </button>

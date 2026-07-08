@@ -1,36 +1,23 @@
 // 2300AD B3 p.52 — Range bands. Light-second scale (~150,000 km = ½ ls = Close).
-// TAC Speed costs derived from stutterwarp efficiency tables; distances are B3 canonical.
+// Distances are B3 canonical. Movement between bands is resolved via an opposed
+// Pilot check (Open/Close, B3 p.54) — see utils/rangeBands.js:moveBands — not a
+// fixed TAC-Speed cost table (no such table exists in the source).
 
-/** @type {{ id: string, label: string, distance: string, tacSpeedCost: number }[]} */
+/** @type {{ id: string, label: string, distance: string }[]} */
 export const RANGE_BANDS = [
-  { id: 'Adjacent', label: 'Adjacent', distance: '< 100 km',              tacSpeedCost: 1  },
-  { id: 'Close',    label: 'Close',    distance: '≤ 150,000 km',          tacSpeedCost: 1  },
-  { id: 'Short',    label: 'Short',    distance: '150,001–300,000 km',    tacSpeedCost: 2  },
-  { id: 'Medium',   label: 'Medium',   distance: '301,000–450,000 km',    tacSpeedCost: 5  },
-  { id: 'Long',     label: 'Long',     distance: '450,001–600,000 km',    tacSpeedCost: 10 },
-  { id: 'VeryLong', label: 'Very Long', distance: '600,001–750,000 km',   tacSpeedCost: 25 },
-  { id: 'Distant',  label: 'Distant',  distance: '> 750,000 km',          tacSpeedCost: 50 },
+  { id: 'Adjacent', label: 'Adjacent',  distance: '< 100 km' },
+  { id: 'Close',    label: 'Close',     distance: '≤ 150,000 km' },
+  { id: 'Short',    label: 'Short',     distance: '150,001–300,000 km' },
+  { id: 'Medium',   label: 'Medium',    distance: '301,000–450,000 km' },
+  { id: 'Long',     label: 'Long',      distance: '450,001–600,000 km' },
+  { id: 'VeryLong', label: 'Very Long', distance: '600,001–750,000 km' },
+  { id: 'Distant',  label: 'Distant',   distance: '> 750,000 km' },
 ]
 
 /** Ordered array of band IDs from nearest to farthest. */
 export const RANGE_BAND_ORDER = [
   'Adjacent', 'Close', 'Short', 'Medium', 'Long', 'VeryLong', 'Distant',
 ]
-
-/**
- * TAC Speed cost to enter each band from the adjacent band.
- * Accumulate in basicBandPool per round; band changes when pool ≥ cost.
- * @type {Record<string, number>}
- */
-export const RANGE_BAND_MOVE_COST = {
-  Adjacent: 1,
-  Close:    1,
-  Short:    2,
-  Medium:   5,
-  Long:     10,
-  VeryLong: 25,
-  Distant:  50,
-}
 
 /**
  * Sensor Time-lag DM per range band. Applied to Electronics(sensors) checks

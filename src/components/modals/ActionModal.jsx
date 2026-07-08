@@ -38,7 +38,6 @@ export function ActionModal({ payload, onClose }) {
   const repairHull           = useBattleStore((s) => s.repairHull)
   const applySensorLock      = useBattleStore((s) => s.applySensorLock)
   const applyEW              = useBattleStore((s) => s.applyEW)
-  const spendEvasion         = useBattleStore((s) => s.spendEvasion)
   const addCriticalHit       = useBattleStore((s) => s.addCriticalHit)
   const updateShip           = useBattleStore((s) => s.updateShip)
   const applyCommand         = useBattleStore((s) => s.applyCommand)
@@ -130,11 +129,10 @@ export function ActionModal({ payload, onClose }) {
         if (success && selectedHazardId) removeHazard(shipId, selectedHazardId)
         break
 
-      case 'overload_stutterwarp': // B3 p.55
+      case 'overload_stutterwarp': // B3 p.55 — Effect 1-4 → +1 TAC Speed, Effect 5-6 → +2
         if (success) {
           if (ship) updateShip(shipId, {
-            currentTacSpeed:   ship.currentTacSpeed   + 1,
-            tacSpeedAvailable: ship.tacSpeedAvailable + 1,
+            currentTacSpeed: ship.currentTacSpeed + (effect >= 5 ? 2 : 1),
           })
         } else {
           addCriticalHit(shipId, 'stutterwarp')
@@ -149,10 +147,6 @@ export function ActionModal({ payload, onClose }) {
         if (success) applyCommand(shipId, commandRole, effect >= 5 ? 2 : 1)
         break
       }
-
-      case 'evasive_action':
-        if (success) spendEvasion(shipId, 1)
-        break
 
       case 'boarding_action': { // B3 p.55
         if (!boardingResult) break

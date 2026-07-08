@@ -58,25 +58,12 @@ describe('ALL_CREW_ACTIONS', () => {
   })
 })
 
-// === B3 p.55 specific checks ===
-
-describe('evasive_action // B3 p.55', () => {
-  const action = ALL_CREW_ACTIONS.find((a) => a.id === 'evasive_action')
-
-  it('exists in pilot actions', () => {
-    expect(action).toBeDefined()
-  })
-
-  it('difficulty is 10 (opposed Pilot check — not TAC Speed cost)', () => {
-    expect(action.difficulty).toBe(10)
-  })
-
-  it('phase is manoeuvre', () => {
-    expect(action.phase).toBe('manoeuvre')
-  })
-
-  it('description references Effect table', () => {
-    expect(action.description).toMatch(/Effect/i)
+// Evasion (opposed Pilot check, B3 p.55) is resolved directly inside
+// ManoeuvreModal during the Manoeuvre Step — there is no "pilot" role entry
+// in CREW_ACTIONS for it (see crewActions.js top-of-file note).
+describe('pilot role', () => {
+  it('has no CREW_ACTIONS entries — Evasion lives in ManoeuvreModal', () => {
+    expect(CREW_ACTIONS.pilot).toBeUndefined()
   })
 })
 

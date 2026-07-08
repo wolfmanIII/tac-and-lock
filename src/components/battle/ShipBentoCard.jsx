@@ -23,20 +23,6 @@ function HullBar({ current, max }) {
   )
 }
 
-function TacSpeedBar({ available, total }) {
-  const pips = Array.from({ length: Math.max(total, 1) }, (_, i) => i < available)
-  return (
-    <div className="flex gap-0.5">
-      {pips.map((filled, i) => (
-        <div
-          key={i}
-          className={`h-2 w-3 rounded-sm ${filled ? 'bg-sky-400' : 'bg-slate-700'}`}
-        />
-      ))}
-    </div>
-  )
-}
-
 export function ShipBentoCard({ ship }) {
   const { openModal, showContextMenu } = useUIStore()
   const phase = useBattleStore((s) => s.phase)
@@ -110,10 +96,12 @@ export function ShipBentoCard({ ship }) {
 
       {/* Stats row */}
       <div className="px-3 pb-1.5 flex items-center gap-4 text-xs font-mono">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-[10px] text-slate-500 font-display tracking-widest">TAC SPD</span>
-          <TacSpeedBar available={ship.tacSpeedAvailable} total={ship.currentTacSpeed} />
-        </div>
+        <Tooltip content="TAC Speed — fixed DM added to Pilot checks (Open/Close, Position Vessel) // 2300AD B3 p.54">
+          <div className="flex flex-col">
+            <span className="text-[10px] text-slate-500 font-display tracking-widest">TAC SPD</span>
+            <span className="text-slate-300">{ship.currentTacSpeed}</span>
+          </div>
+        </Tooltip>
         <Tooltip content={`Armour rating: ${ship.currentArmour}`}>
           <div className="flex flex-col">
             <span className="text-[10px] text-slate-500 font-display tracking-widest">ARM</span>

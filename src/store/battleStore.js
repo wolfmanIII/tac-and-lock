@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { v7 as uuidv7 } from 'uuid'
-import { pairKey, resolveBasicBandMovement, getCloserBand } from '../utils/rangeBands.js'
+import { pairKey, getCloserBand, moveBands } from '../utils/rangeBands.js'
 import { FACTION_COLOR } from '../data/factions.js'
 import { WEAPONS } from '../data/weapons.js'
 import { exportBattle, importBattle } from '../utils/io.js'
@@ -32,7 +32,6 @@ function snapshot(s) {
     ships:                 structuredClone(s.ships),
     drones:                structuredClone(s.drones),
     rangeBands:            structuredClone(s.rangeBands),
-    basicBandPool:         structuredClone(s.basicBandPool),
     initiativeOrder:       [...s.initiativeOrder],
     currentActorIndex:     s.currentActorIndex,
     round:                 s.round,
@@ -62,9 +61,7 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     armour:             profile.armour,
     currentArmour:      profile.armour,
     tacSpeed:           profile.tacSpeed,
-    currentTacSpeed:    profile.tacSpeed,
-    tacSpeedAvailable:  profile.tacSpeed,
-    evasionSpent:       0,
+    currentTacSpeed:    profile.tacSpeed, // fixed DM added to Pilot checks (Open/Close/Position Vessel) — never spent // 2300AD B3 p.54
     evasionDm:          0,  // B3 p.55: result of opposed Pilot check (−1, −2, or +1 for enemy)
     sensors:            { ...profile.sensors },
     computer:           { ...profile.computer },
@@ -158,8 +155,6 @@ export const useBattleStore = create((set, get) => {
       const bonus = sh.initiativeBonusNextRound ?? 0
       return {
         ...sh,
-        tacSpeedAvailable:        sh.currentTacSpeed,
-        evasionSpent:             0,
         evasionDm:                0,
         sensorLockTarget:         null,
         sensorLocked:             false,
@@ -227,7 +222,6 @@ export const useBattleStore = create((set, get) => {
     ships:                 [],
     drones:                [], // launched combat drones/missiles // 2300AD B3 p.61
     rangeBands:            {},   // pairKey → band id
-    basicBandPool:         {},   // pairKey → accumulated TAC Speed toward next band change
     log:                   [],
     undoStack:             [],
     redoStack:             [],
@@ -446,54 +440,37 @@ export const useBattleStore = create((set, get) => {
     // === MOVEMENT ===
 
     /**
-     * Commit manoeuvre intent for a ship pair and resolve band movement.
+     * Apply the resolved Effect of an opposed Pilot check (Open/Close) to a
+     * ship pair's range band. // 2300AD B3 p.54
      * @param {string} shipAId
      * @param {string} shipBId
-     * @param {'closer' | 'farther' | 'hold'} intent
-     * @param {number} netTacSpeed — net TAC Speed toward/away this round
+     * @param {string} actingShipId — the ship whose Pilot attempted the manoeuvre
+     * @param {'closer' | 'farther'} direction
+     * @param {number} bandsChanged — the check's Effect (bands moved), ≥ 1
      */
     manoeuvre: wh(
       (shipAId, shipBId) =>
         !!get().ships.find((s) => s.id === shipAId) &&
         !!get().ships.find((s) => s.id === shipBId),
-      (shipAId, shipBId, intent, netTacSpeed) => {
-        const { rangeBands, basicBandPool, round, phase } = get()
+      (shipAId, shipBId, actingShipId, direction, bandsChanged) => {
+        const { rangeBands, round, phase } = get()
         const key         = pairKey(shipAId, shipBId)
         const currentBand = rangeBands[key] ?? 'Long'
-        const pool        = basicBandPool[key] ?? 0
-
-        const { newBand, newPool } = resolveBasicBandMovement(
-          currentBand, pool, intent, netTacSpeed,
-        )
-
+        const newBand     = moveBands(currentBand, direction, bandsChanged)
         const bandChanged = newBand !== currentBand
-        const shipA = get().ships.find((s) => s.id === shipAId)
-        const shipB = get().ships.find((s) => s.id === shipBId)
+
+        if (!bandChanged) return
+
+        const actor = get().ships.find((s) => s.id === actingShipId)
+        const other = get().ships.find((s) => s.id === (actingShipId === shipAId ? shipBId : shipAId))
 
         set((s) => ({
           rangeBands: { ...s.rangeBands, [key]: newBand },
-          basicBandPool: {
-            ...s.basicBandPool,
-            [key]: bandChanged ? 0 : newPool,
-          },
-          log: bandChanged
-            ? [...s.log, makeLogEntry({
-                round, phase, type: 'manoeuvre',
-                message: `${shipA?.profile.name} ↔ ${shipB?.profile.name}: ${currentBand} → ${newBand}`,
-              })]
-            : s.log,
+          log: [...s.log, makeLogEntry({
+            round, phase, type: 'manoeuvre',
+            message: `${actor?.profile.name} ↔ ${other?.profile.name}: ${currentBand} → ${newBand} (Pilot Effect ${bandsChanged})`,
+          })],
         }))
-
-        // Deduct TAC Speed from the ship that drove the manoeuvre
-        if (netTacSpeed > 0 && intent !== 'hold') {
-          set((s) => ({
-            ships: s.ships.map((sh) =>
-              sh.id === shipAId
-                ? { ...sh, tacSpeedAvailable: Math.max(0, sh.tacSpeedAvailable - netTacSpeed) }
-                : sh,
-            ),
-          }))
-        }
       },
     ),
 
@@ -506,8 +483,7 @@ export const useBattleStore = create((set, get) => {
     setRangeBand: wh((shipAId, shipBId, band) => {
       const key = pairKey(shipAId, shipBId)
       set((s) => ({
-        rangeBands:    { ...s.rangeBands, [key]: band },
-        basicBandPool: { ...s.basicBandPool, [key]: 0 },
+        rangeBands: { ...s.rangeBands, [key]: band },
       }))
     }),
 
@@ -519,23 +495,6 @@ export const useBattleStore = create((set, get) => {
     setEvasionDm: wh((shipId) => !!get().ships.find((s) => s.id === shipId), (shipId, dm) => {
       set((s) => ({
         ships: s.ships.map((sh) => sh.id !== shipId ? sh : { ...sh, evasionDm: dm }),
-      }))
-    }),
-
-    /**
-     * Reserve TAC Speed for evasion this round.
-     * @param {string} shipId
-     * @param {number} amount
-     */
-    spendEvasion: wh((shipId) => !!get().ships.find((s) => s.id === shipId), (shipId, amount) => {
-      set((s) => ({
-        ships: s.ships.map((sh) =>
-          sh.id !== shipId ? sh : {
-            ...sh,
-            evasionSpent:      sh.evasionSpent + amount,
-            tacSpeedAvailable: Math.max(0, sh.tacSpeedAvailable - amount),
-          },
-        ),
       }))
     }),
 
@@ -751,11 +710,7 @@ export const useBattleStore = create((set, get) => {
         const newTacSpeed = Math.max(0, ship.currentTacSpeed - reduction)
         set((s) => ({
           ships: s.ships.map((sh) =>
-            sh.id !== shipId ? sh : {
-              ...sh,
-              currentTacSpeed:   newTacSpeed,
-              tacSpeedAvailable: Math.min(sh.tacSpeedAvailable, newTacSpeed),
-            },
+            sh.id !== shipId ? sh : { ...sh, currentTacSpeed: newTacSpeed },
           ),
           log: [...s.log, makeLogEntry({
             round, phase, type: 'critical', shipId,
@@ -1046,7 +1001,6 @@ export const useBattleStore = create((set, get) => {
       ships:                 [],
       drones:                [],
       rangeBands:            {},
-      basicBandPool:         {},
       log:                   [],
       undoStack:             [],
       redoStack:             [],
@@ -1055,11 +1009,11 @@ export const useBattleStore = create((set, get) => {
     exportBattleState: () => {
       const {
         id, name, round, phase, initiativeOrder, currentActorIndex,
-        ships, drones, rangeBands, basicBandPool, log,
+        ships, drones, rangeBands, log,
       } = get()
       exportBattle({
         id, name, round, phase, initiativeOrder, currentActorIndex,
-        ships, drones, rangeBands, basicBandPool, log,
+        ships, drones, rangeBands, log,
         savedAt: new Date().toISOString(),
       })
     },
@@ -1076,7 +1030,6 @@ export const useBattleStore = create((set, get) => {
         ships:                 battle.ships ?? [],
         drones:                battle.drones ?? [],
         rangeBands:            battle.rangeBands ?? {},
-        basicBandPool:         battle.basicBandPool ?? {},
         log:                   battle.log ?? [],
         undoStack:             [],
         redoStack:             [],
@@ -1088,11 +1041,6 @@ export const useBattleStore = create((set, get) => {
     /** Get the range band between two ships. */
     getRangeBand: (shipAId, shipBId) => {
       return get().rangeBands[pairKey(shipAId, shipBId)] ?? 'Long'
-    },
-
-    /** Get accumulated band-pool value for a pair. */
-    getBandPool: (shipAId, shipBId) => {
-      return get().basicBandPool[pairKey(shipAId, shipBId)] ?? 0
     },
 
     /** Whether any drones/missiles are in engagement range awaiting resolution. */

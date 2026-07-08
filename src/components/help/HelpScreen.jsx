@@ -237,30 +237,15 @@ export function HelpScreen({ onBack } = {}) {
 
         {/* MANOEUVRE */}
         <Section id="manoeuvre" title="Manoeuvre Step">
-          <p>Each ship in initiative order may spend TAC Speed to change range bands. // B3 p.52</p>
+          <p>Each ship's Pilot may attempt to Open (flee) or Close (approach) against one opposing ship — an opposed Pilot (DEX) check, adding the ship's TAC Speed as a DM. // 2300AD B3 p.54</p>
           <p>Right-click a ship → <span className="text-slate-200">Manoeuvre…</span></p>
           <Sub title="CONTROLS">
-            <KV k="⬇ APPROACH"   v="Move toward the selected ship." />
-            <KV k="⬆ FLEE"       v="Move away from the selected ship." />
-            <KV k="APPLY"        v="Pool meets band cost — band shifts, TAC Speed spent." />
-            <KV k="ALLOCATE"     v="Pool below cost — TAC Speed allocated, band unchanged. Progress bar shows % toward next change." />
-            <KV k="GM SET"       v="Override — sets the band directly, no TAC Speed cost." />
+            <KV k="◀ APPROACH / FLEE ▶" v="Pick which ship attempts Close (approach) or Open (flee)." />
+            <KV k="ROLL"                v="Opposed Pilot (DEX) check for both ships: 2D6 + Pilot skill + DEX DM + TAC Speed each." />
+            <KV k="APPLY"               v="On success, the band shifts by the check's Effect in the attempted direction. On failure, the Effect is available for the enemy to close/open instead, at the GM's discretion." />
+            <KV k="GM SET"              v="Override — sets the band directly, no roll." />
           </Sub>
-          <Note>TAC Speed accumulates across rounds within the same band pair. A ship that cannot cover the full cost in one round contributes partial thrust; the band changes when the pool is met.</Note>
-          <Sub title="BAND COSTS // B3 p.52">
-            <Table
-              headers={['Band', 'Distance', 'TAC Speed cost']}
-              rows={[
-                ['Adjacent',  '< 100 km',           '1'],
-                ['Close',     '≤ 150,000 km',        '1'],
-                ['Short',     '≤ 300,000 km',        '2'],
-                ['Medium',    '≤ 450,000 km',        '5'],
-                ['Long',      '≤ 600,000 km',       '10'],
-                ['Very Long', '≤ 750,000 km',       '25'],
-                ['Distant',   '> 750,000 km',       '50'],
-              ]}
-            />
-          </Sub>
+          <Note>TAC Speed is a fixed DM added to the roll — it is never spent or depleted. Pilot can be used multiple times per round (unlike Gunner), so a ship isn't limited to one manoeuvre attempt. // 2300AD B3 p.53–54</Note>
         </Section>
 
         {/* ATTACK */}
@@ -285,7 +270,7 @@ export function HelpScreen({ onBack } = {}) {
             <Table
               headers={['DM source', 'Value']}
               rows={[
-                ['TAC Speed available', '+tacSpeedAvailable'],
+                ['TAC Speed',           '+currentTacSpeed (fixed DM, never spent)'],
                 ['Engineer assist',     'Routine (8+) Engineer(power) — adds Effect as DM'],
                 ['Effect from Step 1',  'Positive Effect carries forward'],
               ]}

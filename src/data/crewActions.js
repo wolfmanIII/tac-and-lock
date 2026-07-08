@@ -15,22 +15,12 @@
  * }} CrewAction
  */
 
+// Note: Evasion (opposed Pilot check, B3 p.55) is resolved directly inside
+// ManoeuvreModal during the Manoeuvre Step, not as an Actions-phase crew
+// action — there is no separate "pilot" role entry here.
+
 /** @type {Record<string, CrewAction[]>} */
 export const CREW_ACTIONS = {
-  pilot: [
-    {
-      id: 'evasive_action',
-      label: 'Evasive Action',
-      phase: 'manoeuvre',
-      reaction: false,
-      skill: 'Pilot (DEX)',
-      difficulty: 10,
-      difficultyLabel: 'Opposed (10+)',
-      description: 'Opposed Pilot (DEX) check vs 10. Effect 1–4 → DM−1 to incoming attacks; Effect 5+ → DM−2; Effect ≤−5 → enemy gains DM+1. // 2300AD B3 p.55',
-      requiresTarget: false,
-    },
-  ],
-
   captain: [
     {
       id: 'sensor_lock',
