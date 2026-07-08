@@ -1,6 +1,6 @@
 # Tac & Lock — Field Manual
 
-**Version 1.1.2** · 2300AD Space Combat Simulator
+**Version 1.1.3** · 2300AD Space Combat Simulator
 
 ---
 
@@ -66,7 +66,7 @@ The right panel mirrors the current session at a glance, even before entering ba
 | ROUND / PHASE | Current round and phase of the active session. |
 | VESSELS / DRONES | Ship and drone/missile counts in the active roster. |
 | SESSION / SAVED | Session name and timestamp of the last autosave. |
-| SHIP ROSTER | Ships grouped by faction (Players / NPC / Neutral), each with its token silhouette, name, class, and hull bar. |
+| SHIP ROSTER | Ships grouped by faction (Players / NPC / Neutral). Each row shows the ship's token silhouette, name, class, TAC Speed / Armour, range to the nearest enemy, a status badge (DOGFIGHT when Adjacent/Close, DESTROYED, or COMBAT/NEUTRAL), and hull bar. |
 
 ### 2.3 Operations Console
 
@@ -499,4 +499,4 @@ Use **↑ EXPORT** and **↓ IMPORT** in the profile panel to share or back up p
 
 ---
 
-*Tac & Lock v1.1.2 — © 2300AD: Mongoose Publishing. VTT tool for personal use at the gaming table.*
+*Tac & Lock v1.1.3 — © 2300AD: Mongoose Publishing. VTT tool for personal use at the gaming table.*
