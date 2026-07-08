@@ -14,8 +14,19 @@ import { ShipProfileForm }  from '../forms/ShipProfileForm.jsx'
 import { CatalogPanel }     from './CatalogPanel.jsx'
 import { useProfileImport } from './useProfileImport.js'
 import { Tooltip }          from '../ui/Tooltip.jsx'
-import { FACTIONS }         from '../../data/factions.js'
+import { FACTIONS, FACTION_COLOR } from '../../data/factions.js'
 import { RANGE_BANDS }      from '../../data/rangeBands.js'
+import { useShipTokenIcon } from '../battle/useShipTokenIcon.js'
+
+const PHASE_LABEL = {
+  setup: 'SETUP', initiative: 'INITIATIVE', manoeuvre: 'MANOEUVRE', attack: 'ATTACK', actions: 'ACTIONS',
+}
+
+/** Ship token silhouette for a roster row — same icon as the battle bento card. */
+function RosterShipToken({ ship, fallbackColor }) {
+  const tokenRef = useShipTokenIcon({ ...ship, color: ship.color ?? fallbackColor }, 32)
+  return <canvas ref={tokenRef} width={32} height={32} className="shrink-0" />
+}
 
 // ── Tiny icon button ──────────────────────────────────────────────────────
 
@@ -197,9 +208,22 @@ function StatusLine({ label, value, active = true }) {
 }
 
 function SessionPanel({ onEnterBattle, onLoadBattle, loading, onFieldManual }) {
-  const ships = useBattleStore((s) => s.ships)
+  const ships   = useBattleStore((s) => s.ships)
+  const drones  = useBattleStore((s) => s.drones)
+  const round   = useBattleStore((s) => s.round)
+  const phase   = useBattleStore((s) => s.phase)
+  const name    = useBattleStore((s) => s.name)
+  const savedAt = useBattleStore((s) => s.savedAt)
   const { exportBattleState, resetBattle } = useBattleStore()
-  const FACTION_HEX = { players: '#60a5fa', npc: '#f87171', neutral: '#94a3b8' }
+
+  const byFaction = ships.reduce((acc, ship) => {
+    const f = ship.faction ?? 'neutral'
+    if (!acc[f]) acc[f] = []
+    acc[f].push(ship)
+    return acc
+  }, {})
+
+  const savedAtFormatted = savedAt ? new Date(savedAt).toLocaleString('it-IT') : '—'
 
   return (
     <div className="h-full flex overflow-hidden">
@@ -265,10 +289,12 @@ function SessionPanel({ onEnterBattle, onLoadBattle, loading, onFieldManual }) {
           </div>
           <div className="px-6 py-3 border-b border-slate-800/60 shrink-0 grid grid-cols-2 gap-x-8 gap-y-1">
             {[
-              { k: 'PROTOCOL', v: '2300AD/TCV-1.0' },
-              { k: 'RANGE',    v: 'BAND SYSTEM'    },
-              { k: 'VESSELS',  v: ships.length || '—' },
-              { k: 'MISSILES', v: '—' },
+              { k: 'PROTOCOL',     v: '2300AD/TCV-1.0' },
+              { k: 'RANGE SYSTEM', v: 'BAND' },
+              { k: 'ROUND',        v: ships.length ? round : '—' },
+              { k: 'PHASE',        v: ships.length ? (PHASE_LABEL[phase] ?? phase.toUpperCase()) : '—' },
+              { k: 'VESSELS',      v: ships.length || '—' },
+              { k: 'DRONES',       v: ships.length ? drones.length : '—' },
             ].map(({ k, v }) => (
               <div key={k} className="flex justify-between gap-2">
                 <span className="font-mono text-xs text-slate-400">{k}</span>
@@ -276,6 +302,14 @@ function SessionPanel({ onEnterBattle, onLoadBattle, loading, onFieldManual }) {
               </div>
             ))}
           </div>
+          {ships.length > 0 && (
+            <div className="px-6 py-2 border-b border-slate-800/40 shrink-0">
+              <span className="font-mono text-xs text-slate-400">SESSION </span>
+              <span className="font-mono text-xs text-slate-300">{name}</span>
+              <span className="font-mono text-xs text-slate-400 ml-3">SAVED </span>
+              <span className="font-mono text-xs text-slate-400">{savedAtFormatted}</span>
+            </div>
+          )}
           <div className="flex-1 overflow-y-auto px-6 py-4">
             {ships.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full gap-4 opacity-40">
@@ -291,25 +325,39 @@ function SessionPanel({ onEnterBattle, onLoadBattle, loading, onFieldManual }) {
               </div>
             ) : (
               <>
-                <p className="font-display text-xs text-slate-400 tracking-widest mb-3">BATTLE ROSTER</p>
-                <div className="space-y-1.5">
-                  {ships.map((s) => {
-                    const hull = s.hullPoints ?? 0
-                    const cur  = s.currentHull ?? hull
-                    const pct  = hull > 0 ? Math.max(0, cur / hull) : 1
-                    const bar  = pct > 0.6 ? '#22c55e' : pct > 0.3 ? '#eab308' : '#ef4444'
-                    return (
-                      <div key={s.id} className="flex items-center gap-2.5">
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: FACTION_HEX[s.faction] ?? '#64748b' }} />
-                        <span className="font-mono text-xs text-slate-300 truncate flex-1">{s.profile?.name ?? s.name ?? '?'}</span>
-                        <div className="w-14 h-1 bg-slate-800 rounded-full overflow-hidden shrink-0">
-                          <div className="h-full rounded-full" style={{ width: `${pct * 100}%`, backgroundColor: bar }} />
-                        </div>
-                        <span className="font-mono text-xs text-slate-400 w-10 text-right shrink-0">{cur}/{hull || '?'}</span>
+                <p className="font-display text-xs text-slate-400 tracking-widest mb-3">SHIP ROSTER</p>
+                {FACTIONS.map(({ id: fId, label }) => {
+                  const group = byFaction[fId]
+                  if (!group || group.length === 0) return null
+                  return (
+                    <div key={fId} className="mb-4">
+                      <p className="font-display text-xs tracking-widest mb-2" style={{ color: FACTION_COLOR[fId] }}>
+                        {label.toUpperCase()} · {group.length}
+                      </p>
+                      <div className="space-y-1.5">
+                        {group.map((s) => {
+                          const hull = s.hullPoints ?? 0
+                          const cur  = s.currentHull ?? hull
+                          const pct  = hull > 0 ? Math.max(0, cur / hull) : 1
+                          const bar  = pct > 0.6 ? '#22c55e' : pct > 0.3 ? '#eab308' : '#ef4444'
+                          return (
+                            <div key={s.id} className="flex items-center gap-2.5">
+                              <RosterShipToken ship={s} fallbackColor={FACTION_COLOR[fId] ?? '#64748b'} />
+                              <div className="min-w-0 flex-1">
+                                <p className="font-mono text-xs text-slate-200 font-bold truncate">{s.profile?.name ?? '?'}</p>
+                                <p className="font-mono text-xs text-slate-400 truncate">{s.profile?.class ?? '—'}</p>
+                              </div>
+                              <div className="w-14 h-1 bg-slate-800 rounded-full overflow-hidden shrink-0">
+                                <div className="h-full rounded-full" style={{ width: `${pct * 100}%`, backgroundColor: bar }} />
+                              </div>
+                              <span className="font-mono text-xs text-slate-400 w-10 text-right shrink-0">{cur}/{hull || '?'}</span>
+                            </div>
+                          )
+                        })}
                       </div>
-                    )
-                  })}
-                </div>
+                    </div>
+                  )
+                })}
               </>
             )}
           </div>

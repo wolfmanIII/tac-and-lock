@@ -221,6 +221,7 @@ export const useBattleStore = create((set, get) => {
     name:                  'New Battle',
     round:                 1,
     phase:                 'setup',
+    savedAt:               null, // ISO timestamp of last autosave — display only, set by useAutosave
     initiativeOrder:       [],
     currentActorIndex:     0,
     ships:                 [],
@@ -1039,6 +1040,7 @@ export const useBattleStore = create((set, get) => {
       name:                  'New Battle',
       round:                 1,
       phase:                 'setup',
+      savedAt:               null,
       initiativeOrder:       [],
       currentActorIndex:     0,
       ships:                 [],
