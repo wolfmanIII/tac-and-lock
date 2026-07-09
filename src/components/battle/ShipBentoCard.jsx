@@ -68,13 +68,13 @@ export function ShipBentoCard({ ship }) {
               </span>
             </Tooltip>
           )}
-          {ship.commandBonus && (
-            <Tooltip content={`Captain's Command: DM+${ship.commandBonus.dm} to ${ship.commandBonus.role} this round`}>
+          {(ship.commandBonus ?? []).map((cb) => (
+            <Tooltip key={cb.role} content={`Captain's Command: DM+${cb.dm} to ${cb.role} this round`}>
               <span className="text-[10px] text-emerald-400 border border-emerald-800 rounded px-1">
-                CMD +{ship.commandBonus.dm}
+                CMD +{cb.dm}
               </span>
             </Tooltip>
-          )}
+          ))}
           {isDestroyed && (
             <span className="text-[10px] text-red-500 border border-red-900 rounded px-1 font-display">DEST</span>
           )}

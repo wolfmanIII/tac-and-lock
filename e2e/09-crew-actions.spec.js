@@ -80,8 +80,39 @@ test.describe('Commands — applyCommand', () => {
         ship1: ships.find((s) => s.id === ids.id1).commandBonusNextRound,
       }
     }, { id0, id1 })
-    expect(state.ship0).toEqual({ role: 'gunner_turret', dm: 1 })
-    expect(state.ship1).toBeNull()
+    expect(state.ship0).toEqual([{ role: 'gunner_turret', dm: 1 }])
+    expect(state.ship1).toEqual([])
+  })
+
+  test('a Captain with Leadership 3 can issue three Commands to three different roles in one round', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      const s = window.__ZUSTAND_BATTLE_STORE__.getState()
+      s.applyCommand(id, 'gunner_turret', 1)
+      s.applyCommand(id, 'pilot', 2)
+      s.applyCommand(id, 'sensor_operator', 1)
+    }, id0)
+    const ship0 = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id),
+    id0)
+    expect(ship0.commandBonusNextRound).toEqual([
+      { role: 'gunner_turret', dm: 1 },
+      { role: 'pilot', dm: 2 },
+      { role: 'sensor_operator', dm: 1 },
+    ])
+  })
+
+  test('re-issuing a Command to the same role replaces its DM instead of stacking', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      const s = window.__ZUSTAND_BATTLE_STORE__.getState()
+      s.applyCommand(id, 'pilot', 1)
+      s.applyCommand(id, 'pilot', 2)
+    }, id0)
+    const ship0 = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id),
+    id0)
+    expect(ship0.commandBonusNextRound).toEqual([{ role: 'pilot', dm: 2 }])
   })
 
   test('commandBonusNextRound promotes to commandBonus only after the round advances', async ({ page }) => {
@@ -95,14 +126,14 @@ test.describe('Commands — applyCommand', () => {
     let ship0 = await page.evaluate((id) =>
       window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id),
     id0)
-    expect(ship0.commandBonus).toBeNull()
+    expect(ship0.commandBonus).toEqual([])
 
     await page.evaluate(() => window.__ZUSTAND_BATTLE_STORE__.getState().startNextRound())
     ship0 = await page.evaluate((id) =>
       window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id),
     id0)
-    expect(ship0.commandBonus).toEqual({ role: 'gunner_turret', dm: 2 })
-    expect(ship0.commandBonusNextRound).toBeNull()
+    expect(ship0.commandBonus).toEqual([{ role: 'gunner_turret', dm: 2 }])
+    expect(ship0.commandBonusNextRound).toEqual([])
   })
 
   test('AttackModal step 3 shows Command row only for the ship that received it, targeting gunner_turret', async ({ page }) => {

@@ -249,7 +249,7 @@ export function AttackModal({ payload, onClose }) {
     const jammer = ships.find((s) => s.ewTarget === attacker.id)
     const jammerPenalty = jammer?.ewEffect ?? 0 // already negative
     // Captain's Command from a previous round, if it targeted this ship's gunner // B3 p.54
-    const commandDm = attacker.commandBonus?.role === 'gunner_turret' ? attacker.commandBonus.dm : 0
+    const commandDm = (attacker.commandBonus ?? []).find((cb) => cb.role === 'gunner_turret')?.dm ?? 0
     const total = gunnerSkill + intDm + fireControlDm + rangeDm + step2CarryEffect + evasionDm + weaponTraitDm + jammerPenalty + commandDm + captainAssistDm
     return {
       rows: [

@@ -88,8 +88,8 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     initiativeBreakdown:     null,
     initiativeBonusNextRound: 0,
     hasActedThisPhase:       false,
-    commandBonus:            null, // { role, dm } | null — active this round // 2300AD B3 p.54
-    commandBonusNextRound:   null, // { role, dm } | null — declared in Actions Step, activates next round
+    commandBonus:            [], // Array<{ role, dm }> — active this round, up to one per Leadership level // 2300AD B3 p.54
+    commandBonusNextRound:   [], // Array<{ role, dm }> — declared in Actions Step, activates next round
   }
 }
 
@@ -161,8 +161,8 @@ export const useBattleStore = create((set, get) => {
         initiativeBonusNextRound: 0,
         // Commands promotion: a Command declared in round N's Actions Step activates for round N+1,
         // then clears at the start of N+2 — same two-stage pattern as initiativeBonusNextRound. // B3 p.54
-        commandBonus:             sh.commandBonusNextRound ?? null,
-        commandBonusNextRound:    null,
+        commandBonus:             sh.commandBonusNextRound ?? [],
+        commandBonusNextRound:    [],
       }
     })
 
@@ -775,12 +775,15 @@ export const useBattleStore = create((set, get) => {
 
     /**
      * Captain issues a Command to one crew role of their own ship. // 2300AD B3 p.54
-     * "A captain can issue one command per combat round... On Effect 1–4, the recipient
-     * gains DM+1 to their actions for that combat round. On Effect 5–6, they receive DM+2."
-     * Declared during the Actions Step; activates for the FOLLOWING round (via the
-     * commandBonusNextRound → commandBonus promotion in buildNextRoundState), since the
-     * Manoeuvre/Attack steps of the current round have already passed by the time a ship
-     * reaches its own Actions turn.
+     * "A captain can issue one command per combat round PER LEVEL OF THEIR LEADERSHIP SKILL...
+     * On Effect 1–4, the recipient gains DM+1 to their actions for that combat round. On
+     * Effect 5–6, they receive DM+2." A Captain with Leadership 3 can therefore issue three
+     * separate Commands to three different crew roles in the same round — the per-round cap
+     * is enforced in the Actions Step UI (ActionModal.jsx), not here. Declared during the
+     * Actions Step; activates for the FOLLOWING round (via the commandBonusNextRound →
+     * commandBonus promotion in buildNextRoundState), since the Manoeuvre/Attack steps of the
+     * current round have already passed by the time a ship reaches its own Actions turn.
+     * Re-issuing to a role already commanded this round replaces that role's DM.
      * @param {string} shipId
      * @param {string} role — crew role receiving the order (pilot, gunner_turret, etc.)
      * @param {number} dm — 1 or 2
@@ -791,7 +794,13 @@ export const useBattleStore = create((set, get) => {
         const { round, phase } = get()
         const ship = get().ships.find((s) => s.id === shipId)
         set((s) => ({
-          ships: s.ships.map((sh) => sh.id !== shipId ? sh : { ...sh, commandBonusNextRound: { role, dm } }),
+          ships: s.ships.map((sh) => sh.id !== shipId ? sh : {
+            ...sh,
+            commandBonusNextRound: [
+              ...(sh.commandBonusNextRound ?? []).filter((cb) => cb.role !== role),
+              { role, dm },
+            ],
+          }),
           log: [...s.log, makeLogEntry({
             round, phase, type: 'action', shipId,
             message: `🎖 ${ship?.profile.name}: Command issued to ${role} — DM+${dm} next round.`,

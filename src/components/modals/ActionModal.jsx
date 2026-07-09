@@ -46,6 +46,12 @@ export function ActionModal({ payload, onClose }) {
   const ship    = ships.find((s) => s.id === shipId)
   const targets = ships.filter((s) => s.id !== shipId && !s.isDestroyed)
 
+  // Commands issued so far this round on this ship — capped at one per Leadership level. // B3 p.54
+  const issuedCommands = ship?.commandBonusNextRound ?? []
+  const availableCommandRoles = COMMAND_TARGET_ROLES.filter(
+    (r) => !issuedCommands.some((cb) => cb.role === r),
+  )
+
   const [selectedAction,         setSelectedAction]         = useState(null)
   const [targetId,               setTargetId]               = useState(targets[0]?.id ?? '')
   const [skillLevel,             setSkillLevel]             = useState(1)
@@ -60,6 +66,18 @@ export function ActionModal({ payload, onClose }) {
 
   const action = ALL_ACTIONS.find((a) => a.id === selectedAction)
   const target = ships.find((s) => s.id === targetId)
+
+  // Falls back to the first still-available role once the selected one has been commanded. // B3 p.54
+  const effectiveCommandRole = availableCommandRoles.includes(commandRole)
+    ? commandRole
+    : availableCommandRoles[0]
+
+  // "One command per combat round per level of Leadership skill" — skillLevel is the GM's
+  // manually-entered Leadership rating for this check (same convention as every other action
+  // roll in this modal), so it doubles as the per-round Commands cap. // 2300AD B3 p.54
+  const commandsRemaining = selectedAction === 'commands'
+    ? Math.max(0, skillLevel - issuedCommands.length)
+    : null
 
   // Boarding result derived from attacker roll + defender manual total
   const boardingResult = useMemo(() => {
@@ -141,7 +159,7 @@ export function ActionModal({ payload, onClose }) {
         break
 
       case 'commands': { // B3 p.54 — activates next round, see applyCommand
-        if (success) applyCommand(shipId, commandRole, effect >= 5 ? 2 : 1)
+        if (success) applyCommand(shipId, effectiveCommandRole, effect >= 5 ? 2 : 1)
         break
       }
 
@@ -172,12 +190,20 @@ export function ActionModal({ payload, onClose }) {
       default:
         break
     }
+    // A Captain with commands left to give (per Leadership level) keeps the modal open to
+    // issue the next one, instead of closing after a single Command. // B3 p.54
+    if (action.id === 'commands' && success && commandsRemaining > 1) {
+      setRollResult(null)
+      return
+    }
     onClose()
   }
 
   const groupedActions = Object.entries(CREW_ACTIONS).map(([role, actions]) => ({ role, actions }))
 
   const canApply = action && (
+    action.id !== 'commands' || commandsRemaining > 0
+  ) && (
     action.difficulty === 0 ||
     rollResult?.success ||
     HAS_FAILURE_EFFECT.has(action.id) && rollResult ||
@@ -275,11 +301,25 @@ export function ActionModal({ payload, onClose }) {
           {/* Commands — crew role picker (own ship, not an enemy target) */}
           {action.id === 'commands' && (
             <div>
-              <p className="text-[10px] font-display text-slate-500 tracking-widest mb-1">ORDER RECIPIENT (crew role)</p>
-              <select value={commandRole} onChange={(e) => setCommandRole(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1 focus:border-sky-400 outline-none">
-                {COMMAND_TARGET_ROLES.map((r) => <option key={r} value={r}>{CREW_SKILLS[r]} ({r})</option>)}
-              </select>
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-[10px] font-display text-slate-500 tracking-widest">ORDER RECIPIENT (crew role)</p>
+                <p className="text-[10px] font-mono text-slate-500">
+                  {commandsRemaining}/{skillLevel} left this round
+                </p>
+              </div>
+              {availableCommandRoles.length === 0 ? (
+                <p className="text-xs font-mono text-slate-500 italic">Every crew role already has a Command this round.</p>
+              ) : (
+                <select value={effectiveCommandRole} onChange={(e) => setCommandRole(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1 focus:border-sky-400 outline-none">
+                  {availableCommandRoles.map((r) => <option key={r} value={r}>{CREW_SKILLS[r]} ({r})</option>)}
+                </select>
+              )}
+              {issuedCommands.length > 0 && (
+                <p className="text-[10px] font-mono text-emerald-500 mt-1">
+                  Issued: {issuedCommands.map((cb) => `${cb.role} (+${cb.dm})`).join(', ')}
+                </p>
+              )}
             </div>
           )}
 

@@ -11,7 +11,7 @@ function rollPilotCheck(ship) {
   const dexChar    = getAssignedCharacteristic('pilot', ship.crewAssignments, ship.crew, 'DEX')
   const dexDm      = getCharDM(dexChar)
   const tacSpeed   = ship.currentTacSpeed ?? 0
-  const commandDm  = ship.commandBonus?.role === 'pilot' ? ship.commandBonus.dm : 0
+  const commandDm  = (ship.commandBonus ?? []).find((cb) => cb.role === 'pilot')?.dm ?? 0
   const dice       = roll2D6()
   const total      = dice[0] + dice[1] + pilotSkill + dexDm + tacSpeed + commandDm
   return { dice, pilotSkill, dexDm, tacSpeed, commandDm, total }
@@ -88,7 +88,7 @@ export function ManoeuvreModal({ payload, onClose }) {
     const dexChar    = getAssignedCharacteristic('pilot', ship.crewAssignments, ship.crew, 'DEX')
     const dexDm      = getCharDM(dexChar)
     // Captain's Command from a previous round, if it targeted this ship's pilot // B3 p.54
-    const commandDm  = ship.commandBonus?.role === 'pilot' ? ship.commandBonus.dm : 0
+    const commandDm  = (ship.commandBonus ?? []).find((cb) => cb.role === 'pilot')?.dm ?? 0
     const dice       = roll2D6()
     const total      = dice[0] + dice[1] + pilotSkill + dexDm + commandDm
     const effect     = total - 10  // opposed vs enemy Pilot (assume enemy also rolls ~10)
