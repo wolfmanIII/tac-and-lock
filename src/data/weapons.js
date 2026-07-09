@@ -20,6 +20,7 @@
  *   rangeDm: RangeDmTable,
  *   traits: string[],
  *   notes: string,
+ *   launchable?: boolean,     // engine-only flag: shown in DroneLaunchModal as a tracked drone/missile unit — NOT a B3 trait, never displayed as one
  *   tacSpeed?: number,        // drone/fighter only — closing speed // 2300AD B3 p.61
  *   enduranceRounds?: number, // drone/fighter only — max rounds before going inert (hours × 10) // 2300AD B3 p.61
  *   detonationMode?: { damage: string, traits: string[] }, // drone only — optional single-use alt warhead
@@ -89,7 +90,8 @@ export const WEAPONS = {
       VeryLong:  0,
       Distant:   0,
     },
-    traits: ['Smart', 'AP5'],
+    traits: ['AP5'],
+    launchable: true, // tracked as an individual unit via DroneLaunchModal, not a "Smart" B3 trait
     notes: 'Attack roll deferred to missile impact round. Missiles travel N rounds before impact.',
   },
 
@@ -181,7 +183,7 @@ export const WEAPONS = {
 
   ll98: {
     id: 'll98',
-    name: 'LL98 Liquid Laser',
+    name: 'Darlan LL-98',
     mount: 'turret',
     TL: 11,
     damage: '2D',
@@ -238,8 +240,9 @@ export const WEAPONS = {
       VeryLong: 0,
       Distant:  0,
     },
-    traits: ['Smart', 'AP5'],
-    notes: 'Smart anti-vehicle missile. Internal bay mount. // 2300AD B3 p.70',
+    traits: ['AP5'],
+    launchable: true, // tracked as an individual unit via DroneLaunchModal, not a "Smart" B3 trait
+    notes: 'Homing anti-vehicle missile. Internal bay mount. // 2300AD B3 p.70',
   },
 
   anti_missile_laser: {
@@ -259,7 +262,7 @@ export const WEAPONS = {
       VeryLong:-20,
       Distant: -20,
     },
-    traits: ['Reaction', 'Point Defence', 'Rapid Fire'], // 2300AD B3 p.60
+    traits: ['Point Defence', 'Rapid Fire'], // 2300AD B3 p.60
     notes: 'Quinn Optronics PDC Type 17. Beam laser cluster. DM+2 vs missiles/drones/fighters at Close. // 2300AD B3 p.60',
   },
 
@@ -314,7 +317,8 @@ export const WEAPONS = {
       VeryLong:-20,
       Distant: -20,
     },
-    traits: ['Smart'],
+    traits: [], // B3 Combat Drones table lists no traits for Ritage-1 // 2300AD B3 p.61
+    launchable: true, // tracked as an individual unit via DroneLaunchModal, not a "Smart" B3 trait
     notes: 'French remote fighter drone. // 2300AD B3 p.61',
   },
 
@@ -337,7 +341,11 @@ export const WEAPONS = {
       VeryLong:-20,
       Distant: -20,
     },
-    traits: ['Smart', 'Blast 6', 'Radiation'],
+    // Blast 6, Radiation per the p.61 stat block; 'Slow' (DM-2) added per the general
+    // detonation-laser rule (nuclear x-ray warhead — "must be fired at Close range and
+    // even then will suffer DM-2 to hit"), not printed in the stat block itself. // B3 p.59, p.61
+    traits: ['Blast 6', 'Radiation', 'Slow'],
+    launchable: true, // tracked as an individual unit via DroneLaunchModal, not a "Smart" B3 trait
     notes: 'Nuclear x-ray laser warhead, single-shot — drone is destroyed on use. // 2300AD B3 p.61',
   },
 
@@ -360,8 +368,12 @@ export const WEAPONS = {
       VeryLong:-20,
       Distant: -20,
     },
-    traits: ['Smart'],
-    detonationMode: { damage: '3D', traits: ['Smart', 'Blast 3', 'Radiation'] }, // single-use, GM picks mode per round
+    traits: [], // battery laser mode — no traits listed for Whiskey's base entry // 2300AD B3 p.61
+    launchable: true, // tracked as an individual unit via DroneLaunchModal, not a "Smart" B3 trait
+    // detonationMode: Blast 3, Radiation per the p.61 stat block; 'Slow' (DM-2) added per the
+    // general detonation-laser rule ("must be fired at Close range and even then will suffer
+    // DM-2 to hit"), not printed in the stat block itself. // B3 p.59, p.61
+    detonationMode: { damage: '3D', traits: ['Blast 3', 'Radiation', 'Slow'] }, // single-use, GM picks mode per round
     notes: "Kaefer ESA drone: battery laser (repeatable) or detonation laser (single use). // 2300AD B3 p.61",
   },
 
@@ -424,7 +436,8 @@ export const WEAPONS = {
       VeryLong: 0,
       Distant:  0,
     },
-    traits: ['Smart', 'AP16', 'One Use'],
+    traits: ['AP16', 'One Use'],
+    launchable: true, // tracked as an individual unit via DroneLaunchModal, not a "Smart" B3 trait
     notes: 'Kaefer anti-ship missile. High damage, deep armour penetration. // 2300AD B3 p.110',
   },
 

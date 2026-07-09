@@ -208,8 +208,10 @@ Come Trav2022 CRB p.158–159, con queste sostituzioni:
 | Drone | TL | Danno | TAC Speed | Endurance | Traits |
 | --- | --- | --- | --- | --- | --- |
 | Ritage-1 | 11 | 1D | 3 | 6 ore | — |
-| Ritage-2 | 12 | 5D | 4 | 4 ore | Blast 6, Radiation |
-| 'Whiskey' (Kaefer) | 12 | 1D laser / 3D det. laser | 4 | 2 ore | Blast 3, Radiation |
+| Ritage-2 | 12 | 5D | 4 | 4 ore | Blast 6, Radiation, Slow¹ |
+| 'Whiskey' (Kaefer) | 12 | 1D laser / 3D det. laser | 4 | 2 ore | — / Blast 3, Radiation, Slow¹ |
+
+¹ `Slow` (DM−2) non è stampato nella tabella Combat Drones di p.61 — deriva dalla regola generale sui detonation laser (B3 p.59): Ritage-2 e la modalità di detonazione di Whiskey sono entrambi warhead nucleari a raggi X ("detonation lasers"), che devono sparare a Close range e soffrono comunque DM−2.
 
 ### Ship Profile Fields (combat-relevant)
 

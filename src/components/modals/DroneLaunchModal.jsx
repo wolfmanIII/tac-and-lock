@@ -18,8 +18,8 @@ export function DroneLaunchModal({ payload, onClose }) {
   const attacker = ships.find((s) => s.id === attackerId) ?? ships[0]
   const targets  = ships.filter((s) => s.id !== attacker?.id && !s.isDestroyed)
 
-  // Only weapon slots that represent a drone/missile (Smart trait — homing warhead)
-  const droneWeapons = (attacker?.weapons ?? []).filter((w) => WEAPONS[w.weaponId]?.traits?.includes('Smart'))
+  // Only weapon slots that represent a drone/missile — engine-only flag, not a B3 trait
+  const droneWeapons = (attacker?.weapons ?? []).filter((w) => WEAPONS[w.weaponId]?.launchable)
 
   const [targetId,   setTargetId]   = useState(targets[0]?.id ?? '')
   const [weaponIdx,  setWeaponIdx]  = useState(0)

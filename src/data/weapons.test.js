@@ -64,6 +64,15 @@ describe('WEAPONS — every weapon', () => {
     it(`${id}: optimalRange is a valid band`, () => {
       expect([...RANGE_BANDS, '—', 'N/A']).toContain(w.optimalRange)
     })
+
+    it(`${id}: traits do not include invented/non-canonical entries (Smart, Reaction)`, () => {
+      expect(w.traits).not.toContain('Smart')
+      expect(w.traits).not.toContain('Reaction')
+      if (w.detonationMode) {
+        expect(w.detonationMode.traits).not.toContain('Smart')
+        expect(w.detonationMode.traits).not.toContain('Reaction')
+      }
+    })
   }
 })
 
@@ -129,5 +138,40 @@ describe('2300AD canonical weapons', () => {
   it('grape_shot — optimal range is Close and has Slow trait (detonation lasers must fire at Close, DM-2) // B3 p.59', () => {
     expect(WEAPONS.grape_shot.optimalRange).toBe('Close')
     expect(WEAPONS.grape_shot.traits).toContain('Slow')
+  })
+
+  it('ll98 — name is "Darlan LL-98", not an invented flavor name // B3 p.60', () => {
+    expect(WEAPONS.ll98.name).toBe('Darlan LL-98')
+  })
+
+  it('anti_missile_laser — does not have the invented "Reaction" trait // B3 p.60', () => {
+    expect(WEAPONS.anti_missile_laser.traits).not.toContain('Reaction')
+  })
+
+  it('ritage1 — has no traits (B3 lists none) // B3 p.61', () => {
+    expect(WEAPONS.ritage1.traits).toEqual([])
+  })
+
+  it('ritage2 — has Blast 6, Radiation, and Slow (detonation-laser Close-range penalty) // B3 p.59, p.61', () => {
+    expect(WEAPONS.ritage2.traits).toContain('Blast 6')
+    expect(WEAPONS.ritage2.traits).toContain('Radiation')
+    expect(WEAPONS.ritage2.traits).toContain('Slow')
+  })
+
+  it('whiskey — base entry has no traits, detonationMode has Blast 3, Radiation, Slow // B3 p.59, p.61', () => {
+    expect(WEAPONS.whiskey.traits).toEqual([])
+    expect(WEAPONS.whiskey.detonationMode.traits).toContain('Blast 3')
+    expect(WEAPONS.whiskey.detonationMode.traits).toContain('Radiation')
+    expect(WEAPONS.whiskey.detonationMode.traits).toContain('Slow')
+  })
+
+  it('missile_rack, aero12, ritage1, ritage2, whiskey, kingfisher — launchable via DroneLaunchModal', () => {
+    for (const id of ['missile_rack', 'aero12', 'ritage1', 'ritage2', 'whiskey', 'kingfisher']) {
+      expect(WEAPONS[id].launchable).toBe(true)
+    }
+  })
+
+  it('grape_shot is not launchable (direct-fire Firing Solution weapon, not a tracked drone/missile)', () => {
+    expect(WEAPONS.grape_shot.launchable).toBeFalsy()
   })
 })
