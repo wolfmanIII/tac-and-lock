@@ -114,4 +114,20 @@ describe('2300AD canonical weapons', () => {
   it('particle_barbette — has Radiation trait (AP∞) // B3 p.59', () => {
     expect(WEAPONS.particle_barbette.traits).toContain('Radiation')
   })
+
+  it('grape_shot — TL is 11, damage is 2D // B3 p.61', () => {
+    expect(WEAPONS.grape_shot.TL).toBe(11)
+    expect(WEAPONS.grape_shot.damage).toBe('2D')
+  })
+
+  it('grape_shot — has Auto 4, Blast 4, Radiation traits // B3 p.61', () => {
+    expect(WEAPONS.grape_shot.traits).toContain('Auto 4')
+    expect(WEAPONS.grape_shot.traits).toContain('Blast 4')
+    expect(WEAPONS.grape_shot.traits).toContain('Radiation')
+  })
+
+  it('grape_shot — optimal range is Close and has Slow trait (detonation lasers must fire at Close, DM-2) // B3 p.59', () => {
+    expect(WEAPONS.grape_shot.optimalRange).toBe('Close')
+    expect(WEAPONS.grape_shot.traits).toContain('Slow')
+  })
 })

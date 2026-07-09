@@ -263,6 +263,33 @@ export const WEAPONS = {
     notes: 'Quinn Optronics PDC Type 17. Beam laser cluster. DM+2 vs missiles/drones/fighters at Close. // 2300AD B3 p.60',
   },
 
+  grape_shot: {
+    id: 'grape_shot',
+    name: 'Mitraille (Grape Shot)',
+    mount: 'turret',
+    TL: 11,
+    damage: '2D',
+    damageBonus: 0,
+    // Submunitions are "detonation lasers" (nuclear bomb-pumped x-ray laser warheads):
+    // "Detonation lasers must be fired at Close range and even then will suffer DM-2
+    // to hit." — hence optimalRange Close + the 'Slow' trait below. // 2300AD B3 p.59
+    optimalRange: 'Close',
+    rangeDm: {
+      Adjacent:  2,
+      Close:     0,
+      Short:   -20,
+      Medium:  -20,
+      Long:    -20,
+      VeryLong:-20,
+      Distant: -20,
+    },
+    // 'Slow' (DM-2) is the detonation-laser Close-range penalty from the prose rule
+    // above — it is not printed in the Submunitions stat block itself (B3 p.61),
+    // which only lists Auto 4, Blast 4, Radiation.
+    traits: ['Auto 4', 'Blast 4', 'Radiation', 'Slow'],
+    notes: 'French Mitraille submunition dispenser ("Grapeshot"). Guided by a TTA or UTES mount; fire control can be handed off to another vessel. // 2300AD B3 p.59, p.61',
+  },
+
   // ── Combat Drones — B3 p.61 (canonical starship-launched drones) ─────────
   // Remote-piloted "mini-ships" — see doc/drone-combat-redesign-spec.md.
   // Distinct from aero12/kingfisher below, which are sourced from the vehicle
@@ -432,6 +459,7 @@ export const WEAPON_IDS = [
   'anti_missile_laser',
   'grumbler',
   'allen_bmz50',
+  'grape_shot',
   // 2300AD B3 p.61 — combat drones
   'ritage1',
   'ritage2',

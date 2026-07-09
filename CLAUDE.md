@@ -197,6 +197,13 @@ Come Trav2022 CRB p.158–159, con queste sostituzioni:
 | --- | --- | --- | --- | --- |
 | Allen BMZ-50 | 11 | Close | 3D | AP 4, EM, Inefficient, Slow |
 
+#### Submunitions — B3 p.59, p.61
+| Arma | TL | Range | Danno | Traits |
+| --- | --- | --- | --- | --- |
+| Mitraille (Grape Shot) | 11 | Close | 2D | Auto 4, Blast 4, Radiation, Slow |
+
+> Le submunitions sono "detonation lasers" (B3 p.59): devono sparare a Close range e soffrono comunque DM−2 — da cui il trait `Slow`, non stampato nella tabella Submunitions di p.61 ma derivato dalla regola generale sui detonation laser.
+
 #### Combat Drones — B3 p.61
 | Drone | TL | Danno | TAC Speed | Endurance | Traits |
 | --- | --- | --- | --- | --- | --- |
