@@ -292,6 +292,7 @@ export function getReactionDriveSignatureDm(reactionDriveType) {
  *   spinHabitatRetracted → −1
  *   reactionDriveActive  → +4/+6/+8 depending on ship.reactionDriveType (rocket/thruster/nuclear)
  *   activeSensorsOn      → +1  (TTA, UTES)
+ *   stealthActive        → −4  (stealth technology masking heat signature)
  *
  * @param {object} ship — battle-state ship object
  * @returns {{ base: number, delta: number, effective: number, mods: Array<[string, number]> }}
@@ -316,6 +317,7 @@ export function computeEffectiveSignature(ship) {
   if (ship.spinHabitatRetracted) mods.push(['Spin habitat retracted', -1])
   if (ship.reactionDriveActive)  mods.push(['Reaction drive active', getReactionDriveSignatureDm(ship.reactionDriveType)])
   if (ship.activeSensorsOn)      mods.push(['Active sensors on', 1])
+  if (ship.stealthActive)        mods.push(['Stealth active', -4])
 
   const delta = mods.reduce((acc, [, v]) => acc + v, 0)
   return { base, delta, effective: base + delta, mods }

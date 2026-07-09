@@ -85,6 +85,7 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     spinHabitatRetracted:    false,
     reactionDriveActive:     false,
     activeSensorsOn:         false,
+    stealthActive:           false,
     initiative:              0,
     initiativeBreakdown:     null,
     initiativeBonusNextRound: 0,
@@ -655,7 +656,7 @@ export const useBattleStore = create((set, get) => {
     /**
      * Toggle a signature-modifier flag on a ship. // 2300AD B3 p.57
      * Allowed flags: radiatorsRetracted, heatSinkActive, solarPanelsExtended,
-     *                spinHabitatRetracted, reactionDriveActive, activeSensorsOn
+     *                spinHabitatRetracted, reactionDriveActive, activeSensorsOn, stealthActive
      * @param {string} shipId
      * @param {string} flag
      */

@@ -17,6 +17,7 @@ const SIG_FLAGS = [
   { key: 'spinHabitatRetracted', label: 'Spin Habitat Retracted', dm: -1 },
   { key: 'reactionDriveActive',  label: 'Reaction Drive Active',  dm: null }, // resolved per-ship from reactionDriveType // B3 p.57
   { key: 'activeSensorsOn',      label: 'Active Sensors On',      dm: +1 },
+  { key: 'stealthActive',        label: 'Stealth Active',         dm: -4 },
 ]
 
 export function ShipDetailModal({ payload, onClose }) {

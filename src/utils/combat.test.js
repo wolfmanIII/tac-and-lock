@@ -493,6 +493,7 @@ describe('computeEffectiveSignature', () => {
     spinHabitatRetracted: false,
     reactionDriveActive:  false,
     activeSensorsOn:      false,
+    stealthActive:        false,
     ...overrides,
   })
 
@@ -574,6 +575,12 @@ describe('computeEffectiveSignature', () => {
   it('activeSensorsOn → +1', () => {
     const r = computeEffectiveSignature(base({ activeSensorsOn: true }))
     expect(r.delta).toBe(1)
+  })
+
+  it('stealthActive → −4', () => {
+    const r = computeEffectiveSignature(base({ stealthActive: true }))
+    expect(r.delta).toBe(-4)
+    expect(r.mods.find(([l]) => l === 'Stealth active')).toBeTruthy()
   })
 
   it('multiple modifiers stack correctly', () => {
