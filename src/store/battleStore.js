@@ -68,6 +68,7 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     weapons:            profile.weapons.map((w) => ({ ...w, offline: false, destroyed: false })),
     software:           [...(profile.software ?? [])],
     signature:          profile.signature ?? 2, // base Signature // 2300AD B3 p.57
+    reactionDriveType:  profile.reactionDriveType ?? 'rocket', // rocket/thruster/nuclear — Signature DM while active // 2300AD B3 p.57
     criticalTracks:     { ...(profile.criticalTracks ?? {}) },
     surfaceFixtureTracks: { ...(profile.surfaceFixtureTracks ?? {}) },
     crew:               structuredClone(profile.crew ?? []),

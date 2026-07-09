@@ -12,6 +12,7 @@ import { FACTIONS } from '../../data/factions.js'
 import { SOFTWARE, SOFTWARE_IDS } from '../../data/software.js'
 import { blankCrewMember } from '../../utils/crew.js'
 import { blankCriticalTracks, blankSurfaceFixtureTracks } from '../../data/defaultProfiles.js'
+import { REACTION_DRIVE_TYPES } from '../../utils/combat.js'
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -28,6 +29,7 @@ function blankProfile() {
     name: '', class: '', tonnage: 100, faction: 'neutral',
     hullPoints: 20, currentHull: 20, armour: 0, tacSpeed: 1,
     signature: 2,   // base Signature for enemy Electronics(sensors) // 2300AD B3 p.57
+    reactionDriveType: 'rocket', // rocket/thruster/nuclear — Signature DM while active // 2300AD B3 p.57
     sensors: { type: '', dm: 0 },
     computer: { model: '', bandwidth: 0 },
     weapons: [], software: [], crew: [],
@@ -230,6 +232,14 @@ export function ShipProfileForm({ profileId, onSave, onCancel }) {
             <NumField label="SIGNATURE"     value={form.signature ?? 2} onChange={(v) => set('signature', v)} min={0} max={10} />
           </div>
           <p className="font-mono text-[9px] text-slate-500">SIGNATURE: DM applied to enemy Electronics (sensors) checks // 2300AD B3 p.57</p>
+          <div>
+            <label className="flex flex-col gap-0.5">
+              <span className={LABEL_CLS}>REACTION DRIVE TYPE</span>
+              <select value={form.reactionDriveType ?? 'rocket'} onChange={(e) => set('reactionDriveType', e.target.value)} className={FIELD_CLS}>
+                {REACTION_DRIVE_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label} (+{t.dm} Signature while active)</option>)}
+              </select>
+            </label>
+          </div>
         </section>
 
         {/* Sensors + Computer */}

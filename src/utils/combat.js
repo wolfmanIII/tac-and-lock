@@ -255,6 +255,28 @@ export function getNextSeverity(criticalTracks, system) {
 // === SIGNATURE — 2300AD B3 p.57 ===
 
 /**
+ * Reaction drive types and their Signature contribution while active.
+ * "Rockets add +4 to Signature, while thrusters add +6. Nuclear thrusters add +8." // 2300AD B3 p.57
+ * @type {Array<{ id: string, label: string, dm: number }>}
+ */
+export const REACTION_DRIVE_TYPES = [
+  { id: 'rocket',   label: 'Rocket',           dm: 4 },
+  { id: 'thruster', label: 'Thruster',         dm: 6 },
+  { id: 'nuclear',  label: 'Nuclear Thruster', dm: 8 },
+]
+
+/**
+ * Signature DM for a ship's reaction drive type, defaulting to rocket (+4) for
+ * profiles that predate this field. // 2300AD B3 p.57
+ * @param {string} [reactionDriveType]
+ * @returns {number}
+ */
+export function getReactionDriveSignatureDm(reactionDriveType) {
+  return REACTION_DRIVE_TYPES.find((t) => t.id === reactionDriveType)?.dm
+    ?? REACTION_DRIVE_TYPES[0].dm
+}
+
+/**
  * Compute the effective Signature of a ship, applying all dynamic modifiers.
  * Returns base, delta, and effective value for UI breakdown display.
  *
@@ -268,7 +290,7 @@ export function getNextSeverity(criticalTracks, system) {
  *   heatSinkActive       → −4  (limited duration, GM resets manually)
  *   solarPanelsExtended  → +2
  *   spinHabitatRetracted → −1
- *   reactionDriveActive  → +4  (rockets; thruster +6, nuclear +8 not yet tracked)
+ *   reactionDriveActive  → +4/+6/+8 depending on ship.reactionDriveType (rocket/thruster/nuclear)
  *   activeSensorsOn      → +1  (TTA, UTES)
  *
  * @param {object} ship — battle-state ship object
@@ -292,7 +314,7 @@ export function computeEffectiveSignature(ship) {
   if (ship.heatSinkActive)       mods.push(['Heat sink active', -4])
   if (ship.solarPanelsExtended)  mods.push(['Solar panels extended', 2])
   if (ship.spinHabitatRetracted) mods.push(['Spin habitat retracted', -1])
-  if (ship.reactionDriveActive)  mods.push(['Reaction drive active', 4])
+  if (ship.reactionDriveActive)  mods.push(['Reaction drive active', getReactionDriveSignatureDm(ship.reactionDriveType)])
   if (ship.activeSensorsOn)      mods.push(['Active sensors on', 1])
 
   const delta = mods.reduce((acc, [, v]) => acc + v, 0)

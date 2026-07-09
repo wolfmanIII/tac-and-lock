@@ -18,6 +18,7 @@ import {
   getNextSeverity,
   getWeaponTraitAttackDm,
   computeEffectiveSignature,
+  getReactionDriveSignatureDm,
 } from './combat.js'
 
 // === parseDiceNotation ===
@@ -456,6 +457,27 @@ describe('rollDamage — Advanced/Obsolete traits', () => {
   })
 })
 
+// === getReactionDriveSignatureDm — 2300AD B3 p.57 ===
+
+describe('getReactionDriveSignatureDm', () => {
+  it('rocket → 4', () => {
+    expect(getReactionDriveSignatureDm('rocket')).toBe(4)
+  })
+
+  it('thruster → 6', () => {
+    expect(getReactionDriveSignatureDm('thruster')).toBe(6)
+  })
+
+  it('nuclear → 8', () => {
+    expect(getReactionDriveSignatureDm('nuclear')).toBe(8)
+  })
+
+  it('unknown/missing type → defaults to rocket (4)', () => {
+    expect(getReactionDriveSignatureDm(undefined)).toBe(4)
+    expect(getReactionDriveSignatureDm('warp-sail')).toBe(4)
+  })
+})
+
 // === computeEffectiveSignature — 2300AD B3 p.57 ===
 
 describe('computeEffectiveSignature', () => {
@@ -529,9 +551,24 @@ describe('computeEffectiveSignature', () => {
     expect(r.delta).toBe(-1)
   })
 
-  it('reactionDriveActive → +4', () => {
+  it('reactionDriveActive with no reactionDriveType set → +4 (defaults to rocket)', () => {
     const r = computeEffectiveSignature(base({ reactionDriveActive: true }))
     expect(r.delta).toBe(4)
+  })
+
+  it('reactionDriveActive with reactionDriveType "rocket" → +4', () => {
+    const r = computeEffectiveSignature(base({ reactionDriveActive: true, reactionDriveType: 'rocket' }))
+    expect(r.delta).toBe(4)
+  })
+
+  it('reactionDriveActive with reactionDriveType "thruster" → +6', () => {
+    const r = computeEffectiveSignature(base({ reactionDriveActive: true, reactionDriveType: 'thruster' }))
+    expect(r.delta).toBe(6)
+  })
+
+  it('reactionDriveActive with reactionDriveType "nuclear" → +8', () => {
+    const r = computeEffectiveSignature(base({ reactionDriveActive: true, reactionDriveType: 'nuclear' }))
+    expect(r.delta).toBe(8)
   })
 
   it('activeSensorsOn → +1', () => {

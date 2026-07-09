@@ -5,7 +5,7 @@ import { CRITICAL_HIT_SYSTEM_LABELS, SURFACE_FIXTURE_SYSTEM_LABELS } from '../..
 import { FACTION_COLOR } from '../../data/factions.js'
 import { RANGE_BAND_ORDER } from '../../data/rangeBands.js'
 import { pairKey } from '../../utils/rangeBands.js'
-import { computeEffectiveSignature } from '../../utils/combat.js'
+import { computeEffectiveSignature, getReactionDriveSignatureDm } from '../../utils/combat.js'
 import { useShipTokenIcon } from '../battle/useShipTokenIcon.js'
 
 const SEV_COLOR = ['text-slate-500', 'text-yellow-400', 'text-orange-400', 'text-red-400', 'text-red-500', 'text-red-600', 'text-red-700']
@@ -15,7 +15,7 @@ const SIG_FLAGS = [
   { key: 'heatSinkActive',       label: 'Heat Sink Active',       dm: -4 },
   { key: 'solarPanelsExtended',  label: 'Solar Panels Extended',  dm: +2 },
   { key: 'spinHabitatRetracted', label: 'Spin Habitat Retracted', dm: -1 },
-  { key: 'reactionDriveActive',  label: 'Reaction Drive Active',  dm: +4 },
+  { key: 'reactionDriveActive',  label: 'Reaction Drive Active',  dm: null }, // resolved per-ship from reactionDriveType // B3 p.57
   { key: 'activeSensorsOn',      label: 'Active Sensors On',      dm: +1 },
 ]
 
@@ -121,8 +121,9 @@ export function ShipDetailModal({ payload, onClose }) {
       <div>
         <p className="text-[10px] font-display text-slate-500 tracking-widest mb-1.5">SIGNATURE CONDITIONS</p>
         <div className="grid grid-cols-2 gap-1">
-          {SIG_FLAGS.map(({ key, label, dm }) => {
+          {SIG_FLAGS.map(({ key, label, dm: staticDm }) => {
             const active = !!ship[key]
+            const dm = key === 'reactionDriveActive' ? getReactionDriveSignatureDm(ship.reactionDriveType) : staticDm
             return (
               <button
                 key={key}
