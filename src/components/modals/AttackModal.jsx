@@ -410,7 +410,7 @@ export function AttackModal({ payload, onClose }) {
   function applyResults() {
     if (!damageResult || !target || applied) return
     applyDamage(target.id, damageResult.net, attacker?.id)
-    depleteScreens(target.id) // any hit depletes screens by 1, regardless of damage // B3 p.62
+    if (weapon?.isLaser) depleteScreens(target.id) // only laser fire depletes screens // B3 p.62
     const effect = step3Result?.effect ?? 0
     // Improve Critical (Sensor Operator) lowers the threshold for this ship's next shot
     // this round — "next shot" is singular, so it's consumed here regardless of whether

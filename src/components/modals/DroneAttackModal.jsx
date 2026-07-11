@@ -274,7 +274,7 @@ export function DroneAttackModal({ payload, onClose }) {
   function applyResults() {
     if (!damageResult || !target) return
     applyDamage(target.id, damageResult.net, owner?.id)
-    depleteScreens(target.id) // any hit depletes screens by 1, regardless of damage // B3 p.62
+    if (weapon?.isLaser) depleteScreens(target.id) // only laser fire depletes screens // B3 p.62
     detonateDrone(droneId)
     const effect = step3Result?.effect ?? 0
     // Improve Critical (Sensor Operator) lowers the threshold for this ship's next shot

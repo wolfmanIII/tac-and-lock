@@ -594,6 +594,50 @@ test.describe('AttackModal — Defensive Screens', () => {
     expect(rating).toBe(2)
   })
 
+  test('a hit from a non-laser weapon does not deplete the screen', async ({ page }) => {
+    const nonLaserShips = [
+      { name: 'ISV-2 Trilon', faction: 'players', weapons: [{ weaponId: 'allen_bmz50', count: 1, label: 'Particle Beam' }] },
+      { name: 'Kaefer Geist', faction: 'npc', weapons: [{ weaponId: 'll88', count: 1, label: 'Main Laser' }] },
+    ]
+    const { id0, id1 } = await page.evaluate(({ shipDefs, screenFields }) => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      for (const def of shipDefs) {
+        store.getState().addShip(
+          {
+            name: def.name, class: 'Test class', hullPoints: 20, armour: 0,
+            tacSpeed: 4, signature: 2,
+            sensors: { type: 'Basic Military', dm: 0 },
+            computer: { model: 'TL-10', bandwidth: 20 },
+            weapons: def.weapons, software: ['fire_control_1'],
+            crew: [{
+              id: 'crew-full', name: 'Full Crew', role: null,
+              skills: { pilot: 2, tactics: 2, engineer: 2, gunner: 2, sensors: 2, countermeasures: 2, leadership: 2, mechanic: 2, gunCombat: 2, melee: 2, remoteOps: 2 },
+              characteristics: { STR: 7, DEX: 7, END: 7, INT: 7, EDU: 7, SOC: 7 },
+            }],
+            crewAssignments: {
+              pilot: 'crew-full', captain: 'crew-full', engineer: 'crew-full', sensor_operator: 'crew-full',
+              gunner_turret: 'crew-full', gunner_bay: 'crew-full', marine: 'crew-full', remote_pilot: 'crew-full',
+            },
+          },
+          def.faction, 'Close',
+        )
+      }
+      const ships = store.getState().ships
+      store.getState().updateShip(ships[1].id, screenFields)
+      return { id0: ships[0].id, id1: ships[1].id }
+    }, { shipDefs: nonLaserShips, screenFields: { screenRating: 3, screenDeployed: true, screenCurrentRating: 3 } })
+    await page.evaluate((id) => window.__ZUSTAND_UI_STORE__.getState().openModal('attack', { attackerId: id }), id0)
+    await reachStep3(page)
+    await page.getByText('enter manually').last().click()
+    await page.locator('input[type="number"]').nth(0).fill('6')
+    await page.locator('input[type="number"]').nth(1).fill('6')
+    await page.getByText('APPLY DAMAGE').click()
+    const rating = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id).screenCurrentRating
+    , id1)
+    expect(rating).toBe(3)
+  })
+
   test('SETUP screen shows DEPLOY SCREENS for an undeployed screen-equipped ship', async ({ page }) => {
     const { id0 } = await setupShipsWithTargetScreens(page)
     await page.evaluate((id) => window.__ZUSTAND_BATTLE_STORE__.getState().updateShip(id, { screenRating: 1 }), id0)
