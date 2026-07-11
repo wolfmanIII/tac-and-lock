@@ -45,6 +45,19 @@ export function getRangeDM(weaponId, rangeBand) {
   return weapon.rangeDm[rangeBand] ?? -8
 }
 
+/**
+ * Fire Control software DM for a Gunner check, including point defence. // 2300AD B3 p.44, p.62
+ * "A weapon without fire control suffers DM-8 on all attack rolls, including point defence."
+ * @param {string[]} software — ship's installed software list
+ * @returns {number}
+ */
+export function getFireControlDm(software) {
+  if (software?.includes('fire_control_3')) return 3
+  if (software?.includes('fire_control_2')) return 2
+  if (software?.includes('fire_control_1')) return 1
+  return -8
+}
+
 // === CHARACTERISTIC DM ===
 
 /**

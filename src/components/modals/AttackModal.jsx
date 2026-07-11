@@ -14,7 +14,7 @@ import { SENSOR_TIME_LAG_DM } from '../../data/rangeBands.js'
 import { pairKey }        from '../../utils/rangeBands.js'
 import { getAssignedSkill, getAssignedCharacteristic } from '../../utils/crew.js'
 import { getCharDM, roll2D6 } from '../../utils/dice.js'
-import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, getWeaponTraitAttackDm, computeEffectiveSignature, getEasyTargetAttackDm, getEasyTargetDamageMultiplier, getAtmosphericTargetDm, getOrtilleryDm } from '../../utils/combat.js'
+import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, getWeaponTraitAttackDm, computeEffectiveSignature, getEasyTargetAttackDm, getEasyTargetDamageMultiplier, getAtmosphericTargetDm, getOrtilleryDm, getFireControlDm } from '../../utils/combat.js'
 import { DiceInput } from '../forms/DiceInput.jsx'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -32,14 +32,6 @@ const STEP_LABELS = {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-function getFireControlDm(software) {
-  if (!software) return 0
-  if (software.includes('fire_control_3')) return 3
-  if (software.includes('fire_control_2')) return 2
-  if (software.includes('fire_control_1')) return 1
-  return 0
-}
 
 function fmtDm(n) {
   return n >= 0 ? `+${n}` : `${n}`

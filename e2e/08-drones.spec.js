@@ -260,6 +260,21 @@ test.describe('Drone attack — Point Defence and Firing Solution', () => {
     await page.locator('input[type="number"]').nth(1).fill('6')
     await expect(page.getByText('×2 damage', { exact: false })).toBeVisible()
   })
+
+  test('Point Defence shows Fire Control -8 when the defending ship has no fire control // B3 p.62', async ({ page }) => {
+    const droneId = await injectDrone(page, { band: 'Close' })
+    await page.evaluate(() => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const target = store.getState().ships[1]
+      store.getState().updateShip(target.id, { software: [] })
+    })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await expect(page.getByText(/— POINT DEFENCE ·/)).toBeVisible()
+    const row = page.locator('div').filter({ hasText: 'Fire Control' }).last()
+    await expect(row).toContainText('-8')
+  })
 })
 
 test.describe('Context menu — real right-click, drone items', () => {

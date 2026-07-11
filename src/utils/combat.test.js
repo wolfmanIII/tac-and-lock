@@ -25,6 +25,7 @@ import {
   getAtmosphericTargetDm,
   getOrtilleryDm,
   ATMOSPHERIC_CONDITIONS,
+  getFireControlDm,
 } from './combat.js'
 
 // === parseDiceNotation ===
@@ -706,5 +707,30 @@ describe('getOrtilleryDm', () => {
 
   it('Ortillery trait vs. a target in space → 0', () => {
     expect(getOrtilleryDm(['Ortillery'], { atmosphericCondition: 'none' })).toBe(0)
+  })
+})
+
+// === Fire Control — 2300AD B3 p.44, p.62 ===
+
+describe('getFireControlDm', () => {
+  it('no fire control software at all → DM-8 (including point defence) // B3 p.62', () => {
+    expect(getFireControlDm([])).toBe(-8)
+    expect(getFireControlDm(undefined)).toBe(-8)
+  })
+
+  it('fire_control_1 → +1', () => {
+    expect(getFireControlDm(['fire_control_1'])).toBe(1)
+  })
+
+  it('fire_control_2 → +2', () => {
+    expect(getFireControlDm(['fire_control_2'])).toBe(2)
+  })
+
+  it('fire_control_3 → +3', () => {
+    expect(getFireControlDm(['fire_control_3'])).toBe(3)
+  })
+
+  it('other unrelated software present, no fire control → still DM-8', () => {
+    expect(getFireControlDm(['auto_repair_1', 'stutterwarp_control'])).toBe(-8)
   })
 })

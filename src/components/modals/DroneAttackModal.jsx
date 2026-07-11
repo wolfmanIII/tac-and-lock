@@ -20,7 +20,7 @@ import { WEAPONS }        from '../../data/weapons.js'
 import { SENSOR_TIME_LAG_DM } from '../../data/rangeBands.js'
 import { getAssignedSkill, getAssignedCharacteristic } from '../../utils/crew.js'
 import { getCharDM, roll2D6 } from '../../utils/dice.js'
-import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, computeEffectiveSignature, getPointDefenceDm, getEasyTargetAttackDm, getEasyTargetDamageMultiplier, getAtmosphericTargetDm, getOrtilleryDm } from '../../utils/combat.js'
+import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, computeEffectiveSignature, getPointDefenceDm, getEasyTargetAttackDm, getEasyTargetDamageMultiplier, getAtmosphericTargetDm, getOrtilleryDm, getFireControlDm } from '../../utils/combat.js'
 import { DiceInput } from '../forms/DiceInput.jsx'
 
 const STEP_PD     = 0
@@ -114,8 +114,10 @@ export function DroneAttackModal({ payload, onClose }) {
     const gunnerSkill = getAssignedSkill('gunner_turret', target.crewAssignments, target.crew)
     const dexDm       = getCharDM(getAssignedCharacteristic('gunner_turret', target.crewAssignments, target.crew, 'DEX'))
     const pdDm        = getPointDefenceDm(weapon.traits)
-    const total = gunnerSkill + dexDm + pdDm
-    return { rows: [['Gunner skill', gunnerSkill], ['DEX DM', dexDm], ['Point Defence', pdDm]], total }
+    // Fire Control applies to all attack rolls, including point defence // B3 p.62
+    const fireControlDm = getFireControlDm(target.software)
+    const total = gunnerSkill + dexDm + pdDm + fireControlDm
+    return { rows: [['Gunner skill', gunnerSkill], ['DEX DM', dexDm], ['Point Defence', pdDm], ['Fire Control', fireControlDm]], total }
   }, [target, weapon])
 
   function rollPd() {
@@ -188,9 +190,7 @@ export function DroneAttackModal({ payload, onClose }) {
   // ── Step 3: Gunner — Difficult (10+), Fire Control, range, target's reactive DMs // B3 p.56 ──
   const step3Dms = useMemo(() => {
     if (!owner || !target || !weapon) return { rows: [], total: 0 }
-    const fireControlDm = owner.software?.includes('fire_control_3') ? 3
-      : owner.software?.includes('fire_control_2') ? 2
-      : owner.software?.includes('fire_control_1') ? 1 : 0
+    const fireControlDm = getFireControlDm(owner.software)
     const rangeDm = getRangeDM(drone.weaponId, drone.currentBand)
     const evasionDm    = target.evasionDm ?? 0
     const jammer = ships.find((s) => s.ewTarget === owner.id)

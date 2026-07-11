@@ -429,3 +429,42 @@ test.describe('AttackModal — planetary/atmospheric range modifiers', () => {
     expect(condition).toBe('surface_vacuum')
   })
 })
+
+// === Fire Control DM-8 penalty when absent — 2300AD B3 p.62 ==================
+
+test.describe('AttackModal — DM-8 penalty for weapons without fire control', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  test('Step 3 shows Fire Control -8 when attacker has no fire_control_N software', async ({ page }) => {
+    await page.evaluate((shipDefs) => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      for (const def of shipDefs) {
+        store.getState().addShip(
+          {
+            name: def.name, class: 'Test class', hullPoints: 20, armour: 3,
+            tacSpeed: 4, signature: 2,
+            sensors: { type: 'Basic Military', dm: 0 },
+            computer: { model: 'TL-10', bandwidth: 20 },
+            weapons: def.weapons, software: [], // no fire control at all
+            crew: [], crewAssignments: {},
+          },
+          def.faction, 'Close',
+        )
+      }
+      const ships = store.getState().ships
+      window.__ZUSTAND_UI_STORE__.getState().openModal('attack', { attackerId: ships[0].id })
+    }, ARMED_SHIPS)
+    await expect(page.getByText('FIRING SOLUTION', { exact: true })).toBeVisible()
+    await page.getByText('BEGIN FIRING SOLUTION →').click()
+    await page.getByText('ROLL 2D6').click()
+    await page.getByText('NEXT → PILOT').click()
+    await page.getByText('ROLL 2D6').click()
+    await page.getByText('NEXT → GUNNER').click()
+
+    const row = page.locator('div').filter({ hasText: 'Fire Control' }).last()
+    await expect(row).toContainText('-8')
+  })
+})

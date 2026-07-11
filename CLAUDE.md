@@ -139,6 +139,7 @@ Ogni nave ha un valore **Signature** (basato su tonnellaggio + power plant). Usa
 ### Critical Hits — 2300AD B3 p.58
 
 #### Surface Fixture Damage (esterno, non penetrante)
+
 Qualsiasi hit con Effect ≥ 3 triggerizza questo roll (anche se non penetra l'armatura).
 
 | 2D | Sistema | 1° Hit | 2° Hit |
@@ -152,7 +153,9 @@ Qualsiasi hit con Effect ≥ 3 triggerizza questo roll (anche se non penetra l'a
 | 12 | Other System | Disabled | Destroyed |
 
 #### Internal Critical Hits
+
 Come Trav2022 CRB p.158–159, con queste sostituzioni:
+
 - J-Drive → **Stutterwarp Drive** (crit riduce TAC Speed di −1 per punto perso, non Thrust)
 - M-Drive → **Reaction Drive** (primo crit: inoperabile; secondo: distrutto)
 
@@ -189,11 +192,14 @@ Come Trav2022 CRB p.158–159, con queste sostituzioni:
 | Auto-Repair/2 | 11 | 20 | 2 tentativi/round (o DM+2) |
 | Archive | 10 | 0 | Banca dati (incluso) |
 
+> Una nave **senza nessun software Fire Control** subisce **DM−8** a tutti i check di attacco, incluso il point defence — 2300AD B3 p.62. Implementato in `getFireControlDm(software)` in `utils/combat.js`, usato sia da `AttackModal.jsx` che da `DroneAttackModal.jsx` (Gunner step e Point Defence).
+>
 > Nota: in 2300AD non esistono i software "Manoeuvre" e "Evade" del Trav2022 CRB. I profili nave usano `stutterwarp_control`, `fire_control_N`, `auto_repair_N`.
 
 ### Armi Canoniche 2300AD — B3 p.60–61
 
 #### Laser (spacecraft)
+
 | Arma | TL | Range | Danno | Traits |
 | --- | --- | --- | --- | --- |
 | Darlan LL-88 | 10 | Close | 1D−1 | Obsolete, Accurate |
@@ -203,11 +209,13 @@ Come Trav2022 CRB p.158–159, con queste sostituzioni:
 | Kaefer 'Grumbler' | 12 | Short | 2D+2 | Advanced, Inefficient |
 
 #### Particle Beam
+
 | Arma | TL | Range | Danno | Traits |
 | --- | --- | --- | --- | --- |
 | Allen BMZ-50 | 11 | Close | 3D | AP 4, EM, Inefficient, Slow |
 
 #### Submunitions — B3 p.59, p.61
+
 | Arma | TL | Range | Danno | Traits |
 | --- | --- | --- | --- | --- |
 | Mitraille (Grape Shot) | 11 | Close | 2D | Auto 4, Blast 4, Radiation, Slow |
@@ -215,6 +223,7 @@ Come Trav2022 CRB p.158–159, con queste sostituzioni:
 > Le submunitions sono "detonation lasers" (B3 p.59): devono sparare a Close range e soffrono comunque DM−2 — da cui il trait `Slow`, non stampato nella tabella Submunitions di p.61 ma derivato dalla regola generale sui detonation laser.
 
 #### Combat Drones — B3 p.61
+
 | Drone | TL | Danno | TAC Speed | Endurance | Traits |
 | --- | --- | --- | --- | --- | --- |
 | Ritage-1 | 11 | 1D | 3 | 6 ore | — |
