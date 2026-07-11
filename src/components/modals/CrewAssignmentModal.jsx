@@ -12,7 +12,7 @@ export function CrewAssignmentModal({ payload, onClose }) {
 
   const ship = ships.find((s) => s.id === shipId)
   const initialCrew = ship?.crew ?? []
-  const initialAssignments = ship?.assignments ?? buildDefaultAssignments(initialCrew)
+  const initialAssignments = ship?.crewAssignments ?? buildDefaultAssignments()
 
   const [crew,        setCrew]        = useState(initialCrew.length ? [...initialCrew] : [blankCrewMember(uuidv7())])
   const [assignments, setAssignments] = useState({ ...initialAssignments })
@@ -47,7 +47,7 @@ export function CrewAssignmentModal({ payload, onClose }) {
   }
 
   function save() {
-    if (updateShip) updateShip(shipId, { crew, assignments })
+    if (updateShip) updateShip(shipId, { crew, crewAssignments: assignments })
     onClose()
   }
 
