@@ -28,6 +28,7 @@ import {
   getOrtilleryDm,
   ATMOSPHERIC_CONDITIONS,
   getFireControlDm,
+  getTargetingSystemDm,
   getScreenDm,
   SCREEN_RATINGS,
 } from './combat.js'
@@ -829,6 +830,32 @@ describe('getFireControlDm', () => {
 
   it('other unrelated software present, no fire control → still DM-8', () => {
     expect(getFireControlDm(['auto_repair_1', 'stutterwarp_control'])).toBe(-8)
+  })
+})
+
+// === getTargetingSystemDm — per-weapon-mount hardware, stacks with Fire Control software // 2300AD B3 p.62 ===
+
+describe('getTargetingSystemDm', () => {
+  it('no targeting system / "none" → 0', () => {
+    expect(getTargetingSystemDm({})).toBe(0)
+    expect(getTargetingSystemDm({ targetingSystem: 'none' })).toBe(0)
+    expect(getTargetingSystemDm(null)).toBe(0)
+  })
+
+  it('Light TTA → 0', () => {
+    expect(getTargetingSystemDm({ targetingSystem: 'light_tta' })).toBe(0)
+  })
+
+  it('TTA → −1', () => {
+    expect(getTargetingSystemDm({ targetingSystem: 'tta' })).toBe(-1)
+  })
+
+  it('UTES → +1', () => {
+    expect(getTargetingSystemDm({ targetingSystem: 'utes' })).toBe(1)
+  })
+
+  it('Drone Controller is not a fire-control system → 0', () => {
+    expect(getTargetingSystemDm({ targetingSystem: 'drone_controller' })).toBe(0)
   })
 })
 

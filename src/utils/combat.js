@@ -58,6 +58,36 @@ export function getFireControlDm(software) {
   return -8
 }
 
+// === TARGETING SYSTEMS — 2300AD B3 p.62 ===
+
+/**
+ * Per-weapon-mount Targeting System hardware — a separate, stackable DM source
+ * from Fire Control software (`getFireControlDm`). B3 distinguishes the physical
+ * targeting array from the fire-control software running on it.
+ * Drone Controller is not a weapon fire-control device ("not exactly a targeting
+ * system" — B3), contributes DM+0, and its 2-drones-per-controller limit is a
+ * separate, unmodeled resource cap — out of scope here (issue #16).
+ * @type {Array<{ id: string, label: string, dm: number }>}
+ */
+export const TARGETING_SYSTEMS = [
+  { id: 'none',             label: 'None',                                dm: 0 },
+  { id: 'light_tta',        label: 'Light TTA (TL11, up to 4 weapons)',    dm: 0 },
+  { id: 'tta',              label: 'TTA (TL10, up to 10 weapons)',         dm: -1 },
+  { id: 'utes',             label: 'UTES (TL12, 1 weapon, rare up to 4)',  dm: 1 },
+  { id: 'drone_controller', label: 'Drone Controller (not a fire-control system)', dm: 0 },
+]
+
+/**
+ * Attack roll DM from a weapon mount's installed Targeting System hardware
+ * (Light TTA/TTA/UTES). Stacks with `getFireControlDm` (software). // 2300AD B3 p.62
+ * @param {{ targetingSystem?: string }} weaponSlot — a ship.weapons[] entry
+ * @returns {number}
+ */
+export function getTargetingSystemDm(weaponSlot) {
+  const id = weaponSlot?.targetingSystem ?? 'none'
+  return TARGETING_SYSTEMS.find((t) => t.id === id)?.dm ?? 0
+}
+
 // === CHARACTERISTIC DM ===
 
 /**
