@@ -237,7 +237,7 @@ Come Trav2022 CRB p.158–159, con queste sostituzioni:
 - Navi più piccole (fino a ~20.000 ton); TL10–TL12
 - `Astrogation` usata per rotte stutterwarp, non per plot di salto
 - Combattimento inizia tipicamente a **Long range**; armi efficaci solo a **Close**
-- Bersagli stazionari (reaction drive spento, in orbita): DM+2 e danno doppio — 2300AD B3 p.56
+- Bersagli stazionari o in movimento a reaction drive (non stutterwarp): DM+2 e danno doppio agli attacchi contro di loro — 2300AD B3 p.56, `ship.isStationary` / `ship.reactionDriveActive` via `isEasyTarget()`/`getEasyTargetAttackDm()`/`getEasyTargetDamageMultiplier()` in `utils/combat.js`
 
 ## CODING GUIDELINES
 

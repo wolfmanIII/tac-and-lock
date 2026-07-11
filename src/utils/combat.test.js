@@ -19,6 +19,9 @@ import {
   getWeaponTraitAttackDm,
   computeEffectiveSignature,
   getReactionDriveSignatureDm,
+  isEasyTarget,
+  getEasyTargetAttackDm,
+  getEasyTargetDamageMultiplier,
 } from './combat.js'
 
 // === parseDiceNotation ===
@@ -379,6 +382,18 @@ describe('rollDamage', () => {
     const r = rollDamage('ll98', 3, 0)
     expect(r.gross).toBe(10)
   })
+
+  it('damageMultiplier doubles gross before armour // stationary/reaction-drive target B3 p.56', () => {
+    // ll98: gross would be 8 at ×1 → 16 at ×2, armour 3 → net 13
+    const r = rollDamage('ll98', 1, 3, null, 2)
+    expect(r.gross).toBe(16)
+    expect(r.net).toBe(13)
+  })
+
+  it('damageMultiplier defaults to 1 (no change) when omitted', () => {
+    const r = rollDamage('ll98', 1, 0)
+    expect(r.gross).toBe(8)
+  })
 })
 
 // === getWeaponTraitAttackDm — 2300AD B3 p.59 ===
@@ -599,5 +614,41 @@ describe('computeEffectiveSignature', () => {
     const r = computeEffectiveSignature({ currentHull: 10, hullPoints: 10 })
     expect(r.base).toBe(2)
     expect(r.effective).toBe(2)
+  })
+})
+
+// === Stationary / reaction-drive targets — 2300AD B3 p.56 ===
+
+describe('isEasyTarget / getEasyTargetAttackDm / getEasyTargetDamageMultiplier', () => {
+  it('a normal manoeuvring target is not easy', () => {
+    const target = { isStationary: false, reactionDriveActive: false }
+    expect(isEasyTarget(target)).toBe(false)
+    expect(getEasyTargetAttackDm(target)).toBe(0)
+    expect(getEasyTargetDamageMultiplier(target)).toBe(1)
+  })
+
+  it('a stationary target is easy: DM+2, ×2 damage', () => {
+    const target = { isStationary: true, reactionDriveActive: false }
+    expect(isEasyTarget(target)).toBe(true)
+    expect(getEasyTargetAttackDm(target)).toBe(2)
+    expect(getEasyTargetDamageMultiplier(target)).toBe(2)
+  })
+
+  it('a reaction-drive-active target is easy: DM+2, ×2 damage', () => {
+    const target = { isStationary: false, reactionDriveActive: true }
+    expect(isEasyTarget(target)).toBe(true)
+    expect(getEasyTargetAttackDm(target)).toBe(2)
+    expect(getEasyTargetDamageMultiplier(target)).toBe(2)
+  })
+
+  it('both flags set does not stack — still DM+2, ×2', () => {
+    const target = { isStationary: true, reactionDriveActive: true }
+    expect(getEasyTargetAttackDm(target)).toBe(2)
+    expect(getEasyTargetDamageMultiplier(target)).toBe(2)
+  })
+
+  it('handles a missing/undefined target gracefully', () => {
+    expect(isEasyTarget(undefined)).toBe(false)
+    expect(getEasyTargetAttackDm(null)).toBe(0)
   })
 })

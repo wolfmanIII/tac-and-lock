@@ -86,6 +86,7 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     reactionDriveActive:     false,
     activeSensorsOn:         false,
     stealthActive:           false,
+    isStationary:            false, // not manoeuvring — DM+2/×2 damage to attackers // 2300AD B3 p.56
     initiative:              0,
     initiativeBreakdown:     null,
     initiativeBonusNextRound: 0,
@@ -657,6 +658,8 @@ export const useBattleStore = create((set, get) => {
      * Toggle a signature-modifier flag on a ship. // 2300AD B3 p.57
      * Allowed flags: radiatorsRetracted, heatSinkActive, solarPanelsExtended,
      *                spinHabitatRetracted, reactionDriveActive, activeSensorsOn, stealthActive
+     * Also used for isStationary — not a Signature modifier, but an attack-DM/damage
+     * condition on the target (DM+2, ×2 damage — 2300AD B3 p.56, see getEasyTargetAttackDm).
      * @param {string} shipId
      * @param {string} flag
      */

@@ -258,3 +258,91 @@ test.describe('AttackModal — Captain Tactics Assist', () => {
     await expect(page.getByText('Command (Captain)')).toBeVisible()
   })
 })
+
+// === Stationary / reaction-drive target — DM+2, ×2 damage ===================
+// // 2300AD B3 p.56 — "Non-Stutterwarp and Stationary Targets"
+
+test.describe('AttackModal — stationary/reaction-drive target bonus', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  /** Inject armed ships, flag the target per `flag`, then open AttackModal. */
+  async function openAttackWithEasyTarget(page, flag) {
+    await page.evaluate(({ shipDefs, flag }) => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      for (const def of shipDefs) {
+        store.getState().addShip(
+          {
+            name: def.name, class: 'Test class', hullPoints: 20, armour: 0,
+            tacSpeed: 4, signature: 2,
+            sensors: { type: 'Basic Military', dm: 0 },
+            computer: { model: 'TL-10', bandwidth: 20 },
+            weapons: def.weapons, software: ['fire_control_1'],
+            crew: [], crewAssignments: {},
+          },
+          def.faction, 'Close',
+        )
+      }
+      const ships = store.getState().ships
+      if (flag) store.getState().updateShip(ships[1].id, { [flag]: true })
+      window.__ZUSTAND_UI_STORE__.getState().openModal('attack', { attackerId: ships[0].id })
+    }, { shipDefs: ARMED_SHIPS, flag })
+    await expect(page.getByText('FIRING SOLUTION', { exact: true })).toBeVisible()
+  }
+
+  async function reachStep3(page) {
+    await page.getByText('BEGIN FIRING SOLUTION →').click()
+    await page.getByText('ROLL 2D6').click()
+    await page.getByText('NEXT → PILOT').click()
+    await page.getByText('ROLL 2D6').click()
+    await page.getByText('NEXT → GUNNER').click()
+    await expect(page.getByText('STEP 3 — GUNNER')).toBeVisible()
+  }
+
+  test('no bonus row when target is neither stationary nor on reaction drive', async ({ page }) => {
+    await openAttackWithEasyTarget(page, null)
+    await reachStep3(page)
+    await expect(page.getByText('Stationary/reaction-drive target')).not.toBeVisible()
+  })
+
+  test('isStationary target shows DM+2 row in Step 3', async ({ page }) => {
+    await openAttackWithEasyTarget(page, 'isStationary')
+    await reachStep3(page)
+    const row = page.locator('div').filter({ hasText: 'Stationary/reaction-drive target' }).last()
+    await expect(row).toContainText('+2')
+  })
+
+  test('reactionDriveActive target shows DM+2 row in Step 3', async ({ page }) => {
+    await openAttackWithEasyTarget(page, 'reactionDriveActive')
+    await reachStep3(page)
+    const row = page.locator('div').filter({ hasText: 'Stationary/reaction-drive target' }).last()
+    await expect(row).toContainText('+2')
+  })
+
+  test('a hit on a stationary target shows the ×2 damage indicator', async ({ page }) => {
+    await openAttackWithEasyTarget(page, 'isStationary')
+    await reachStep3(page)
+    // Two RollBlocks are visible pre-roll (optional Captain assist, then the main Gunner
+    // roll) — .last() targets the main one, whose manual dice inputs decide the hit/miss.
+    await page.getByText('enter manually').last().click()
+    await page.locator('input[type="number"]').nth(0).fill('6')
+    await page.locator('input[type="number"]').nth(1).fill('6')
+    await expect(page.getByText('×2 damage', { exact: false })).toBeVisible()
+  })
+
+  test('ShipDetailModal — toggling "Stationary" sets ship.isStationary', async ({ page }) => {
+    await openAttackWithEasyTarget(page, null)
+    const targetId = await page.evaluate(() => window.__ZUSTAND_BATTLE_STORE__.getState().ships[1].id)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('ship-detail', { shipId: id })
+    }, targetId)
+    await expect(page.getByText('Stationary (not manoeuvring)')).toBeVisible()
+    await page.getByText('Stationary (not manoeuvring)').click()
+    const isStationary = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id).isStationary
+    , targetId)
+    expect(isStationary).toBe(true)
+  })
+})

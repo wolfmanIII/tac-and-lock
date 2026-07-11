@@ -20,7 +20,7 @@ import { WEAPONS }        from '../../data/weapons.js'
 import { SENSOR_TIME_LAG_DM } from '../../data/rangeBands.js'
 import { getAssignedSkill, getAssignedCharacteristic } from '../../utils/crew.js'
 import { getCharDM, roll2D6 } from '../../utils/dice.js'
-import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, computeEffectiveSignature, getPointDefenceDm } from '../../utils/combat.js'
+import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, computeEffectiveSignature, getPointDefenceDm, getEasyTargetAttackDm, getEasyTargetDamageMultiplier } from '../../utils/combat.js'
 import { DiceInput } from '../forms/DiceInput.jsx'
 
 const STEP_PD     = 0
@@ -195,7 +195,9 @@ export function DroneAttackModal({ payload, onClose }) {
     const evasionDm    = target.evasionDm ?? 0
     const jammer = ships.find((s) => s.ewTarget === owner.id)
     const jammerPenalty = jammer?.ewEffect ?? 0
-    const total = fireControlDm + rangeDm + step2CarryEffect + evasionDm + jammerPenalty
+    // Stationary or reaction-drive target — Firing Solution is trivial // B3 p.56
+    const easyTargetDm = getEasyTargetAttackDm(target)
+    const total = fireControlDm + rangeDm + step2CarryEffect + evasionDm + jammerPenalty + easyTargetDm
     return {
       rows: [
         ['Fire Control', fireControlDm],
@@ -203,6 +205,7 @@ export function DroneAttackModal({ payload, onClose }) {
         ['Carry (Step 2)', step2CarryEffect],
         ['Evasion penalty', evasionDm],
         ...(jammerPenalty !== 0 ? [['EW jamming', jammerPenalty]] : []),
+        ...(easyTargetDm !== 0 ? [['Stationary/reaction-drive target', easyTargetDm]] : []),
       ],
       total,
     }
@@ -216,14 +219,14 @@ export function DroneAttackModal({ payload, onClose }) {
     const effect = total - 10
     setStep3Result({ dice, total, effect })
     if (total >= 10) {
-      setDamageResult(rollDamage(drone.weaponId, 1, target.currentArmour ?? 0, damageOverride))
+      setDamageResult(rollDamage(drone.weaponId, 1, target.currentArmour ?? 0, damageOverride, getEasyTargetDamageMultiplier(target)))
     }
   }
   function manualStep3({ dice, total }) {
     const effect = total - 10
     setStep3Result({ dice, total, effect })
     if (total >= 10) {
-      setDamageResult(rollDamage(drone.weaponId, 1, target.currentArmour ?? 0, damageOverride))
+      setDamageResult(rollDamage(drone.weaponId, 1, target.currentArmour ?? 0, damageOverride, getEasyTargetDamageMultiplier(target)))
     }
   }
 
@@ -385,6 +388,9 @@ export function DroneAttackModal({ payload, onClose }) {
           <p className="font-mono text-xs text-slate-400">
             ARM {damageResult.armour} → Net: <span className="text-red-400 font-bold">{damageResult.net}</span>
           </p>
+          {getEasyTargetDamageMultiplier(target) > 1 && (
+            <p className="text-amber-400 font-mono text-xs">×2 damage — stationary/reaction-drive target // B3 p.56</p>
+          )}
           {isSurfaceFixtureDamage(effect) && !isInternalCriticalHit(effect, damageResult.net, target.currentHull) && (
             <p className="text-amber-400 font-mono text-xs">⚠ Effect ≥ 3 — Surface Fixture roll // B3 p.58</p>
           )}

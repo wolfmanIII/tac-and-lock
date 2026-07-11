@@ -5,7 +5,7 @@ import { CRITICAL_HIT_SYSTEM_LABELS, SURFACE_FIXTURE_SYSTEM_LABELS } from '../..
 import { FACTION_COLOR } from '../../data/factions.js'
 import { RANGE_BAND_ORDER } from '../../data/rangeBands.js'
 import { pairKey } from '../../utils/rangeBands.js'
-import { computeEffectiveSignature, getReactionDriveSignatureDm } from '../../utils/combat.js'
+import { computeEffectiveSignature, getReactionDriveSignatureDm, isEasyTarget } from '../../utils/combat.js'
 import { useShipTokenIcon } from '../battle/useShipTokenIcon.js'
 
 const SEV_COLOR = ['text-slate-500', 'text-yellow-400', 'text-orange-400', 'text-red-400', 'text-red-500', 'text-red-600', 'text-red-700']
@@ -159,6 +159,26 @@ export function ShipDetailModal({ payload, onClose }) {
           }
           return null
         })()}
+      </div>
+
+      {/* Stationary / reaction-drive target — attack DM+2 & ×2 damage for attackers, not a Signature modifier // B3 p.56 */}
+      <div>
+        <p className="text-[10px] font-display text-slate-500 tracking-widest mb-1.5">FIRING SOLUTION EASE</p>
+        <button
+          onClick={() => toggleShipFlag(shipId, 'isStationary')}
+          className={`w-full flex items-center justify-between px-2 py-1 rounded text-[10px] font-mono border transition-colors
+            ${ship.isStationary
+              ? 'bg-amber-900/40 border-amber-700 text-amber-300'
+              : 'bg-slate-800/50 border-slate-700 text-slate-500 hover:border-slate-500 hover:text-slate-300'}`}
+        >
+          <span>Stationary (not manoeuvring)</span>
+          <span className="font-bold ml-2 text-amber-400">DM+2 / ×2 dmg to attackers</span>
+        </button>
+        {isEasyTarget(ship) && (
+          <p className="text-[9px] font-mono text-slate-600 mt-1">
+            {ship.isStationary ? 'Stationary' : 'Reaction Drive Active'} — attacks against this ship gain DM+2 and inflict double damage // 2300AD B3 p.56
+          </p>
+        )}
       </div>
 
       {/* Evasion state */}

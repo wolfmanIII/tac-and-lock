@@ -237,6 +237,29 @@ test.describe('Drone attack — Point Defence and Firing Solution', () => {
     const row = page.locator('div', { hasText: 'Drone Pilot bonus' }).last()
     await expect(row.getByText('+2', { exact: true })).toBeVisible()
   })
+
+  test('Step 3 (Gunner) shows Stationary/reaction-drive DM+2 and ×2 damage vs a stationary target // B3 p.56', async ({ page }) => {
+    const droneId = await injectDrone(page, { band: 'Close' })
+    await page.evaluate(() => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const target = store.getState().ships[1]
+      store.getState().updateShip(target.id, { isStationary: true })
+    })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await page.getByText('NO INTERCEPT → FIRING SOLUTION').click()
+    await page.getByText('ROLL 2D6').click()
+    await page.getByText('NEXT → PILOT').click()
+    await page.getByText('ROLL 2D6').click()
+    await page.getByText('NEXT → GUNNER').click()
+
+    await expect(page.getByText('Stationary/reaction-drive target')).toBeVisible()
+    await page.getByText('enter manually').click()
+    await page.locator('input[type="number"]').nth(0).fill('6')
+    await page.locator('input[type="number"]').nth(1).fill('6')
+    await expect(page.getByText('×2 damage', { exact: false })).toBeVisible()
+  })
 })
 
 test.describe('Context menu — real right-click, drone items', () => {

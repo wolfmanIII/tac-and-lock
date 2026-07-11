@@ -180,9 +180,10 @@ function resolveArmour(traits, armour) {
  * @param {number} weaponCount — number of same weapon type in turret (1–3)
  * @param {number} armour      — target's current armour value
  * @param {{ damage?: string, traits?: string[] }} [overrides] — e.g. a drone's detonationMode
+ * @param {number} [damageMultiplier] — e.g. 2 for a stationary/reaction-drive target // B3 p.56
  * @returns {{ rolls: number[], bonus: number, gross: number, armour: number, net: number }}
  */
-export function rollDamage(weaponId, weaponCount = 1, armour = 0, overrides = null) {
+export function rollDamage(weaponId, weaponCount = 1, armour = 0, overrides = null, damageMultiplier = 1) {
   const base = WEAPONS[weaponId]
   if (!base) return { rolls: [], bonus: 0, gross: 0, armour: 0, net: 0 }
   const weapon = overrides ? { ...base, ...overrides } : base
@@ -203,7 +204,7 @@ export function rollDamage(weaponId, weaponCount = 1, armour = 0, overrides = nu
   const traitBonus = n * perDieMod
 
   const bonus = flatBonus + multiBonus + traitBonus
-  const gross = Math.max(0, diceTotal + bonus)
+  const gross = Math.max(0, diceTotal + bonus) * damageMultiplier
 
   const effectiveArmour = resolveArmour(traits, armour)
   const net = Math.max(0, gross - effectiveArmour)
@@ -321,6 +322,38 @@ export function computeEffectiveSignature(ship) {
 
   const delta = mods.reduce((acc, [, v]) => acc + v, 0)
   return { base, delta, effective: base + delta, mods }
+}
+
+// === STATIONARY / REACTION-DRIVE TARGETS — 2300AD B3 p.56 ===
+
+/**
+ * Whether a target's Firing Solution is "trivial": it is stationary, or
+ * manoeuvring under reaction drive rather than stutterwarp. Weapon systems
+ * are optimised for stutterwarp-manoeuvring craft, so such targets are much
+ * easier to hit. // 2300AD B3 p.56 ("Non-Stutterwarp and Stationary Targets")
+ * @param {object} target — battle-state ship object
+ * @returns {boolean}
+ */
+export function isEasyTarget(target) {
+  return !!(target?.isStationary || target?.reactionDriveActive)
+}
+
+/**
+ * Attack roll DM for an easy (stationary/reaction-drive) target: DM+2. // 2300AD B3 p.56
+ * @param {object} target
+ * @returns {number}
+ */
+export function getEasyTargetAttackDm(target) {
+  return isEasyTarget(target) ? 2 : 0
+}
+
+/**
+ * Damage multiplier for an easy (stationary/reaction-drive) target: ×2. // 2300AD B3 p.56
+ * @param {object} target
+ * @returns {number}
+ */
+export function getEasyTargetDamageMultiplier(target) {
+  return isEasyTarget(target) ? 2 : 1
 }
 
 // === HELPERS ===
