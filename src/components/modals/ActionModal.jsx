@@ -10,6 +10,11 @@ const COMMAND_TARGET_ROLES = Object.keys(CREW_SKILLS).filter((r) => r !== 'capta
 
 const ALL_ACTIONS = Object.values(CREW_ACTIONS).flat()
 
+/** action.id → owning crew-role bucket (the CREW_ACTIONS object key), for spendCrewAction. */
+const ACTION_ROLE = Object.fromEntries(
+  Object.entries(CREW_ACTIONS).flatMap(([role, actions]) => actions.map((a) => [a.id, role])),
+)
+
 /** Actions that show APPLY on failure too (have a failure-path store effect). */
 const HAS_FAILURE_EFFECT = new Set(['overload_stutterwarp', 'electronic_warfare'])
 
@@ -42,9 +47,12 @@ export function ActionModal({ payload, onClose }) {
   const applyCommand         = useBattleStore((s) => s.applyCommand)
   const removeHazard         = useBattleStore((s) => s.removeHazard)
   const applyDamage          = useBattleStore((s) => s.applyDamage)
+  const spendCrewAction      = useBattleStore((s) => s.spendCrewAction)
+  const grantExtraAction     = useBattleStore((s) => s.grantExtraAction)
 
   const ship    = ships.find((s) => s.id === shipId)
   const targets = ships.filter((s) => s.id !== shipId && !s.isDestroyed)
+  const budget  = ship?.actionsRemaining ?? {}
 
   // Commands issued so far this round on this ship — capped at one per Leadership level. // B3 p.54
   const issuedCommands = ship?.commandBonusNextRound ?? []
@@ -63,6 +71,7 @@ export function ActionModal({ payload, onClose }) {
   const [boardingDefenderTotal,  setBoardingDefenderTotal]  = useState('')
   const [boardingHullDamage,     setBoardingHullDamage]     = useState(null)
   const [commandRole,            setCommandRole]            = useState(COMMAND_TARGET_ROLES[0])
+  const [issueOrderRole,         setIssueOrderRole]         = useState(COMMAND_TARGET_ROLES[0])
 
   const action = ALL_ACTIONS.find((a) => a.id === selectedAction)
   const target = ships.find((s) => s.id === targetId)
@@ -72,12 +81,11 @@ export function ActionModal({ payload, onClose }) {
     ? commandRole
     : availableCommandRoles[0]
 
-  // "One command per combat round per level of Leadership skill" — skillLevel is the GM's
-  // manually-entered Leadership rating for this check (same convention as every other action
-  // roll in this modal), so it doubles as the per-round Commands cap. // 2300AD B3 p.54
-  const commandsRemaining = selectedAction === 'commands'
-    ? Math.max(0, skillLevel - issuedCommands.length)
-    : null
+  // "One command per combat round per level of Leadership skill" is the Captain's shared
+  // action budget (actionsRemaining.captain, built from the assigned Captain's real
+  // Leadership skill) — the same pool the Tactics assist and Issue Order draw from, not a
+  // separately-tracked cap. // 2300AD B3 p.53–54
+  const commandsRemaining = selectedAction === 'commands' ? (budget.captain ?? 0) : null
 
   // Boarding result derived from attacker roll + defender manual total
   const boardingResult = useMemo(() => {
@@ -163,9 +171,16 @@ export function ActionModal({ payload, onClose }) {
         break
 
       case 'commands': { // B3 p.54 — activates next round, see applyCommand
-        if (success) applyCommand(shipId, effectiveCommandRole, effect >= 5 ? 2 : 1)
+        if (success) {
+          applyCommand(shipId, effectiveCommandRole, effect >= 5 ? 2 : 1)
+          spendCrewAction(shipId, 'captain')
+        }
         break
       }
+
+      case 'issue_order': // B3 p.53 — no check; spends one Captain action, grants +1 to another role
+        grantExtraAction(shipId, issueOrderRole)
+        break
 
       case 'boarding_action': { // B3 p.55
         if (!boardingResult) break
@@ -194,6 +209,11 @@ export function ActionModal({ payload, onClose }) {
       default:
         break
     }
+    // Commands and Issue Order manage their own captain-budget spend above (both draw
+    // from the same pool); every other action spends its owning role's action here. // B3 p.53
+    if (action.id !== 'commands' && action.id !== 'issue_order') {
+      spendCrewAction(shipId, ACTION_ROLE[action.id])
+    }
     // A Captain with commands left to give (per Leadership level) keeps the modal open to
     // issue the next one, instead of closing after a single Command. // B3 p.54
     if (action.id === 'commands' && success && commandsRemaining > 1) {
@@ -205,7 +225,11 @@ export function ActionModal({ payload, onClose }) {
 
   const groupedActions = Object.entries(CREW_ACTIONS).map(([role, actions]) => ({ role, actions }))
 
-  const canApply = action && (
+  // Every action is gated on its owning role having an action left this round — this
+  // also covers Commands/Issue Order, since both draw from actionsRemaining.captain. // B3 p.53
+  const roleBudget = action ? (budget[ACTION_ROLE[action.id]] ?? 0) : 0
+
+  const canApply = action && roleBudget > 0 && (
     action.id !== 'commands' || commandsRemaining > 0
   ) && (
     action.difficulty === 0 ||
@@ -308,7 +332,7 @@ export function ActionModal({ payload, onClose }) {
               <div className="flex items-center justify-between mb-1">
                 <p className="text-[10px] font-display text-slate-500 tracking-widest">ORDER RECIPIENT (crew role)</p>
                 <p className="text-[10px] font-mono text-slate-500">
-                  {commandsRemaining}/{skillLevel} left this round
+                  {commandsRemaining} captain action(s) left this round
                 </p>
               </div>
               {availableCommandRoles.length === 0 ? (
@@ -324,6 +348,20 @@ export function ActionModal({ payload, onClose }) {
                   Issued: {issuedCommands.map((cb) => `${cb.role} (+${cb.dm})`).join(', ')}
                 </p>
               )}
+            </div>
+          )}
+
+          {/* Issue Order — grant +1 action to another role, no check // B3 p.53 */}
+          {action.id === 'issue_order' && (
+            <div>
+              <p className="text-[10px] font-display text-slate-500 tracking-widest mb-1">RECIPIENT (crew role)</p>
+              <select value={issueOrderRole} onChange={(e) => setIssueOrderRole(e.target.value)}
+                className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1 focus:border-sky-400 outline-none">
+                {COMMAND_TARGET_ROLES.map((r) => <option key={r} value={r}>{CREW_SKILLS[r]} ({r})</option>)}
+              </select>
+              <p className="text-[10px] font-mono text-slate-500 mt-1">
+                Costs one of the Captain's own actions ({budget.captain ?? 0} left this round).
+              </p>
             </div>
           )}
 
@@ -363,6 +401,12 @@ export function ActionModal({ payload, onClose }) {
             </div>
           )}
 
+          {roleBudget <= 0 && (
+            <p className="text-[10px] font-mono text-red-400">
+              {CREW_SKILLS[ACTION_ROLE[action.id]] ?? ACTION_ROLE[action.id]} ({ACTION_ROLE[action.id]}) has no actions left this round.
+            </p>
+          )}
+
           {/* Standard skill roll block (all actions with difficulty > 0, except boarding which has its own) */}
           {action.difficulty > 0 && (
             <>
@@ -383,6 +427,9 @@ export function ActionModal({ payload, onClose }) {
                 <button className="text-xs font-mono text-slate-400 underline" onClick={() => setManualMode((m) => !m)}>manual</button>
               </div>
               {manualMode && <DiceInput dm={skillLevel} onChange={onManual} />}
+              <p className="text-[9px] font-mono text-slate-600">
+                Acting out of the Captain's declared order: apply DM−1 manually // 2300AD B3 p.53
+              </p>
             </>
           )}
 

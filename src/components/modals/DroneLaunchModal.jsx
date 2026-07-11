@@ -14,9 +14,11 @@ export function DroneLaunchModal({ payload, onClose }) {
   const ships       = useBattleStore((s) => s.ships)
   const rangeBands  = useBattleStore((s) => s.rangeBands)
   const launchDrone = useBattleStore((s) => s.launchDrone)
+  const spendCrewAction = useBattleStore((s) => s.spendCrewAction)
 
   const attacker = ships.find((s) => s.id === attackerId) ?? ships[0]
   const targets  = ships.filter((s) => s.id !== attacker?.id && !s.isDestroyed)
+  const remotePilotBudget = attacker?.actionsRemaining?.remote_pilot ?? 0
 
   // Only weapon slots that represent a drone/missile — engine-only flag, not a B3 trait
   const droneWeapons = (attacker?.weapons ?? []).filter((w) => WEAPONS[w.weaponId]?.launchable)
@@ -35,6 +37,8 @@ export function DroneLaunchModal({ payload, onClose }) {
     for (let i = 0; i < count; i++) {
       launchDrone(attacker.id, target.id, weapon.id)
     }
+    // Launching is a Remote Pilot action (one launch order, regardless of unit count). // 2300AD B3 p.53
+    spendCrewAction(attacker.id, 'remote_pilot')
     onClose()
   }
 
@@ -101,6 +105,12 @@ export function DroneLaunchModal({ payload, onClose }) {
         </div>
         <p className="text-[9px] font-mono text-slate-600 mt-1">Each unit closes range and attacks independently — no salvo bonus.</p>
       </div>
+
+      {remotePilotBudget <= 0 && (
+        <p className="text-[10px] font-mono text-amber-500">
+          ⚠ Remote Pilot has no actions left this round (GM discretion to allow anyway).
+        </p>
+      )}
 
       <div className="flex gap-2 pt-2">
         <button className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-700 hover:bg-slate-800 rounded" onClick={onClose}>CANCEL</button>

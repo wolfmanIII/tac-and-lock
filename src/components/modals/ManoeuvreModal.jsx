@@ -5,6 +5,11 @@ import { pairKey, getCloserBand, getFartherBand } from '../../utils/rangeBands.j
 import { getAssignedSkill, getAssignedCharacteristic } from '../../utils/crew.js'
 import { getCharDM, roll2D6 } from '../../utils/dice.js'
 
+/** Pilot action budget for a ship this round — warn-only, never hard-blocked (GM-paced). // 2300AD B3 p.53 */
+function pilotBudget(ship) {
+  return ship?.actionsRemaining?.pilot ?? 0
+}
+
 /** Opposed Pilot (DEX) check for one ship — TAC Speed is a fixed DM, never spent. // 2300AD B3 p.54 */
 function rollPilotCheck(ship) {
   const pilotSkill = getAssignedSkill('pilot', ship.crewAssignments, ship.crew)
@@ -24,6 +29,7 @@ export function ManoeuvreModal({ payload, onClose }) {
   const manoeuvre    = useBattleStore((s) => s.manoeuvre)
   const setRangeBand = useBattleStore((s) => s.setRangeBand)
   const setEvasionDm = useBattleStore((s) => s.setEvasionDm)
+  const spendCrewAction = useBattleStore((s) => s.spendCrewAction)
 
   // If only one ship given, pick first pair it's in
   const allPairs = []
@@ -96,6 +102,7 @@ export function ManoeuvreModal({ payload, onClose }) {
     setEvadingShipId(shipId)
     setEvasionRoll({ dice, total, effect, dm, pilotSkill, dexDm, commandDm })
     setEvasionDm(shipId, dm)
+    spendCrewAction(shipId, 'pilot') // Evade is a Pilot action, committed immediately // 2300AD B3 p.53, p.55
   }
 
   function clearEvasion(shipId) {
@@ -126,6 +133,7 @@ export function ManoeuvreModal({ payload, onClose }) {
       return
     }
     if (manoeuvreRoll && intent && actingShipId) {
+      spendCrewAction(actingShipId, 'pilot') // Open/Close is a Pilot action, committed on APPLY // 2300AD B3 p.53, p.54
       const bandsChanged = Math.abs(manoeuvreRoll.effect)
       if (bandsChanged > 0) {
         if (manoeuvreRoll.effect > 0) {
@@ -188,6 +196,11 @@ export function ManoeuvreModal({ payload, onClose }) {
             </button>
           ))}
         </div>
+        {actingShipId && pilotBudget(actingShip) <= 0 && (
+          <p className="text-[9px] font-mono text-amber-500 mb-2">
+            ⚠ {actingShip?.profile?.name ?? 'This ship'}'s Pilot has no actions left this round (GM discretion to allow anyway).
+          </p>
+        )}
         {actingShipId && (
           <div className="grid grid-cols-2 gap-2 mb-2">
             <button
@@ -300,10 +313,15 @@ export function ManoeuvreModal({ payload, onClose }) {
                     </button>
                   </>
                 ) : (
-                  <button onClick={() => rollEvasion(ship.id)}
-                    className="w-full py-1 text-[10px] font-display tracking-widest text-slate-400 border border-slate-600 hover:border-sky-600 hover:text-sky-400 rounded transition-colors">
-                    EVADE 🎲
-                  </button>
+                  <>
+                    <button onClick={() => rollEvasion(ship.id)}
+                      className="w-full py-1 text-[10px] font-display tracking-widest text-slate-400 border border-slate-600 hover:border-sky-600 hover:text-sky-400 rounded transition-colors">
+                      EVADE 🎲
+                    </button>
+                    {pilotBudget(ship) <= 0 && (
+                      <p className="text-[9px] font-mono text-amber-500">⚠ no Pilot actions left this round</p>
+                    )}
+                  </>
                 )}
               </div>
             )

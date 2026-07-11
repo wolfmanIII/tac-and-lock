@@ -1,5 +1,9 @@
 // 2300AD B3 p.55–56 — Crew actions in combat.
-// Actions Phase unless marked as Reaction (executed during Attack Step).
+// No "Manoeuvre/Attack/Actions Step" in 2300AD B3 (that's a Traveller CRB import,
+// removed in #19) — these are just the actions available to the Captain/Engineer/
+// Sensor Operator/Marine roles, spendable any time during a ship's turn from that
+// role's own actionsRemaining budget (see utils/crew.js buildActionBudget). The
+// `phase` field below is a display-grouping leftover, not enforced anywhere.
 
 /**
  * @typedef {{
@@ -16,8 +20,8 @@
  */
 
 // Note: Evasion (opposed Pilot check, B3 p.55) is resolved directly inside
-// ManoeuvreModal during the Manoeuvre Step, not as an Actions-phase crew
-// action — there is no separate "pilot" role entry here.
+// ManoeuvreModal as a Pilot action, not as a captain/engineer/sensor_operator/
+// marine crew action — there is no separate "pilot" role entry here.
 
 // Note: "Sensor Lock" is not a 2300AD B3 action — it only exists in the
 // Traveller 2022 CRB (flat DM+2, persists until broken by enemy EW), and B3
@@ -36,9 +40,21 @@ export const CREW_ACTIONS = {
       skill: 'Leadership',
       difficulty: 8,
       difficultyLabel: 'Average (8+)',
-      description: 'Leadership (INT or SOC) Average (8+). One command per Leadership skill level, each to a different crew member. Effect 1–4: DM+1 to their actions next round. Effect 5–6: DM+2. Activates the round AFTER this one (Actions Step is the last step of the round). // 2300AD B3 p.54',
+      description: 'Leadership (INT or SOC) Average (8+). One command per Leadership skill level, each to a different crew member. Effect 1–4: DM+1 to their actions next round. Effect 5–6: DM+2. Currently activates the round AFTER this one (B3 literally says "for that combat round" — this project applies it next round instead, a known open question). Draws from the Captain\'s shared action budget (actionsRemaining.captain), same pool as the Tactics assist and Issue Order. // 2300AD B3 p.53–54',
       requiresTarget: false,
       targetsCrewRole: true, // picks a role of this ship's own crew, not an enemy ship
+    },
+    {
+      id: 'issue_order',
+      label: 'Issue Order (grant +1 action)',
+      phase: 'actions',
+      reaction: false,
+      skill: 'Leadership',
+      difficulty: 0, // no check required — a pure action-economy transfer // 2300AD B3 p.53
+      difficultyLabel: 'No check',
+      description: 'The captain spends one of their own actions to grant another crew role +1 action this round. Distinct from Commands (a DM+1/+2 buff activating next round) — this is an immediate action-economy transfer, no roll. // 2300AD B3 p.53',
+      requiresTarget: false,
+      targetsCrewRole: true,
     },
   ],
 
