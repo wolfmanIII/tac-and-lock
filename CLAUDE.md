@@ -32,7 +32,7 @@ Riferimenti regole:
 Regole complete in `doc/space-combat-rules.md`.
 
 > **FONTE PRIMARIA per il combattimento spaziale: 2300AD B3 p.52–62** (non il CRB).
-> Il CRB si usa per le tabelle di critical hit interno (p.158–159) e weapon traits (p.75).
+> Il CRB si usa per le tabelle di critical hit interno (p.158–159), weapon traits (p.75), e Boarding Actions (p.175 — B3 p.57 rimanda esplicitamente al CRB per queste regole).
 > Dove B3 e CRB divergono, B3 vince sempre.
 
 ## GAME RULES SUMMARY
@@ -43,8 +43,9 @@ Regole complete in `doc/space-combat-rules.md`.
 
 - Il **Capitano** (o lead tactician) di ogni nave effettua un check Tactics (naval) opposto.
 - La nave con il risultato più alto muove e spara per prima. Ordine fisso per tutta la durata del combattimento.
-- In caso di sorpresa: la nave sorpresa non può agire nel primo round.
 - **NON usa Pilot skill né TAC Speed** (quella è la formula CRB — errata per 2300AD).
+
+> Non esiste una regola di "Surprise" in 2300AD B3 p.52–62 (ricerca a testo pieno su B1 e B3: zero risultati). La riga precedente ("nave sorpresa non agisce nel primo round") era un residuo Trav2022 CRB p.164 mai verificato — stessa famiglia di errore della terminologia Manoeuvre/Attack/Actions Step (issue #19) — rimossa perché non implementata e non sourced.
 
 ### Round Structure (6 minuti) — 2300AD B3 p.53
 
@@ -87,7 +88,7 @@ Non esiste una tabella di "costo TAC Speed per fascia" nel testo — il moviment
 | Short | −6 |
 | Medium+ | Non applicabile (nessuna arma da nave standard arriva) |
 
-Il campo `rangeDm` in `data/weapons.js` codifica per ogni arma: DM ottimale alla sua Range massima, penalità secondo questa tabella oltre.
+Il campo `rangeDm` in `data/weapons.js` codifica per ogni arma il DM per fascia secondo questa tabella universale (B3 p.57) applicato alla Range dell'arma stessa e a quelle inferiori — non è "0 alla Range massima": es. il Kaefer Grumbler ha Range Short, quindi anche al suo `rangeDm.Short` si applica la penalità −6 della tabella, non 0.
 
 Condizioni situazionali (indipendenti dalla fascia, si applicano sempre) — `ship.atmosphericCondition` via `getAtmosphericTargetDm()` in `utils/combat.js`, toggle GM in ShipDetailModal:
 

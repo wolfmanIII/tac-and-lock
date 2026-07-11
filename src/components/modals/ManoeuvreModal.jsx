@@ -286,7 +286,7 @@ export function ManoeuvreModal({ payload, onClose }) {
         </div>
       </div>
 
-      {/* Evasion — B3 p.55: opposed Pilot check (DEX) during Manoeuvre Step */}
+      {/* Evasion — B3 p.55: opposed Pilot check (DEX) */}
       <div>
         <p className="text-[10px] font-display text-slate-500 tracking-widest mb-2">
           EVASION — OPPOSED PILOT (DEX) // 2300AD B3 p.55

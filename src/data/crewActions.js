@@ -39,8 +39,8 @@ export const CREW_ACTIONS = {
       reaction: false,
       skill: 'Leadership',
       difficulty: 8,
-      difficultyLabel: 'Average (8+)',
-      description: 'Leadership (INT or SOC) Average (8+). One command per Leadership skill level, each to a different crew member. Effect 1–4: DM+1 to their actions this round. Effect 5–6: DM+2. Applies immediately — the Captain acts first, so a Command issued early in the ship\'s turn is available to that role\'s actions later this same round. Draws from the Captain\'s shared action budget (actionsRemaining.captain), same pool as the Tactics assist and Issue Order. // 2300AD B3 p.53–54',
+      difficultyLabel: 'Routine (8+)',
+      description: 'Leadership (INT or SOC) Routine (8+). One command per Leadership skill level, each to a different crew member. Effect 1–4: DM+1 to their actions this round. Effect 5–6: DM+2. Applies immediately — the Captain acts first, so a Command issued early in the ship\'s turn is available to that role\'s actions later this same round. Draws from the Captain\'s shared action budget (actionsRemaining.captain), same pool as the Tactics assist and Issue Order. // 2300AD B3 p.53–54',
       requiresTarget: false,
       targetsCrewRole: true, // picks a role of this ship's own crew, not an enemy ship
     },
@@ -107,6 +107,11 @@ export const CREW_ACTIONS = {
 
   sensor_operator: [
     {
+      // Houserule — not found anywhere in 2300AD B3 p.44-58 (verified by full-text
+      // search of the Sensor Operations and Signature sections). The only related
+      // B3 rule is passive: using active sensors (incl. TTA/UTES) raises own
+      // Signature by +1 (see `activeSensorsOn` in computeEffectiveSignature). This
+      // rollable "reveal hidden positions" effect is not sourced to any page.
       id: 'active_sensors',
       label: 'Active Sensors',
       phase: 'actions',
@@ -176,7 +181,7 @@ export const CREW_ACTIONS = {
       skill: 'Gun Combat / Melee',
       difficulty: 8,
       difficultyLabel: 'Average (8+)',
-      description: 'Marines attempt to breach and board target vessel. Must be at Adjacent range. DM-2 on attacker (Trav2022 CRB p.164).',
+      description: 'Marines attempt to breach and board target vessel. Must be at Adjacent range. Opposed Gun Combat/Melee vs defender; the difference (attacker − defender total) is read off the Boarding Actions results table. // Trav2022 CRB p.175 (referenced by 2300AD B3 p.57)',
       requiresTarget: true,
     },
     {

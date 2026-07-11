@@ -142,7 +142,7 @@ export const useBattleStore = create((set, get) => {
 
   /**
    * Advance a single drone one round: close one range band toward its target
-   * (like a ship's own Manoeuvre Step, simplified to "always closes at max
+   * (like a ship's own movement, simplified to "always closes at max
    * TAC Speed" — see doc/drone-combat-redesign-spec.md §2.3), or mark it
    * detonated (gone inert) once its Endurance is exceeded. // 2300AD B3 p.61
    * @param {object} drone

@@ -212,7 +212,8 @@ export function computeAttackDMs({
 }
 
 /**
- * Roll an attack (2D6 + total DM). // Trav2022 CRB p.163
+ * Roll an attack (2D6 + total DM). Generic Traveller task-resolution mechanic,
+ * not itself a page-specific CRB/B3 rule.
  * @param {number} totalDm
  * @returns {{ dice: number[], base: number, totalDm: number, total: number, success: boolean, effect: number }}
  */

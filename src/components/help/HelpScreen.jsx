@@ -233,7 +233,6 @@ export function HelpScreen({ onBack } = {}) {
         <Section id="initiative" title="Initiative">
           <p>Formula: <span className="text-slate-200">2D6 + Tactics(naval) + INT DM</span> — opposed check. // B3 p.54</p>
           <p>The Captain (or lead tactician) of each ship makes an opposed Tactics(naval) check. Highest total acts first. Ties re-roll. Order is fixed for the entire engagement.</p>
-          <p><span className="text-amber-400">Surprise:</span> a surprised ship cannot act in the first round.</p>
           <Sub title="HOW TO ROLL">
             <p>Right-click background → <span className="text-slate-200">Roll Initiative</span>.</p>
             <KV k="Player ships"  v="Enter 2D6 dice manually. Select Tactics skill and INT DM." />
