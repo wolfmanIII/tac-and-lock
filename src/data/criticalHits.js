@@ -1,6 +1,10 @@
 // 2300AD B3 p.58 — Surface Fixture Damage (external, any hit Effect ≥ 3).
-// Internal Critical Hits: Trav2022 CRB p.158–159 with 2300AD substitutions.
-// B3 substitutions: M-Drive → Reaction Drive; J-Drive → Stutterwarp Drive.
+// Internal Critical Hits: Trav2022 CRB "p.158-159" per B3's own citation, but that
+// range is unrelated Sensor Operations content in this project's CRB PDF — the real
+// Location/Effects tables are on printed p.169/p.170 there (verified via pdftotext).
+// B3 substitutions: M-Drive location → Reaction Drive (own binary mechanic, not
+// M-Drive's table); J-Drive location → Stutterwarp Drive (reuses M-Drive's table,
+// Thrust reinterpreted as TAC Speed).
 
 // ── SURFACE FIXTURE DAMAGE — B3 p.58 ────────────────────────────────────────
 
@@ -87,162 +91,216 @@ export function blankSurfaceFixtureTracks() {
   }
 }
 
-// ── INTERNAL CRITICAL HITS — CRB p.158–159 + 2300AD substitutions ───────────
+// ── INTERNAL CRITICAL HITS — CRB p.169–170 (as printed in this project's CRB PDF;
+// B3 itself cites "p.158–159", but that range is unrelated Sensor Operations content
+// in this specific PDF — a source-edition pagination mismatch) + 2300AD substitutions.
 
 /**
  * Roll 2D on this table for Internal Critical Hits (damage penetrates, Effect ≥ 6 or hull to 0).
- * B3 substitutions: J-Drive → Stutterwarp Drive; M-Drive → Reaction Drive (not tracked separately).
+ * B3 p.58 substitutions, read carefully: the *location* named "M-Drive" is renamed
+ * "Reaction Drive" and gets its own binary mechanic (not M-Drive's effects table — see
+ * CRITICAL_HIT_EFFECTS.reactionDrive); the *location* named "J-Drive" is renamed
+ * "Stutterwarp Drive" and reuses M-Drive's effects table (Thrust reinterpreted as TAC
+ * Speed). These are easy to invert — verified against the primary source twice.
  * @type {Record<number, string>}
  */
 export const INTERNAL_LOCATION_TABLE = {
   2:  'sensors',
-  3:  'bridge',
-  4:  'hull',
+  3:  'powerPlant',
+  4:  'fuel',
   5:  'weapon',
   6:  'armour',
-  7:  'crew',
-  8:  'stutterwarpDrive', // was M-Drive (Reaction Drive in 2300AD — TAC Speed -1 per hit)
-  9:  'powerPlant',
-  10: 'stutterwarpFtl',   // was J-Drive
-  11: 'fuel',
-  12: 'computer',
+  7:  'hull',
+  8:  'reactionDrive',   // was M-Drive — binary: 1st hit inoperable, 2nd hit destroyed
+  9:  'cargo',
+  10: 'stutterwarpDrive', // was J-Drive — reuses M-Drive's table, Thrust → TAC Speed
+  11: 'crew',
+  12: 'bridge',
 }
 
 /** All 11 trackable internal critical hit systems. */
 export const CRITICAL_HIT_SYSTEMS = [
   'sensors',
-  'bridge',
-  'hull',
+  'powerPlant',
+  'fuel',
   'weapon',
   'armour',
-  'crew',
+  'hull',
+  'reactionDrive',
+  'cargo',
   'stutterwarpDrive',
-  'powerPlant',
-  'stutterwarpFtl',
-  'fuel',
-  'computer',
+  'crew',
+  'bridge',
 ]
 
 /**
- * Severity 1–6 effects per internal system (CRB p.158–159 + B3 substitutions).
+ * Max trackable severity per system — every system caps at 6 except Reaction Drive,
+ * whose B3 mechanic is a 2-state binary (inoperable / destroyed), not a 1-6 ladder.
+ * @type {Record<string, number>}
+ */
+export const CRITICAL_HIT_MAX_SEVERITY = {
+  reactionDrive: 2,
+}
+
+/**
+ * Max trackable severity for a system (6 unless overridden above).
+ * @param {string} system
+ * @returns {number}
+ */
+export function getMaxSeverity(system) {
+  return CRITICAL_HIT_MAX_SEVERITY[system] ?? 6
+}
+
+/**
+ * Severity for a new internal critical hit. CRB p.169: "The Severity of the critical
+ * hit is equal to the Effect of the attack roll minus 5", and "If a spacecraft has
+ * already sustained a critical hit to a location that receives another, use the
+ * Severity of the new critical hit or the original plus one, whichever is higher."
+ * Both rules combined, capped at the system's max (6 for most systems).
+ *
+ * Reaction Drive is the one exception: B3 p.58 describes it purely by hit count
+ * ("the first hit renders the reaction drive inoperable... the second effectively
+ * destroys it"), not by Effect — so a single very-high-Effect hit must NOT be able to
+ * skip straight from undamaged to destroyed. It always advances by exactly +1 per hit,
+ * capped at 2, ignoring the Effect-5 term entirely.
+ * @param {number} effect — the triggering attack roll's Effect (≥ 6, since that's what
+ *   triggers an internal crit at all)
+ * @param {number} prevSeverity — this system's current severity (0 if undamaged)
+ * @param {string} system
+ * @returns {number}
+ */
+export function computeCriticalSeverity(effect, prevSeverity, system) {
+  if (system === 'reactionDrive') return Math.min(getMaxSeverity(system), prevSeverity + 1)
+  const fromEffect = effect - 5
+  return Math.min(getMaxSeverity(system), Math.max(fromEffect, prevSeverity + 1, 1))
+}
+
+/**
+ * Severity 1–6 effects per internal system (CRB p.170 + B3 substitutions). A few rows
+ * repeat identical text across adjacent severities — transcribed faithfully from the
+ * source rather than "corrected", since no errata for this table was found in
+ * `doc/Traveller_Core_Rulebook_Update_2022_FAQ_Aug24.pdf`.
  * @type {Record<string, Record<number, { label: string, mechanics: { type: string, value?: any }[] }>>}
  */
 export const CRITICAL_HIT_EFFECTS = {
   sensors: {
-    1: { label: 'Sensor interference — DM−2 to all sensor rolls.', mechanics: [{ type: 'sensors_dm', value: -2 }] },
-    2: { label: 'Sensors damaged — DM−2, range halved.', mechanics: [{ type: 'sensors_dm', value: -2 }] },
-    3: { label: 'Sensors severely damaged — DM−3, limited to Short range.', mechanics: [{ type: 'sensors_dm', value: -3 }] },
-    4: { label: 'Sensors offline.', mechanics: [{ type: 'sensors_offline', value: true }] },
-    5: { label: 'Sensors destroyed — offline, DM−2 to attacks.', mechanics: [{ type: 'sensors_offline', value: true }, { type: 'attack_dm', value: -2 }] },
-    6: { label: 'Total sensor loss — destroyed, DM−4 to attacks.', mechanics: [{ type: 'sensors_offline', value: true }, { type: 'attack_dm', value: -4 }] },
-  },
-
-  bridge: {
-    1: { label: 'Bridge hit — DM−1 to all bridge crew checks.', mechanics: [{ type: 'bridge_dm', value: -1 }] },
-    2: { label: 'Bridge damaged — DM−2.', mechanics: [{ type: 'bridge_dm', value: -2 }] },
-    3: { label: 'Bridge heavily damaged — DM−3; 1 crew casualty.', mechanics: [{ type: 'bridge_dm', value: -3 }, { type: 'crew_casualty', value: 1 }] },
-    4: { label: 'Bridge depressurised — vacc suits required; DM−2.', mechanics: [{ type: 'hull_breach', value: true }, { type: 'bridge_dm', value: -2 }] },
-    5: { label: 'Bridge crippled — offline; 1D crew casualties.', mechanics: [{ type: 'bridge_offline', value: true }, { type: 'crew_casualty', value: 'D6' }] },
-    6: { label: 'Bridge destroyed — 2D crew casualties.', mechanics: [{ type: 'bridge_offline', value: true }, { type: 'crew_casualty', value: '2D6' }] },
-  },
-
-  hull: {
-    1: { label: 'Hull breach — compartment venting.', mechanics: [{ type: 'hull_breach', value: true }] },
-    2: { label: 'Significant breach — multiple compartments.', mechanics: [{ type: 'hull_breach', value: true }] },
-    3: { label: 'Major breach — DM−1 to all checks.', mechanics: [{ type: 'hull_breach', value: true }, { type: 'bridge_dm', value: -1 }] },
-    4: { label: 'Structural compromise — 1D crew casualties.', mechanics: [{ type: 'hull_breach', value: true }, { type: 'crew_casualty', value: 'D6' }] },
-    5: { label: 'Hull critical — 2D crew casualties.', mechanics: [{ type: 'hull_breach', value: true }, { type: 'crew_casualty', value: '2D6' }] },
-    6: { label: 'Hull destroyed — ship destroyed.', mechanics: [{ type: 'ship_destroyed', value: true }] },
-  },
-
-  weapon: {
-    1: { label: 'Weapon hit — one turret DM−1 to next damage roll.', mechanics: [{ type: 'weapon_damage_dm', value: -1 }] },
-    2: { label: 'Weapon damaged — one weapon offline.', mechanics: [{ type: 'weapon_offline', value: 1 }] },
-    3: { label: 'Weapon destroyed.', mechanics: [{ type: 'weapon_destroyed', value: 1 }] },
-    4: { label: 'Multiple weapons hit — two offline.', mechanics: [{ type: 'weapon_offline', value: 2 }] },
-    5: { label: 'Weapons crippled — two destroyed, remaining DM−2.', mechanics: [{ type: 'weapon_destroyed', value: 2 }, { type: 'weapon_damage_dm', value: -2 }] },
-    6: { label: 'All weapons destroyed.', mechanics: [{ type: 'weapon_destroyed', value: 99 }] },
-  },
-
-  armour: {
-    1: { label: 'Armour ablated — Armour −2.', mechanics: [{ type: 'armour_reduce', value: 2 }] },
-    2: { label: 'Armour damaged — Armour −4.', mechanics: [{ type: 'armour_reduce', value: 4 }] },
-    3: { label: 'Armour degraded — Armour −6.', mechanics: [{ type: 'armour_reduce', value: 6 }] },
-    4: { label: 'Armour halved.', mechanics: [{ type: 'armour_halve', value: true }] },
-    5: { label: 'Armour destroyed — reduced to 0.', mechanics: [{ type: 'armour_reduce', value: 999 }] },
-    6: { label: 'Armour stripped — Armour 0; DM−2 to future hull.', mechanics: [{ type: 'armour_reduce', value: 999 }, { type: 'bridge_dm', value: -2 }] },
-  },
-
-  crew: {
-    1: { label: '1 crew incapacitated.', mechanics: [{ type: 'crew_casualty', value: 1 }] },
-    2: { label: '1D crew incapacitated.', mechanics: [{ type: 'crew_casualty', value: 'D6' }] },
-    3: { label: '2D crew casualties; DM−1 to all actions.', mechanics: [{ type: 'crew_casualty', value: '2D6' }, { type: 'bridge_dm', value: -1 }] },
-    4: { label: 'Key crew out — GM chooses: Pilot, Captain, or Engineer.', mechanics: [{ type: 'crew_casualty', value: 'key' }] },
-    5: { label: 'Bridge crew hit — all bridge crew 2D6 damage; DM−2.', mechanics: [{ type: 'crew_casualty', value: '2D6' }, { type: 'bridge_dm', value: -2 }] },
-    6: { label: '3D crew killed.', mechanics: [{ type: 'crew_casualty', value: '3D6' }] },
-  },
-
-  stutterwarpDrive: {
-    // 2300AD B3 p.58: TAC Speed −1 per point of Thrust lost (like M-Drive in CRB).
-    1: { label: 'Stutterwarp hit — TAC Speed −1.', mechanics: [{ type: 'tacSpeed_reduce', value: 1 }] },
-    2: { label: 'Drive damaged — TAC Speed −2.', mechanics: [{ type: 'tacSpeed_reduce', value: 2 }] },
-    3: { label: 'Drive seriously damaged — TAC Speed halved.', mechanics: [{ type: 'tacSpeed_halve', value: true }] },
-    4: { label: 'Drive crippled — TAC Speed reduced to 1.', mechanics: [{ type: 'tacSpeed_reduce', value: 99 }] },
-    5: { label: 'Drive offline — TAC Speed 0.', mechanics: [{ type: 'tacSpeed_zero', value: true }] },
-    6: { label: 'Drive destroyed — stutterwarp tactical drive gone.', mechanics: [{ type: 'tacSpeed_zero', value: true }] },
+    1: { label: 'All checks to use sensors suffer DM−2.', mechanics: [{ type: 'sensors_dm', value: -2 }] },
+    2: { label: 'Sensors inoperative beyond Medium range.', mechanics: [{ type: 'sensors_range_cap', value: 'Medium' }] },
+    3: { label: 'Sensors inoperative beyond Short range.', mechanics: [{ type: 'sensors_range_cap', value: 'Short' }] },
+    4: { label: 'Sensors inoperative beyond Close range.', mechanics: [{ type: 'sensors_range_cap', value: 'Close' }] },
+    5: { label: 'Sensors inoperative beyond Adjacent range.', mechanics: [{ type: 'sensors_range_cap', value: 'Adjacent' }] },
+    6: { label: 'Sensors disabled.', mechanics: [{ type: 'sensors_offline', value: true }] },
   },
 
   powerPlant: {
-    1: { label: 'Power fluctuation — DM−1 to powered systems.', mechanics: [{ type: 'power_dm', value: -1 }] },
-    2: { label: 'Power reduced — DM−2; one weapon powered down.', mechanics: [{ type: 'power_dm', value: -2 }] },
-    3: { label: 'Power compromised — weapons half effective; DM−2.', mechanics: [{ type: 'power_dm', value: -2 }] },
-    4: { label: 'Emergency power — sensors and weapons offline.', mechanics: [{ type: 'power_dm', value: -4 }, { type: 'sensors_offline', value: true }, { type: 'weapon_offline', value: 99 }] },
-    5: { label: 'Power plant offline.', mechanics: [{ type: 'power_offline', value: true }] },
-    6: { label: 'Power plant destroyed — 1D crew casualties.', mechanics: [{ type: 'power_offline', value: true }, { type: 'crew_casualty', value: 'D6' }] },
-  },
-
-  stutterwarpFtl: {
-    // 2300AD B3 p.58: replace J-Drive with Stutterwarp (FTL only, not tactical).
-    1: { label: 'FTL disrupted — next stutterwarp +1 day.', mechanics: [{ type: 'stutterwarp_ftl_damaged', value: true }] },
-    2: { label: 'FTL coils damaged — DM−1 to jumps.', mechanics: [{ type: 'stutterwarp_ftl_damaged', value: true }] },
-    3: { label: 'FTL seriously damaged — DM−2; repair before long range.', mechanics: [{ type: 'stutterwarp_ftl_damaged', value: true }] },
-    4: { label: 'FTL disabled — cannot stutterwarp until repaired.', mechanics: [{ type: 'stutterwarp_ftl_damaged', value: true }] },
-    5: { label: 'FTL destroyed — beyond field repair.', mechanics: [{ type: 'stutterwarp_ftl_destroyed', value: true }] },
-    6: { label: 'FTL explodes — destroyed; 2D structural damage.', mechanics: [{ type: 'stutterwarp_ftl_destroyed', value: true }, { type: 'crew_casualty', value: '2D6' }] },
+    1: { label: 'Power reduced by 10%.', mechanics: [{ type: 'power_reduce_pct', value: 10 }] },
+    2: { label: 'Power reduced by 10% (as printed).', mechanics: [{ type: 'power_reduce_pct', value: 10 }] },
+    3: { label: 'Power reduced by 50%.', mechanics: [{ type: 'power_reduce_pct', value: 50 }] },
+    4: { label: 'Power reduced to 0.', mechanics: [{ type: 'power_offline', value: true }] },
+    5: { label: 'Hull Severity +1. Power reduced to 0.', mechanics: [{ type: 'hull_severity_increase', value: 1 }, { type: 'power_offline', value: true }] },
+    6: { label: 'Hull Severity +1D. Power reduced to 0.', mechanics: [{ type: 'hull_severity_increase', value: '1D6' }, { type: 'power_offline', value: true }] },
   },
 
   fuel: {
-    1: { label: 'Minor fuel leak.', mechanics: [{ type: 'fuel_leak', value: 1 }] },
-    2: { label: 'Fuel leak per round.', mechanics: [{ type: 'fuel_leak', value: 2 }] },
-    3: { label: 'Significant fuel loss — range severely reduced.', mechanics: [{ type: 'fuel_leak', value: 3 }] },
-    4: { label: 'Major fuel breach — emergency dump or risk explosion.', mechanics: [{ type: 'fuel_leak', value: 5 }] },
-    5: { label: 'Fuel critical — dump or explode next round. 1D crew.', mechanics: [{ type: 'fuel_critical', value: true }, { type: 'crew_casualty', value: 'D6' }] },
-    6: { label: 'Fuel explosion — ship destroyed.', mechanics: [{ type: 'ship_destroyed', value: true }] },
+    1: { label: 'Leak — lose 1D tons of fuel per hour.', mechanics: [{ type: 'fuel_leak', value: '1D6/hour' }] },
+    2: { label: 'Leak — lose 1D tons of fuel per round.', mechanics: [{ type: 'fuel_leak', value: '1D6/round' }] },
+    3: { label: 'Leak — lose 1D×10% of fuel.', mechanics: [{ type: 'fuel_leak', value: '1D6x10%' }] },
+    4: { label: 'Fuel tank destroyed.', mechanics: [{ type: 'fuel_tank_destroyed', value: true }] },
+    5: { label: 'Fuel tank destroyed. Hull Severity +1.', mechanics: [{ type: 'fuel_tank_destroyed', value: true }, { type: 'hull_severity_increase', value: 1 }] },
+    6: { label: 'Fuel tank destroyed. Hull Severity +1D.', mechanics: [{ type: 'fuel_tank_destroyed', value: true }, { type: 'hull_severity_increase', value: '1D6' }] },
   },
 
-  computer: {
-    1: { label: 'Software glitch — DM−1 to software-aided actions.', mechanics: [{ type: 'computer_dm', value: -1 }] },
-    2: { label: 'Computer hit — DM−2; one software crashes.', mechanics: [{ type: 'computer_dm', value: -2 }] },
-    3: { label: 'Computer damaged — DM−3; multiple software offline.', mechanics: [{ type: 'computer_dm', value: -3 }] },
-    4: { label: 'Computer severely hit — basic nav only; DM−4.', mechanics: [{ type: 'computer_dm', value: -4 }] },
-    5: { label: 'Computer offline — manual operations only.', mechanics: [{ type: 'computer_offline', value: true }] },
-    6: { label: 'Computer destroyed.', mechanics: [{ type: 'computer_offline', value: true }] },
+  weapon: {
+    1: { label: 'Random weapon suffers DM−1 when used.', mechanics: [{ type: 'weapon_damage_dm', value: -1 }] },
+    2: { label: 'Random weapon disabled.', mechanics: [{ type: 'weapon_offline', value: 1 }] },
+    3: { label: 'Random weapon(s) destroyed.', mechanics: [{ type: 'weapon_destroyed', value: 1 }] },
+    4: { label: 'Random weapon explodes. Hull Severity +1.', mechanics: [{ type: 'weapon_destroyed', value: 1 }, { type: 'hull_severity_increase', value: 1 }] },
+    5: { label: 'D3 random weapons explode. Hull Severity +1.', mechanics: [{ type: 'weapon_destroyed', value: 'D3' }, { type: 'hull_severity_increase', value: 1 }] },
+    6: { label: '1D random weapons explode. Hull Severity +1.', mechanics: [{ type: 'weapon_destroyed', value: '1D6' }, { type: 'hull_severity_increase', value: 1 }] },
+  },
+
+  armour: {
+    1: { label: 'Armour reduced by −1.', mechanics: [{ type: 'armour_reduce', value: 1 }] },
+    2: { label: 'Armour reduced by −D3.', mechanics: [{ type: 'armour_reduce', value: 'D3' }] },
+    3: { label: 'Armour reduced by −1D.', mechanics: [{ type: 'armour_reduce', value: '1D6' }] },
+    4: { label: 'Armour reduced by −1D (as printed).', mechanics: [{ type: 'armour_reduce', value: '1D6' }] },
+    5: { label: 'Armour reduced by −2D. Hull Severity +1.', mechanics: [{ type: 'armour_reduce', value: '2D6' }, { type: 'hull_severity_increase', value: 1 }] },
+    6: { label: 'Armour reduced by −2D (as printed). Hull Severity +1.', mechanics: [{ type: 'armour_reduce', value: '2D6' }, { type: 'hull_severity_increase', value: 1 }] },
+  },
+
+  hull: {
+    // CRB p.169: "Any extra damage caused by the effects of critical hits ignores the spacecraft's Armour."
+    1: { label: 'Spacecraft suffers 1D extra damage (ignores Armour).', mechanics: [{ type: 'extra_damage', value: '1D6' }] },
+    2: { label: 'Spacecraft suffers 2D extra damage (ignores Armour).', mechanics: [{ type: 'extra_damage', value: '2D6' }] },
+    3: { label: 'Spacecraft suffers 3D extra damage (ignores Armour).', mechanics: [{ type: 'extra_damage', value: '3D6' }] },
+    4: { label: 'Spacecraft suffers 4D extra damage (ignores Armour).', mechanics: [{ type: 'extra_damage', value: '4D6' }] },
+    5: { label: 'Spacecraft suffers 5D extra damage (ignores Armour).', mechanics: [{ type: 'extra_damage', value: '5D6' }] },
+    6: { label: 'Spacecraft suffers 6D extra damage (ignores Armour).', mechanics: [{ type: 'extra_damage', value: '6D6' }] },
+  },
+
+  // Reaction Drive — 2300AD B3 p.58: NOT the normal 1-6 ladder. "Reaction drives are
+  // very susceptible to damage. The first hit renders the reaction drive inoperable
+  // until repaired, while the second effectively destroys it." Capped at severity 2
+  // via getMaxSeverity/CRITICAL_HIT_MAX_SEVERITY.
+  reactionDrive: {
+    1: { label: 'Reaction Drive rendered inoperable until repaired.', mechanics: [{ type: 'reaction_drive_inoperable', value: true }] },
+    2: { label: 'Reaction Drive destroyed.', mechanics: [{ type: 'reaction_drive_destroyed', value: true }] },
+  },
+
+  cargo: {
+    1: { label: '10% of cargo destroyed.', mechanics: [{ type: 'cargo_destroyed_pct', value: 10 }] },
+    2: { label: '1D×10% of cargo destroyed.', mechanics: [{ type: 'cargo_destroyed_pct', value: '1D6x10' }] },
+    3: { label: '2D×10% of cargo destroyed.', mechanics: [{ type: 'cargo_destroyed_pct', value: '2D6x10' }] },
+    4: { label: 'All cargo destroyed.', mechanics: [{ type: 'cargo_destroyed_pct', value: 100 }] },
+    5: { label: 'All cargo destroyed. Hull Severity +1.', mechanics: [{ type: 'cargo_destroyed_pct', value: 100 }, { type: 'hull_severity_increase', value: 1 }] },
+    6: { label: 'All cargo destroyed. Hull Severity +1D.', mechanics: [{ type: 'cargo_destroyed_pct', value: 100 }, { type: 'hull_severity_increase', value: '1D6' }] },
+  },
+
+  // Stutterwarp Drive — 2300AD B3 p.58: reuses M-Drive's effects table, "Thrust reduced"
+  // reinterpreted as "Tac Speed reduced by -1 per point of Thrust lost".
+  stutterwarpDrive: {
+    1: { label: 'All checks to control the ship suffer DM−1.', mechanics: [{ type: 'pilot_dm', value: -1 }] },
+    2: { label: 'All checks to control the ship suffer DM−1. TAC Speed −1.', mechanics: [{ type: 'pilot_dm', value: -1 }, { type: 'tacSpeed_reduce', value: 1 }] },
+    3: { label: 'All checks to control the ship suffer DM−1. TAC Speed −1 (as printed).', mechanics: [{ type: 'pilot_dm', value: -1 }, { type: 'tacSpeed_reduce', value: 1 }] },
+    4: { label: 'All checks to control the ship suffer DM−1. TAC Speed −1 (as printed).', mechanics: [{ type: 'pilot_dm', value: -1 }, { type: 'tacSpeed_reduce', value: 1 }] },
+    5: { label: 'TAC Speed reduced to 0.', mechanics: [{ type: 'tacSpeed_zero', value: true }] },
+    6: { label: 'TAC Speed reduced to 0. Hull Severity +1.', mechanics: [{ type: 'tacSpeed_zero', value: true }, { type: 'hull_severity_increase', value: 1 }] },
+  },
+
+  crew: {
+    1: { label: 'Random occupant takes 1D damage.', mechanics: [{ type: 'crew_casualty', value: '1D6' }] },
+    2: { label: 'Life support fails within 1D hours.', mechanics: [{ type: 'life_support_timer', value: '1D6 hours' }] },
+    3: { label: '1D occupants take 2D damage.', mechanics: [{ type: 'crew_casualty', value: '1D6 occupants x 2D6' }] },
+    4: { label: 'Life support fails within 1D rounds.', mechanics: [{ type: 'life_support_timer', value: '1D6 rounds' }] },
+    5: { label: 'All occupants take 3D damage.', mechanics: [{ type: 'crew_casualty', value: 'all x 3D6' }] },
+    6: { label: 'Life support fails.', mechanics: [{ type: 'life_support_timer', value: 'immediate' }] },
+  },
+
+  bridge: {
+    1: { label: 'Random bridge station disabled.', mechanics: [{ type: 'bridge_station_offline', value: 1 }] },
+    2: { label: 'Computer reboots — all software unavailable this round and next.', mechanics: [{ type: 'computer_offline_rounds', value: 2 }] },
+    3: { label: 'Computer damaged. Reduce Bandwidth −50%.', mechanics: [{ type: 'bandwidth_reduce_pct', value: 50 }] },
+    4: { label: 'Random bridge station destroyed. Occupant takes 1D×1D damage.', mechanics: [{ type: 'bridge_station_destroyed', value: 1 }, { type: 'crew_casualty', value: '1D6x1D6' }] },
+    // Severity 5 reconstructed from a page-wrap-ambiguous extraction (lower confidence
+    // than the rest of this table) — verify against the physical book if exact wording matters.
+    5: { label: 'Computer destroyed.', mechanics: [{ type: 'computer_destroyed', value: true }] },
+    6: { label: 'Random bridge station destroyed. Occupant takes 1D×1D damage. Hull Severity +1.', mechanics: [{ type: 'bridge_station_destroyed', value: 1 }, { type: 'crew_casualty', value: '1D6x1D6' }, { type: 'hull_severity_increase', value: 1 }] },
   },
 }
 
 /** Display labels for internal critical hit systems. */
 export const CRITICAL_HIT_SYSTEM_LABELS = {
   sensors:          'Sensors',
-  bridge:           'Bridge',
-  hull:             'Hull',
+  powerPlant:       'Power Plant',
+  fuel:             'Fuel',
   weapon:           'Weapon',
   armour:           'Armour',
-  crew:             'Crew',
+  hull:             'Hull',
+  reactionDrive:    'Reaction Drive',
+  cargo:            'Cargo',
   stutterwarpDrive: 'Stutterwarp Drive',
-  powerPlant:       'Power Plant',
-  stutterwarpFtl:   'Stutterwarp (FTL)',
-  fuel:             'Fuel',
-  computer:         'Computer',
+  crew:             'Crew',
+  bridge:           'Bridge',
 }
 
 /** Display labels for surface fixture systems. */

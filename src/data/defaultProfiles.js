@@ -15,16 +15,16 @@ export { blankSurfaceFixtureTracks }
 export function blankCriticalTracks() {
   return {
     sensors:          0,
-    bridge:           0,
-    hull:             0,
+    powerPlant:       0,
+    fuel:             0,
     weapon:           0,
     armour:           0,
-    crew:             0,
+    hull:             0,
+    reactionDrive:    0,
+    cargo:            0,
     stutterwarpDrive: 0,
-    powerPlant:       0,
-    stutterwarpFtl:   0,
-    fuel:             0,
-    computer:         0,
+    crew:             0,
+    bridge:           0,
   }
 }
 

@@ -11,6 +11,10 @@ import {
   blankSurfaceFixtureTracks,
   INTERNAL_LOCATION_TABLE,
   CRITICAL_HIT_SYSTEMS,
+  CRITICAL_HIT_EFFECTS,
+  CRITICAL_HIT_SYSTEM_LABELS,
+  computeCriticalSeverity,
+  getMaxSeverity,
 } from './criticalHits.js'
 
 // === blankSurfaceFixtureTracks ===
@@ -128,19 +132,100 @@ describe('INTERNAL_LOCATION_TABLE', () => {
     }
   })
 
-  it('contains stutterwarpDrive (B3 substitution for M-Drive)', () => {
-    const systems = Object.values(INTERNAL_LOCATION_TABLE)
-    expect(systems).toContain('stutterwarpDrive')
+  it('location 8 (was M-Drive) is reactionDrive, not stutterwarpDrive (CRB p.169 + B3 p.58)', () => {
+    expect(INTERNAL_LOCATION_TABLE[8]).toBe('reactionDrive')
   })
 
-  it('contains stutterwarpFtl (B3 substitution for J-Drive)', () => {
-    const systems = Object.values(INTERNAL_LOCATION_TABLE)
-    expect(systems).toContain('stutterwarpFtl')
+  it('location 9 is cargo — previously missing entirely', () => {
+    expect(INTERNAL_LOCATION_TABLE[9]).toBe('cargo')
   })
 
-  it('does not contain jumpDrive or mDrive (replaced by B3 substitutions)', () => {
+  it('location 10 (was J-Drive) is stutterwarpDrive, not stutterwarpFtl (B3 p.58)', () => {
+    expect(INTERNAL_LOCATION_TABLE[10]).toBe('stutterwarpDrive')
+  })
+
+  it('does not contain jumpDrive, mDrive, computer, or stutterwarpFtl (invented/replaced locations)', () => {
     const systems = Object.values(INTERNAL_LOCATION_TABLE)
     expect(systems).not.toContain('jumpDrive')
     expect(systems).not.toContain('mDrive')
+    expect(systems).not.toContain('computer')
+    expect(systems).not.toContain('stutterwarpFtl')
+  })
+})
+
+// === CRITICAL_HIT_EFFECTS / CRITICAL_HIT_SYSTEM_LABELS completeness ===
+
+describe('CRITICAL_HIT_EFFECTS completeness', () => {
+  it('has an entry for every system in CRITICAL_HIT_SYSTEMS', () => {
+    for (const system of CRITICAL_HIT_SYSTEMS) {
+      expect(CRITICAL_HIT_EFFECTS).toHaveProperty(system)
+    }
+  })
+
+  it('every system has an effect entry for every severity up to its own max', () => {
+    for (const system of CRITICAL_HIT_SYSTEMS) {
+      const max = getMaxSeverity(system)
+      for (let sev = 1; sev <= max; sev++) {
+        expect(CRITICAL_HIT_EFFECTS[system]).toHaveProperty(String(sev))
+        expect(typeof CRITICAL_HIT_EFFECTS[system][sev].label).toBe('string')
+      }
+    }
+  })
+
+  it('every system has a display label', () => {
+    for (const system of CRITICAL_HIT_SYSTEMS) {
+      expect(typeof CRITICAL_HIT_SYSTEM_LABELS[system]).toBe('string')
+    }
+  })
+})
+
+// === getMaxSeverity ===
+
+describe('getMaxSeverity', () => {
+  it('reactionDrive caps at 2 (binary: inoperable/destroyed, B3 p.58)', () => {
+    expect(getMaxSeverity('reactionDrive')).toBe(2)
+  })
+
+  it('every other system caps at 6 (CRB p.169)', () => {
+    for (const system of CRITICAL_HIT_SYSTEMS) {
+      if (system === 'reactionDrive') continue
+      expect(getMaxSeverity(system)).toBe(6)
+    }
+  })
+})
+
+// === computeCriticalSeverity ===
+
+describe('computeCriticalSeverity', () => {
+  it('Severity = Effect - 5 on a fresh hit (CRB p.169)', () => {
+    expect(computeCriticalSeverity(8, 0, 'sensors')).toBe(3)
+    expect(computeCriticalSeverity(6, 0, 'sensors')).toBe(1)
+  })
+
+  it('uses previous+1 when higher than the new Effect-5 (stacking rule, CRB p.169)', () => {
+    // Effect 6 → 1, but a system already at severity 4 goes to 5, not down to 1
+    expect(computeCriticalSeverity(6, 4, 'sensors')).toBe(5)
+  })
+
+  it('uses the new Effect-5 when higher than previous+1', () => {
+    expect(computeCriticalSeverity(12, 1, 'sensors')).toBe(6)
+  })
+
+  it('caps at the system max even if the formula would exceed it', () => {
+    expect(computeCriticalSeverity(20, 0, 'sensors')).toBe(6)
+  })
+
+  it('reactionDrive ignores the Effect-5 formula entirely — always +1 per hit, capped at 2 (B3 p.58: hit-count based, not Effect-based)', () => {
+    expect(computeCriticalSeverity(6, 0, 'reactionDrive')).toBe(1)
+    expect(computeCriticalSeverity(6, 1, 'reactionDrive')).toBe(2)
+    // A very high Effect must NOT skip straight to "destroyed" on the first hit
+    expect(computeCriticalSeverity(20, 0, 'reactionDrive')).toBe(1)
+    expect(computeCriticalSeverity(20, 1, 'reactionDrive')).toBe(2)
+    // Cannot advance past destroyed on a third hit
+    expect(computeCriticalSeverity(20, 2, 'reactionDrive')).toBe(2)
+  })
+
+  it('never returns below 1', () => {
+    expect(computeCriticalSeverity(6, 0, 'sensors')).toBeGreaterThanOrEqual(1)
   })
 })
