@@ -229,7 +229,7 @@ Nubi ablative/campi elettromagnetici che disperdono **fasci laser in arrivo** �
 | 2 | 11 | 20 | −2 |
 | 3 | 12 | 20 | −3 |
 
-- Ogni hit subito (indipendentemente dal danno inflitto) riduce il Rating attivo di 1.
+- Ogni hit di **laser** subito (indipendentemente dal danno inflitto) riduce il Rating attivo di 1 — un'arma non-laser (es. particle beam) non deplete lo schermo.
 - **Deploy or Recharge Screens** è una **Gunner Action** (stesso elenco B3 p.55 di Fire Weapon / Point Defence / Operate UTES Array): il gunner quel round o spara **o** dispiega/ricarica lo schermo — non entrambi. Nessun check richiesto.
 - **Deploy** (prima attivazione in battaglia): gratuito, porta il Rating attivo al Rating installato.
 - **Recharge** (dopo che è stato depleto): consuma una reload trasportata, riporta il Rating attivo al Rating installato.

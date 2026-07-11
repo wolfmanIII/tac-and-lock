@@ -230,7 +230,7 @@ Nubi ablative/campi elettromagnetici che disperdono **fasci laser in arrivo** (n
 | 2 | 11 | 20 | −2 |
 | 3 | 12 | 20 | −3 |
 
-- Ogni hit subito (indipendentemente dal danno) riduce il Rating attivo di 1.
+- Ogni hit di **laser** subito (indipendentemente dal danno) riduce il Rating attivo di 1 — un'arma non-laser (es. particle beam) non deplete lo schermo, coerentemente col DM che già si applica solo a `weapon.isLaser === true`.
 - **Deploy or Recharge Screens** è una **Gunner Action** (B3 p.55, stesso elenco di Fire Weapon/Point Defence/Operate UTES Array) — il gunner quel round o spara o dispiega/ricarica lo schermo, non entrambi. Nessun check richiesto.
 - "Deploy" (prima attivazione in battaglia) è gratuito; "Recharge" (dopo che è stato depleto) consuma una reload trasportata (`screenReloads`).
 - Campi nave: `screenRating` (installato, 0 = nessuno), `screenReloads`, `screenDeployed`, `screenCurrentRating` (attivo, si deplete sugli hit).
