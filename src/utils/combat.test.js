@@ -300,6 +300,22 @@ describe('isInternalCriticalHit', () => {
     expect(isInternalCriticalHit(4, 1, 15)).toBe(false)
     expect(isInternalCriticalHit(0, 0, 20)).toBe(false)
   })
+
+  // critThreshold — Improve Critical (Sensor Operator) lowers the threshold // 2300AD B3 p.54
+  it('custom critThreshold of 5 makes Effect 5 a crit (normally requires 6)', () => {
+    expect(isInternalCriticalHit(5, 1, 100, 5)).toBe(true)
+    expect(isInternalCriticalHit(4, 1, 100, 5)).toBe(false)
+  })
+
+  it('custom critThreshold of 4 (Improve Critical check itself scored Effect 6+)', () => {
+    expect(isInternalCriticalHit(4, 1, 100, 4)).toBe(true)
+    expect(isInternalCriticalHit(3, 1, 100, 4)).toBe(false)
+  })
+
+  it('defaults to threshold 6 when critThreshold is omitted', () => {
+    expect(isInternalCriticalHit(6, 1, 100)).toBe(true)
+    expect(isInternalCriticalHit(5, 1, 100)).toBe(false)
+  })
 })
 
 // === isCriticalHit (deprecated alias for isInternalCriticalHit) ===

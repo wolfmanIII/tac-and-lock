@@ -420,3 +420,86 @@ test.describe('Emergency Repair — skill, difficulty, and repair amount', () =>
     expect(after - before).toBe(5)
   })
 })
+
+// === Scan Target / Improve Critical — Sensor Operator // 2300AD B3 p.54 =====
+
+test.describe('Scan Target / Improve Critical', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  test('ActionModal lists Scan Target (Routine 8+) and Improve Critical (Very Difficult 12+)', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId: id })
+    }, id0)
+    await page.getByText('Scan Target', { exact: true }).click()
+    await expect(page.getByText('SKILL LEVEL — Electronics (sensors) (Routine (8+))')).toBeVisible()
+    await page.getByText('Improve Critical', { exact: true }).click()
+    await expect(page.getByText('SKILL LEVEL — Electronics (sensors) (Very Difficult (12+))')).toBeVisible()
+  })
+
+  test('a successful Improve Critical sets improveCriticalNextRound to 5 (Effect 1-4)', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId: id })
+    }, id0)
+    await page.getByText('Improve Critical', { exact: true }).click()
+    await page.getByText('manual', { exact: true }).click()
+    const numberInputs = page.locator('input[type="number"]')
+    await numberInputs.nth(0).fill('6')
+    await numberInputs.nth(1).fill('6') // 12 total, +0 skill = Effect 0 → success, Effect < 6
+    await page.getByText('APPLY RESULT', { exact: true }).click()
+    const ship = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
+    , id0)
+    expect(ship.improveCriticalNextRound).toBe(5)
+  })
+
+  test('improveCriticalNextRound promotes to improveCriticalThreshold at round start, shown on Ship Sheet', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      const s = window.__ZUSTAND_BATTLE_STORE__.getState()
+      s.updateShip(id, { improveCriticalNextRound: 5 })
+      s.setInitiativeOrder(s.ships.map((sh) => sh.id))
+      s.startNextRound()
+    }, id0)
+    const ship = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
+    , id0)
+    expect(ship.improveCriticalThreshold).toBe(5)
+
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('ship-detail', { shipId: id })
+    }, id0)
+    await expect(page.getByText('IMPROVE CRITICAL ACTIVE')).toBeVisible()
+    await expect(page.getByText('Next hit crits at Effect 5+ instead of 6+')).toBeVisible()
+  })
+
+  test('AttackModal Step 3 shows the Improve Critical active banner', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().updateShip(id, { improveCriticalThreshold: 5 })
+    }, id0)
+    await reachStep3(page, id0)
+    await expect(page.getByText('Improve Critical active')).toBeVisible()
+    await expect(page.getByText('this shot crits at Effect 5+ instead of 6+', { exact: false })).toBeVisible()
+  })
+
+  test('a hit with Effect 5 shows INTERNAL CRITICAL HIT when improveCriticalThreshold is 5 (normally requires 6)', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      const s = window.__ZUSTAND_BATTLE_STORE__.getState()
+      // ll98 (Accurate +1) + fire_control_1 (+1) + this Command (+1) = DM+3 total on Step 3;
+      // max dice roll (6+6=12) + 3 = 15, Effect = 5 exactly — deterministic, not a crit at the
+      // normal threshold (6) but IS one at the lowered Improve Critical threshold (5) under test.
+      s.updateShip(id, { improveCriticalThreshold: 5, commandBonus: [{ role: 'gunner_turret', dm: 1 }] })
+    }, id0)
+    await reachStep3(page, id0)
+    await page.getByText('enter manually').last().click()
+    await page.locator('input[type="number"]').nth(0).fill('6')
+    await page.locator('input[type="number"]').nth(1).fill('6')
+    await expect(page.getByText('⚠ INTERNAL CRITICAL HIT', { exact: false })).toBeVisible()
+  })
+})

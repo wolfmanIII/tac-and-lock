@@ -158,6 +158,10 @@ export function ActionModal({ payload, onClose }) {
         if (success) updateShip(shipId, { activeSensorsOn: true })
         break
 
+      case 'improve_critical': // B3 p.54 — lowers crit threshold for this ship's next Gunner hit, next round
+        if (success) updateShip(shipId, { improveCriticalNextRound: effect >= 6 ? 4 : 5 })
+        break
+
       case 'commands': { // B3 p.54 — activates next round, see applyCommand
         if (success) applyCommand(shipId, effectiveCommandRole, effect >= 5 ? 2 : 1)
         break

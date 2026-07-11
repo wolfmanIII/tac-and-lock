@@ -277,13 +277,17 @@ export function isSurfaceFixtureDamage(attackEffect) {
 /**
  * Internal Critical Hit check. // 2300AD B3 p.58
  * Effect ≥ 6 with net damage > 0 (penetrating hit), OR hull drops to 0.
+ * The threshold lowers to 5 (or 4) for one shot when the attacker's Sensor
+ * Operator succeeded at Improve Critical last round // 2300AD B3 p.54, see
+ * `ship.improveCriticalThreshold`.
  * @param {number} attackEffect
  * @param {number} netDamage — damage after armour reduction
  * @param {number} hullCurrent — ship hull points BEFORE this hit
+ * @param {number} [critThreshold] — Effect needed for a crit, default 6
  * @returns {boolean}
  */
-export function isInternalCriticalHit(attackEffect, netDamage, hullCurrent) {
-  return (attackEffect >= 6 && netDamage > 0) || netDamage >= hullCurrent
+export function isInternalCriticalHit(attackEffect, netDamage, hullCurrent, critThreshold = 6) {
+  return (attackEffect >= critThreshold && netDamage > 0) || netDamage >= hullCurrent
 }
 
 /** @deprecated Use isInternalCriticalHit instead. */

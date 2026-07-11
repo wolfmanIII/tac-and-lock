@@ -354,6 +354,8 @@ export function HelpScreen({ onBack } = {}) {
             <KV k="Electronic Warfare" v="Difficult (10+) Electronics(comms) INT. Effect 1–4: target suffers DM−1 to Gunner checks. Effect 5–6: DM−2. Effect ≤−5: jam backfires, target instead gains DM+1. Resets at round end." />
             <KV k="EW Countermeasures" v="Average (8+) Electronics(countermeasures) INT. Success: clears an active EW jam on this ship." />
             <KV k="Active Sensors"    v="Easy (6+) Electronics(sensors). Signature +1 while active (toggle off in Ship Sheet)." />
+            <KV k="Scan Target"       v="Routine (8+) Electronics(sensors) INT, DM−1 per range band. Informational only — read the Effect off the roll result and narrate (Trav CRB p.151)." />
+            <KV k="Improve Critical"  v="Very Difficult (12+) Electronics(sensors) INT, DM−1 per range band. Success: this ship's next hit next round crits at Effect 5+ (or 4+ if this check scored Effect 6+). Shown as a banner in the Attack modal and Ship Sheet." />
           </Sub>
 
           <Sub title="GUNNER">

@@ -241,6 +241,17 @@ export function ShipDetailModal({ payload, onClose }) {
         </div>
       )}
 
+      {/* Improve Critical (Sensor Operator) — lowers crit threshold for this ship's next hit // B3 p.54 */}
+      {ship.improveCriticalThreshold != null && (
+        <div className="bg-red-950/30 border border-red-800/50 rounded px-3 py-2">
+          <p className="text-[10px] font-display text-slate-500 tracking-widest mb-0.5">IMPROVE CRITICAL ACTIVE</p>
+          <p className="text-sm font-mono font-bold text-red-400">
+            Next hit crits at Effect {ship.improveCriticalThreshold}+ instead of 6+
+          </p>
+          <p className="text-[9px] font-mono text-slate-600 mt-0.5">Auto-applied in AttackModal/DroneAttackModal; expires after this round // 2300AD B3 p.54</p>
+        </div>
+      )}
+
       {/* Weapons */}
       {(p.weapons ?? []).length > 0 && (
         <div>

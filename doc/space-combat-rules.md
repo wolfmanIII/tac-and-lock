@@ -456,9 +456,9 @@ Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). Tirare sul
 - **Re-route Power**: Average (8+) Engineer (power) **EDU**. Riabilita sistemi o redistribuisce energia.
 - **Boost Power Output**: Difficult (10+) Engineer (power) **EDU**. Successo: Effect% aumento Power. Effect −5 o peggio: critical hit Power Plant.
 - **Overload Stutterwarp** — Difficult (10+) Engineer (stutterwarp) **INT**: porta il motore oltre i limiti di sicurezza. Successo: TAC Speed +1 questo round. Fallimento: critical hit sul sistema Stutterwarp Drive. // B3 p.55
-- **Emergency Repair** — Average (8+) Engineer **INT o EDU**: ripara un danno nella fase corrente.
+- **Emergency Repair** ("Damage Control team") — Difficult (10+) **Mechanic** (1D minuti, INT): ripara un danno nella fase corrente. // B3 p.56–57
   - Modalità *Critical System*: riduce la severity di un critical hit track di 1.
-  - Modalità *Hull*: ripristina 1 Hull Point.
+  - Modalità *Hull*: ripristina **5 Hull Points**.
   - Riparazione temporanea (dura 1D ore); se nuovo critical hit sulla stessa location: ricominciare da capo.
   - Hull damage e armi distrutte NON sono riparabili in combattimento.
 
@@ -481,9 +481,12 @@ Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). Tirare sul
 ### Sensor Operator
 
 - **Active Sensors** — Easy (6+) Electronics (sensors): attiva il sweep attivo dei sensori. Successo: Signature della nave +1 per questo round e i successivi finché non disattivato (flag `activeSensorsOn`). Rivela posizioni nascoste e salvi di missili a Very Long o Distant range. // B3 p.57
-- **Sensor Lock** — Average (8+) Electronics (sensors): blocca il bersaglio con i sensori. Successo: tutti gli attacchi vs quel bersaglio guadagnano **DM+max(1, Effect)** questo round. Il valore è salvato sulla nave bersaglio come `sensorLockDm` e appare automaticamente nello step 3 dell'AttackModal. Reset a fine round. // B3 p.55
-- **Electronic Warfare** — Average (8+) Electronics (countermeasures): disturba sensori e fire control del bersaglio. Successo: il bersaglio subisce **DM−max(1, Effect)** a tutti gli attacchi e check sensori questo round. Il penalty è salvato come `ewEffect` sulla nave jammatrice e applicato automaticamente allo step 3 Gunner quando quella nave attacca. // B3 p.55
+- **Electronic Warfare** — Difficult (10+) Electronics (comms): disturba i lock del bersaglio. Successo: Effect 1–4 → il bersaglio subisce **DM−1** a Gunner questo round; Effect 5–6 → **DM−2**; Effect ≤−5 → il bersaglio ottiene invece **DM+1** (ha triangolato le emissioni del jammer). Il DM è salvato come `ewEffect` sulla nave bersaglio (`ewTarget` punta alla nave che sta subendo il jam) e applicato automaticamente allo step 3 Gunner. // B3 p.54
 - **EW Countermeasures** — Average (8+) Electronics (countermeasures): contrasta un jam in ingresso. Successo opposto: annulla il DM EW subito dalla propria nave questo round (cancella `ewTarget`/`ewEffect` sul jammatore). // B3 p.55
+- **Scan Target** — Routine (8+) Electronics (sensors), DM−1 per fascia di distanza. Effect 1–3: info di base alla fascia attuale (Trav CRB p.151). Effect 4–5: info come se il bersaglio fosse una fascia più vicino. Effect 6: come se fosse due fasce più vicino. **Puramente informativo** — nessuna mutazione di stato, il GM narra il risultato leggendo l'Effect dal roll banner. // B3 p.54
+- **Improve Critical** — Very Difficult (12+) Electronics (sensors), DM−1 per fascia di distanza. Successo: il **prossimo colpo** della Firing Solution di questa nave critica a Effect 5+ invece di 6+ (o 4+ se questo check aveva Effect ≥6). Dichiarato nell'Actions Step (ultimo step del round), quindi si attiva per il round **successivo** — stesso pattern two-stage di Commands (`improveCriticalNextRound` → `improveCriticalThreshold`, consumato da `isInternalCriticalHit(..., critThreshold)` in `AttackModal.jsx`/`DroneAttackModal.jsx`, poi scade automaticamente se non ridichiarato). // B3 p.54
+
+> Nota: "Sensor Lock" non è un'azione 2300AD B3 — non esiste in B3 p.52–62 (compare solo nel Trav2022 CRB, fuori dallo scope CRB autorizzato per questo progetto). Rimosso; il concetto B3 più vicino è "Scan Target", una meccanica diversa (informativa, non un DM+ agli attacchi).
 
 ### Damage Control — Engineer / Mechanic
 

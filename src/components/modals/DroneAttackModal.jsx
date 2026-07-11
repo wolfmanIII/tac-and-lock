@@ -245,9 +245,11 @@ export function DroneAttackModal({ payload, onClose }) {
     depleteScreens(target.id) // any hit depletes screens by 1, regardless of damage // B3 p.62
     detonateDrone(droneId)
     const effect = step3Result?.effect ?? 0
+    // Improve Critical (Sensor Operator) lowers the threshold for this ship's next hit // B3 p.54
+    const critThreshold = owner.improveCriticalThreshold ?? 6
     if (isSurfaceFixtureDamage(effect)) {
       openModal('critical-hit', { shipId: target.id, mode: 'surface', effect })
-    } else if (isInternalCriticalHit(effect, damageResult.net, target.currentHull)) {
+    } else if (isInternalCriticalHit(effect, damageResult.net, target.currentHull, critThreshold)) {
       openModal('critical-hit', { shipId: target.id, mode: 'internal' })
     }
     onClose()
@@ -365,6 +367,7 @@ export function DroneAttackModal({ payload, onClose }) {
 
   const hit = step3Result?.total >= 10
   const effect = step3Result?.effect ?? 0
+  const critThreshold = owner.improveCriticalThreshold ?? 6
 
   return (
     <div className="p-5 space-y-3">
@@ -386,6 +389,13 @@ export function DroneAttackModal({ payload, onClose }) {
         </div>
       )}
 
+      {critThreshold < 6 && (
+        <div className="flex items-center gap-2 px-2.5 py-1.5 bg-red-950/40 border border-red-800/60 rounded text-xs font-mono">
+          <span className="text-red-400">Improve Critical active</span>
+          <span className="text-slate-400">— this shot crits at Effect {critThreshold}+ instead of 6+ // B3 p.54</span>
+        </div>
+      )}
+
       <DmBreakdown rows={step3Dms.rows} total={step3Dms.total} />
       <RollBlock dm={step3Dms.total} onRoll={rollStep3} onManual={manualStep3} result={step3Result} target={10} />
 
@@ -401,10 +411,10 @@ export function DroneAttackModal({ payload, onClose }) {
           {getEasyTargetDamageMultiplier(target) > 1 && (
             <p className="text-amber-400 font-mono text-xs">×2 damage — stationary/reaction-drive target // B3 p.56</p>
           )}
-          {isSurfaceFixtureDamage(effect) && !isInternalCriticalHit(effect, damageResult.net, target.currentHull) && (
+          {isSurfaceFixtureDamage(effect) && !isInternalCriticalHit(effect, damageResult.net, target.currentHull, critThreshold) && (
             <p className="text-amber-400 font-mono text-xs">⚠ Effect ≥ 3 — Surface Fixture roll // B3 p.58</p>
           )}
-          {isInternalCriticalHit(effect, damageResult.net, target.currentHull) && (
+          {isInternalCriticalHit(effect, damageResult.net, target.currentHull, critThreshold) && (
             <p className="text-red-400 font-mono text-xs">⚠ INTERNAL CRITICAL HIT — roll on location table // B3 p.58</p>
           )}
         </div>

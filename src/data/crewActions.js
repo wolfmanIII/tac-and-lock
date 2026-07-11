@@ -112,6 +112,28 @@ export const CREW_ACTIONS = {
       description: 'Counter incoming electronic warfare. Opposed Electronics (countermeasures) check vs attacker\'s EW roll; success negates their EW DM this round.',
       requiresTarget: true,
     },
+    {
+      id: 'scan_target',
+      label: 'Scan Target',
+      phase: 'actions',
+      reaction: false,
+      skill: 'Electronics (sensors)',
+      difficulty: 8,
+      difficultyLabel: 'Routine (8+)',
+      description: 'Scan a target for information (DM−1 per range band between ships). Effect 1–3: base info at current range (Trav CRB p.151). Effect 4–5: info as if one range band closer. Effect 6: as if two range bands closer. Informational — GM narrates the result. // 2300AD B3 p.54',
+      requiresTarget: true,
+    },
+    {
+      id: 'improve_critical',
+      label: 'Improve Critical',
+      phase: 'actions',
+      reaction: false,
+      skill: 'Electronics (sensors)',
+      difficulty: 12,
+      difficultyLabel: 'Very Difficult (12+)',
+      description: 'Find a weakness in a target\'s defences (DM−1 per range band). On success, this ship\'s next Firing Solution shot next round scores a critical hit at Effect 5+ instead of 6+ (or Effect 4+ if this check itself had Effect 6+). // 2300AD B3 p.54',
+      requiresTarget: false,
+    },
   ],
 
   // Point Defence moved to an inline reaction inside the drone/missile attack

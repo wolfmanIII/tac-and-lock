@@ -98,6 +98,8 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     hasActedThisPhase:       false,
     commandBonus:            [], // Array<{ role, dm }> — active this round, up to one per Leadership level // 2300AD B3 p.54
     commandBonusNextRound:   [], // Array<{ role, dm }> — declared in Actions Step, activates next round
+    improveCriticalThreshold:    null, // 5 or 4 — lowers crit threshold for this ship's next Gunner hit // 2300AD B3 p.54
+    improveCriticalNextRound:    null, // declared in Actions Step, activates next round (same two-stage pattern as commandBonus)
   }
 }
 
@@ -171,6 +173,10 @@ export const useBattleStore = create((set, get) => {
         // then clears at the start of N+2 — same two-stage pattern as initiativeBonusNextRound. // B3 p.54
         commandBonus:             sh.commandBonusNextRound ?? [],
         commandBonusNextRound:    [],
+        // Improve Critical: same two-stage promotion — declared in Actions Step, active for the
+        // following round's next Gunner hit only, then cleared. // 2300AD B3 p.54
+        improveCriticalThreshold: sh.improveCriticalNextRound ?? null,
+        improveCriticalNextRound: null,
       }
     })
 
