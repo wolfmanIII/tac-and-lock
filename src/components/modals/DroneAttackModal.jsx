@@ -20,7 +20,7 @@ import { WEAPONS }        from '../../data/weapons.js'
 import { SENSOR_TIME_LAG_DM } from '../../data/rangeBands.js'
 import { getAssignedSkill, getAssignedCharacteristic } from '../../utils/crew.js'
 import { getCharDM, roll2D6 } from '../../utils/dice.js'
-import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, computeEffectiveSignature, getPointDefenceDm, getEasyTargetAttackDm, getEasyTargetDamageMultiplier, getAtmosphericTargetDm, getOrtilleryDm, getFireControlDm, getScreenDm } from '../../utils/combat.js'
+import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, computeEffectiveSignature, getPointDefenceDm, getEasyTargetAttackDm, getEasyTargetDamageMultiplier, getAtmosphericTargetDm, getOrtilleryDm, getFireControlDm, getScreenDm, getWeaponTraitAttackDm } from '../../utils/combat.js'
 import { DiceInput } from '../forms/DiceInput.jsx'
 
 const STEP_PD     = 0
@@ -203,13 +203,16 @@ export function DroneAttackModal({ payload, onClose }) {
     const ortilleryDm   = getOrtilleryDm(weapon.traits, target)
     // Defensive Screens — negative DM equal to target's active Rating, laser weapons only // B3 p.62
     const screenDm = getScreenDm(target, weapon)
-    const total = fireControlDm + rangeDm + step2CarryEffect + evasionDm + jammerPenalty + easyTargetDm + atmosphericDm + ortilleryDm + screenDm
+    // Weapon traits — Accurate +1, Slow −2 // B3 p.59
+    const weaponTraitDm = getWeaponTraitAttackDm(weapon.traits)
+    const total = fireControlDm + rangeDm + step2CarryEffect + evasionDm + jammerPenalty + easyTargetDm + atmosphericDm + ortilleryDm + screenDm + weaponTraitDm
     return {
       rows: [
         ['Fire Control', fireControlDm],
         [`Range (${drone.currentBand})`, rangeDm],
         ['Carry (Step 2)', step2CarryEffect],
         ['Evasion penalty', evasionDm],
+        ['Weapon trait', weaponTraitDm],
         ...(jammerPenalty !== 0 ? [['EW jamming', jammerPenalty]] : []),
         ...(easyTargetDm !== 0 ? [['Stationary/reaction-drive target', easyTargetDm]] : []),
         ...(atmosphericDm !== 0 ? [['Planetary/atmospheric condition', atmosphericDm]] : []),

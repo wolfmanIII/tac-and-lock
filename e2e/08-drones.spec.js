@@ -275,6 +275,21 @@ test.describe('Drone attack — Point Defence and Firing Solution', () => {
     const row = page.locator('div').filter({ hasText: 'Fire Control' }).last()
     await expect(row).toContainText('-8')
   })
+
+  test('Step 3 (Gunner) applies the Slow trait DM-2 for a Ritage-2 drone // B3 p.59', async ({ page }) => {
+    const droneId = await injectDrone(page, { band: 'Close', weaponId: 'ritage2' })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await page.getByText('NO INTERCEPT → FIRING SOLUTION').click()
+    await page.getByText('ROLL 2D6').click()
+    await page.getByText('NEXT → PILOT').click()
+    await page.getByText('ROLL 2D6').click()
+    await page.getByText('NEXT → GUNNER').click()
+
+    const row = page.locator('div').filter({ hasText: 'Weapon trait' }).last()
+    await expect(row).toContainText('-2')
+  })
 })
 
 test.describe('Context menu — real right-click, drone items', () => {
