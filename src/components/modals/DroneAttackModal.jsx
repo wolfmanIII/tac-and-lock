@@ -5,7 +5,8 @@
  *
  * Step 1: Sensor hand-off (Electronics(sensors) INT, no penalty) OR
  *         self-generated (Remote Pilot's Piloting action, DEX, DM-2).
- * Step 2: Position Vessel — Remote Pilot, Electronics(remote ops) DEX, +drone TAC Speed.
+ * Step 2: Position Vessel — Remote Pilot, Electronics(remote ops) DEX, +drone TAC Speed,
+ *         +DM2 flat drone Pilot bonus (crewed fighters <100t get +DM1 instead — not modeled).
  * Step 3: Gunner — Difficult (10+), Fire Control DM, range DM at drone's current band.
  *
  * Point Defence (target's reaction) is also resolved here, inline, one drone at a time —
@@ -161,13 +162,16 @@ export function DroneAttackModal({ payload, onClose }) {
   }
 
   // ── Step 2: Position Vessel — Remote Pilot, Electronics(remote ops) DEX // B3 p.55–56 ──
+  // Drones get a flat DM+2 to all Pilot checks (crewed fighters under 100 tons get DM+1
+  // instead — not currently a modeled unit type, so every drone/missile weapon here is DM+2).
   const step2Dms = useMemo(() => {
     if (!owner) return { rows: [], total: 0 }
     const skill = getAssignedSkill('remote_pilot', owner.crewAssignments, owner.crew)
     const dexDm = getCharDM(getAssignedCharacteristic('remote_pilot', owner.crewAssignments, owner.crew, 'DEX'))
     const tacSpeed = weapon?.tacSpeed ?? 0
-    const total = skill + dexDm + tacSpeed + step1CarryEffect
-    return { rows: [['Remote Pilot skill', skill], ['DEX DM', dexDm], ['Drone TAC Speed', tacSpeed], ['Carry (Step 1)', step1CarryEffect]], total }
+    const droneDm = 2
+    const total = skill + dexDm + tacSpeed + droneDm + step1CarryEffect
+    return { rows: [['Remote Pilot skill', skill], ['DEX DM', dexDm], ['Drone TAC Speed', tacSpeed], ['Drone Pilot bonus', droneDm], ['Carry (Step 1)', step1CarryEffect]], total }
   }, [owner, weapon, step1CarryEffect])
 
   const step2CarryEffect = step2Result ? Math.max(0, step2Result.effect) : 0

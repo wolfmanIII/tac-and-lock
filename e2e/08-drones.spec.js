@@ -222,6 +222,21 @@ test.describe('Drone attack — Point Defence and Firing Solution', () => {
     expect(state.hull).toBeLessThanOrEqual(hullBefore)
     expect(state.detonated).toBe(true)
   })
+
+  test('Step 2 (Position Vessel) shows the flat DM+2 drone Pilot bonus // B3 p.55', async ({ page }) => {
+    const droneId = await injectDrone(page, { band: 'Close' })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await page.getByText('NO INTERCEPT → FIRING SOLUTION').click()
+    await page.getByText('ROLL 2D6').click()
+    await page.getByText('NEXT → PILOT').click()
+
+    await expect(page.getByText('STEP 2 — POSITION VESSEL')).toBeVisible()
+    await expect(page.getByText('Drone Pilot bonus')).toBeVisible()
+    const row = page.locator('div', { hasText: 'Drone Pilot bonus' }).last()
+    await expect(row.getByText('+2', { exact: true })).toBeVisible()
+  })
 })
 
 test.describe('Context menu — real right-click, drone items', () => {
