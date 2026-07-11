@@ -5,7 +5,7 @@ import { CRITICAL_HIT_SYSTEM_LABELS, SURFACE_FIXTURE_SYSTEM_LABELS } from '../..
 import { FACTION_COLOR } from '../../data/factions.js'
 import { RANGE_BAND_ORDER } from '../../data/rangeBands.js'
 import { pairKey } from '../../utils/rangeBands.js'
-import { computeEffectiveSignature, getReactionDriveSignatureDm, isEasyTarget } from '../../utils/combat.js'
+import { computeEffectiveSignature, getReactionDriveSignatureDm, isEasyTarget, ATMOSPHERIC_CONDITIONS, getAtmosphericTargetDm } from '../../utils/combat.js'
 import { useShipTokenIcon } from '../battle/useShipTokenIcon.js'
 
 const SEV_COLOR = ['text-slate-500', 'text-yellow-400', 'text-orange-400', 'text-red-400', 'text-red-500', 'text-red-600', 'text-red-700']
@@ -25,6 +25,7 @@ export function ShipDetailModal({ payload, onClose }) {
   const ships         = useBattleStore((s) => s.ships)
   const rangeBands    = useBattleStore((s) => s.rangeBands)
   const toggleShipFlag = useBattleStore((s) => s.toggleShipFlag)
+  const updateShip      = useBattleStore((s) => s.updateShip)
   const addHazard      = useBattleStore((s) => s.addHazard)
   const removeHazard   = useBattleStore((s) => s.removeHazard)
   const ship          = ships.find((s) => s.id === shipId)
@@ -177,6 +178,25 @@ export function ShipDetailModal({ payload, onClose }) {
         {isEasyTarget(ship) && (
           <p className="text-[9px] font-mono text-slate-600 mt-1">
             {ship.isStationary ? 'Stationary' : 'Reaction Drive Active'} — attacks against this ship gain DM+2 and inflict double damage // 2300AD B3 p.56
+          </p>
+        )}
+      </div>
+
+      {/* Planetary/atmospheric condition — attack range DM, applies regardless of range band // 2300AD B3 p.56 */}
+      <div>
+        <p className="text-[10px] font-display text-slate-500 tracking-widest mb-1.5">PLANETARY / ATMOSPHERIC CONDITION</p>
+        <select
+          value={ship.atmosphericCondition ?? 'none'}
+          onChange={(e) => updateShip(shipId, { atmosphericCondition: e.target.value })}
+          className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-xs rounded px-2 py-1 focus:border-sky-400 outline-none"
+        >
+          {ATMOSPHERIC_CONDITIONS.map((c) => (
+            <option key={c.id} value={c.id}>{c.label}{c.dm !== 0 ? ` (DM${c.dm})` : ''}</option>
+          ))}
+        </select>
+        {getAtmosphericTargetDm(ship) !== 0 && (
+          <p className="text-[9px] font-mono text-slate-600 mt-1">
+            Attacks against this ship suffer DM{getAtmosphericTargetDm(ship)} // 2300AD B3 p.56
           </p>
         )}
       </div>

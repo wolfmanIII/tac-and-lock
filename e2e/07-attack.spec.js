@@ -346,3 +346,86 @@ test.describe('AttackModal — stationary/reaction-drive target bonus', () => {
     expect(isStationary).toBe(true)
   })
 })
+
+// === Planetary surface / atmospheric range modifiers — 2300AD B3 p.56 ========
+
+test.describe('AttackModal — planetary/atmospheric range modifiers', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  /** Inject armed ships, set the target's atmosphericCondition, then open AttackModal. */
+  async function openAttackWithCondition(page, condition) {
+    await page.evaluate(({ shipDefs, condition }) => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      for (const def of shipDefs) {
+        store.getState().addShip(
+          {
+            name: def.name, class: 'Test class', hullPoints: 20, armour: 3,
+            tacSpeed: 4, signature: 2,
+            sensors: { type: 'Basic Military', dm: 0 },
+            computer: { model: 'TL-10', bandwidth: 20 },
+            weapons: def.weapons, software: ['fire_control_1'],
+            crew: [], crewAssignments: {},
+          },
+          def.faction, 'Close',
+        )
+      }
+      const ships = store.getState().ships
+      if (condition) store.getState().updateShip(ships[1].id, { atmosphericCondition: condition })
+      window.__ZUSTAND_UI_STORE__.getState().openModal('attack', { attackerId: ships[0].id })
+    }, { shipDefs: ARMED_SHIPS, condition })
+    await expect(page.getByText('FIRING SOLUTION', { exact: true })).toBeVisible()
+  }
+
+  async function reachStep3(page) {
+    await page.getByText('BEGIN FIRING SOLUTION →').click()
+    await page.getByText('ROLL 2D6').click()
+    await page.getByText('NEXT → PILOT').click()
+    await page.getByText('ROLL 2D6').click()
+    await page.getByText('NEXT → GUNNER').click()
+    await expect(page.getByText('STEP 3 — GUNNER')).toBeVisible()
+  }
+
+  test('no row when target has no atmospheric condition set', async ({ page }) => {
+    await openAttackWithCondition(page, null)
+    await reachStep3(page)
+    await expect(page.getByText('Planetary/atmospheric condition')).not.toBeVisible()
+  })
+
+  test('surface_atmo target shows DM−6 row in Step 3', async ({ page }) => {
+    await openAttackWithCondition(page, 'surface_atmo')
+    await reachStep3(page)
+    const row = page.locator('div').filter({ hasText: 'Planetary/atmospheric condition' }).last()
+    await expect(row).toContainText('-6')
+  })
+
+  test('surface_vacuum target shows DM−4 row in Step 3', async ({ page }) => {
+    await openAttackWithCondition(page, 'surface_vacuum')
+    await reachStep3(page)
+    const row = page.locator('div').filter({ hasText: 'Planetary/atmospheric condition' }).last()
+    await expect(row).toContainText('-4')
+  })
+
+  test('atmo_flight target shows DM−2 row in Step 3', async ({ page }) => {
+    await openAttackWithCondition(page, 'atmo_flight')
+    await reachStep3(page)
+    const row = page.locator('div').filter({ hasText: 'Planetary/atmospheric condition' }).last()
+    await expect(row).toContainText('-2')
+  })
+
+  test('ShipDetailModal — selecting a condition updates ship.atmosphericCondition', async ({ page }) => {
+    await openAttackWithCondition(page, null)
+    const targetId = await page.evaluate(() => window.__ZUSTAND_BATTLE_STORE__.getState().ships[1].id)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('ship-detail', { shipId: id })
+    }, targetId)
+    await expect(page.getByText('PLANETARY / ATMOSPHERIC CONDITION')).toBeVisible()
+    await page.getByRole('combobox').last().selectOption('surface_vacuum')
+    const condition = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id).atmosphericCondition
+    , targetId)
+    expect(condition).toBe('surface_vacuum')
+  })
+})

@@ -89,6 +89,42 @@ export function getWeaponTraitAttackDm(traits = []) {
   return dm
 }
 
+// === RANGE MODIFIERS — planetary/atmospheric targets — 2300AD B3 p.56 ===
+
+/**
+ * Situational range-modifier conditions for a target beyond the Adjacent/Close/Short
+ * range-band table — apply regardless of range band. // 2300AD B3 p.56
+ * @type {Array<{ id: string, label: string, dm: number }>}
+ */
+export const ATMOSPHERIC_CONDITIONS = [
+  { id: 'none',           label: 'None (space)',                       dm: 0 },
+  { id: 'surface_atmo',   label: 'Planetary Surface (with atmosphere)', dm: -6 },
+  { id: 'surface_vacuum', label: 'Planetary Surface (no atmosphere)',   dm: -4 },
+  { id: 'atmo_flight',    label: 'Flight in Atmosphere',                dm: -2 },
+]
+
+/**
+ * Attack roll DM for a target's atmospheric/planetary-surface condition. // 2300AD B3 p.56
+ * @param {object} target — battle-state ship object
+ * @returns {number}
+ */
+export function getAtmosphericTargetDm(target) {
+  const cond = target?.atmosphericCondition ?? 'none'
+  return ATMOSPHERIC_CONDITIONS.find((c) => c.id === cond)?.dm ?? 0
+}
+
+/**
+ * Ortillery trait DM+4 when attacking a target on a planetary surface
+ * (with or without atmosphere — not in atmospheric flight). // 2300AD B3 p.59
+ * @param {string[]} traits
+ * @param {object} target
+ * @returns {number}
+ */
+export function getOrtilleryDm(traits = [], target) {
+  const onSurface = target?.atmosphericCondition === 'surface_atmo' || target?.atmosphericCondition === 'surface_vacuum'
+  return traits.includes('Ortillery') && onSurface ? 4 : 0
+}
+
 /**
  * Point Defence reaction DM — the dedicated intercept action, distinct from the
  * "Point Defence" weapon trait's DM+2 (which applies to normal attacks vs

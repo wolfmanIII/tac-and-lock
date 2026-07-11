@@ -87,6 +87,7 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     activeSensorsOn:         false,
     stealthActive:           false,
     isStationary:            false, // not manoeuvring — DM+2/×2 damage to attackers // 2300AD B3 p.56
+    atmosphericCondition:    'none', // 'none' | 'surface_atmo' | 'surface_vacuum' | 'atmo_flight' — attack range DM // 2300AD B3 p.56
     initiative:              0,
     initiativeBreakdown:     null,
     initiativeBonusNextRound: 0,

@@ -14,7 +14,7 @@ import { SENSOR_TIME_LAG_DM } from '../../data/rangeBands.js'
 import { pairKey }        from '../../utils/rangeBands.js'
 import { getAssignedSkill, getAssignedCharacteristic } from '../../utils/crew.js'
 import { getCharDM, roll2D6 } from '../../utils/dice.js'
-import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, getWeaponTraitAttackDm, computeEffectiveSignature, getEasyTargetAttackDm, getEasyTargetDamageMultiplier } from '../../utils/combat.js'
+import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, getWeaponTraitAttackDm, computeEffectiveSignature, getEasyTargetAttackDm, getEasyTargetDamageMultiplier, getAtmosphericTargetDm, getOrtilleryDm } from '../../utils/combat.js'
 import { DiceInput } from '../forms/DiceInput.jsx'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -252,7 +252,10 @@ export function AttackModal({ payload, onClose }) {
     const commandDm = (attacker.commandBonus ?? []).find((cb) => cb.role === 'gunner_turret')?.dm ?? 0
     // Stationary or reaction-drive target — Firing Solution is trivial // B3 p.56
     const easyTargetDm = getEasyTargetAttackDm(target)
-    const total = gunnerSkill + intDm + fireControlDm + rangeDm + step2CarryEffect + evasionDm + weaponTraitDm + jammerPenalty + commandDm + captainAssistDm + easyTargetDm
+    // Planetary surface / atmospheric flight range modifiers, and Ortillery vs. surface targets // B3 p.56, p.59
+    const atmosphericDm = getAtmosphericTargetDm(target)
+    const ortilleryDm   = getOrtilleryDm(weapon.traits, target)
+    const total = gunnerSkill + intDm + fireControlDm + rangeDm + step2CarryEffect + evasionDm + weaponTraitDm + jammerPenalty + commandDm + captainAssistDm + easyTargetDm + atmosphericDm + ortilleryDm
     return {
       rows: [
         ['Gunner skill',      gunnerSkill],
@@ -266,6 +269,8 @@ export function AttackModal({ payload, onClose }) {
         ...(commandDm     !== 0 ? [['Command (Captain)', commandDm]] : []),
         ...(captainAssistDm !== 0 ? [['Tactics assist',  captainAssistDm]] : []),
         ...(easyTargetDm  !== 0 ? [['Stationary/reaction-drive target', easyTargetDm]] : []),
+        ...(atmosphericDm !== 0 ? [['Planetary/atmospheric condition', atmosphericDm]] : []),
+        ...(ortilleryDm   !== 0 ? [['Ortillery',         ortilleryDm]] : []),
       ],
       total,
     }

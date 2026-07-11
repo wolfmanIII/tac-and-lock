@@ -81,6 +81,16 @@ Non esiste una tabella di "costo TAC Speed per fascia" nel testo — il moviment
 
 Il campo `rangeDm` in `data/weapons.js` codifica per ogni arma: DM ottimale alla sua Range massima, penalità secondo questa tabella oltre.
 
+Condizioni situazionali (indipendenti dalla fascia, si applicano sempre) — `ship.atmosphericCondition` via `getAtmosphericTargetDm()` in `utils/combat.js`, toggle GM in ShipDetailModal:
+
+| Condizione bersaglio | Attack roll DM |
+| --- | --- |
+| Superficie planetaria (con atmosfera) | −6 |
+| Superficie planetaria (senza atmosfera) | −4 |
+| In volo atmosferico | −2 |
+
+Il trait **Ortillery** (DM+4 contro bersagli su superficie planetaria, con o senza atmosfera — non in volo) è implementato in `getOrtilleryDm(traits, target)`.
+
 ### Sensor Time-lag (sensori) — 2300AD B3 p.47
 
 Usato per tutti i check Electronics (sensors), incluso lo step 1 della Firing Solution. Si somma (non si sostituisce) ai DM di qualità sensori.

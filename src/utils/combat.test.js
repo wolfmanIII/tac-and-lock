@@ -22,6 +22,9 @@ import {
   isEasyTarget,
   getEasyTargetAttackDm,
   getEasyTargetDamageMultiplier,
+  getAtmosphericTargetDm,
+  getOrtilleryDm,
+  ATMOSPHERIC_CONDITIONS,
 } from './combat.js'
 
 // === parseDiceNotation ===
@@ -650,5 +653,58 @@ describe('isEasyTarget / getEasyTargetAttackDm / getEasyTargetDamageMultiplier',
   it('handles a missing/undefined target gracefully', () => {
     expect(isEasyTarget(undefined)).toBe(false)
     expect(getEasyTargetAttackDm(null)).toBe(0)
+  })
+})
+
+// === Planetary surface / atmospheric range modifiers — 2300AD B3 p.56, p.59 ===
+
+describe('getAtmosphericTargetDm', () => {
+  it('defaults to 0 DM when atmosphericCondition is missing or "none"', () => {
+    expect(getAtmosphericTargetDm({})).toBe(0)
+    expect(getAtmosphericTargetDm({ atmosphericCondition: 'none' })).toBe(0)
+  })
+
+  it('Planetary Surface (with atmosphere) → DM−6', () => {
+    expect(getAtmosphericTargetDm({ atmosphericCondition: 'surface_atmo' })).toBe(-6)
+  })
+
+  it('Planetary Surface (no atmosphere) → DM−4', () => {
+    expect(getAtmosphericTargetDm({ atmosphericCondition: 'surface_vacuum' })).toBe(-4)
+  })
+
+  it('Flight in Atmosphere → DM−2', () => {
+    expect(getAtmosphericTargetDm({ atmosphericCondition: 'atmo_flight' })).toBe(-2)
+  })
+
+  it('handles a missing/undefined target gracefully', () => {
+    expect(getAtmosphericTargetDm(undefined)).toBe(0)
+  })
+
+  it('ATMOSPHERIC_CONDITIONS has exactly the 4 documented entries', () => {
+    expect(ATMOSPHERIC_CONDITIONS.map((c) => c.id).sort()).toEqual(
+      ['atmo_flight', 'none', 'surface_atmo', 'surface_vacuum'].sort(),
+    )
+  })
+})
+
+describe('getOrtilleryDm', () => {
+  it('no Ortillery trait → 0 regardless of target condition', () => {
+    expect(getOrtilleryDm([], { atmosphericCondition: 'surface_atmo' })).toBe(0)
+  })
+
+  it('Ortillery trait vs. surface target (with atmosphere) → DM+4', () => {
+    expect(getOrtilleryDm(['Ortillery'], { atmosphericCondition: 'surface_atmo' })).toBe(4)
+  })
+
+  it('Ortillery trait vs. surface target (no atmosphere) → DM+4', () => {
+    expect(getOrtilleryDm(['Ortillery'], { atmosphericCondition: 'surface_vacuum' })).toBe(4)
+  })
+
+  it('Ortillery trait vs. a target in atmospheric flight (not on the surface) → 0', () => {
+    expect(getOrtilleryDm(['Ortillery'], { atmosphericCondition: 'atmo_flight' })).toBe(0)
+  })
+
+  it('Ortillery trait vs. a target in space → 0', () => {
+    expect(getOrtilleryDm(['Ortillery'], { atmosphericCondition: 'none' })).toBe(0)
   })
 })

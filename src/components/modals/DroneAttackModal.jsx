@@ -20,7 +20,7 @@ import { WEAPONS }        from '../../data/weapons.js'
 import { SENSOR_TIME_LAG_DM } from '../../data/rangeBands.js'
 import { getAssignedSkill, getAssignedCharacteristic } from '../../utils/crew.js'
 import { getCharDM, roll2D6 } from '../../utils/dice.js'
-import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, computeEffectiveSignature, getPointDefenceDm, getEasyTargetAttackDm, getEasyTargetDamageMultiplier } from '../../utils/combat.js'
+import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, computeEffectiveSignature, getPointDefenceDm, getEasyTargetAttackDm, getEasyTargetDamageMultiplier, getAtmosphericTargetDm, getOrtilleryDm } from '../../utils/combat.js'
 import { DiceInput } from '../forms/DiceInput.jsx'
 
 const STEP_PD     = 0
@@ -197,7 +197,10 @@ export function DroneAttackModal({ payload, onClose }) {
     const jammerPenalty = jammer?.ewEffect ?? 0
     // Stationary or reaction-drive target — Firing Solution is trivial // B3 p.56
     const easyTargetDm = getEasyTargetAttackDm(target)
-    const total = fireControlDm + rangeDm + step2CarryEffect + evasionDm + jammerPenalty + easyTargetDm
+    // Planetary surface / atmospheric flight range modifiers, and Ortillery vs. surface targets // B3 p.56, p.59
+    const atmosphericDm = getAtmosphericTargetDm(target)
+    const ortilleryDm   = getOrtilleryDm(weapon.traits, target)
+    const total = fireControlDm + rangeDm + step2CarryEffect + evasionDm + jammerPenalty + easyTargetDm + atmosphericDm + ortilleryDm
     return {
       rows: [
         ['Fire Control', fireControlDm],
@@ -206,6 +209,8 @@ export function DroneAttackModal({ payload, onClose }) {
         ['Evasion penalty', evasionDm],
         ...(jammerPenalty !== 0 ? [['EW jamming', jammerPenalty]] : []),
         ...(easyTargetDm !== 0 ? [['Stationary/reaction-drive target', easyTargetDm]] : []),
+        ...(atmosphericDm !== 0 ? [['Planetary/atmospheric condition', atmosphericDm]] : []),
+        ...(ortilleryDm !== 0 ? [['Ortillery', ortilleryDm]] : []),
       ],
       total,
     }
