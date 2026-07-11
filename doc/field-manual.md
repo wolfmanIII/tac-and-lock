@@ -8,13 +8,13 @@
 
 1. [Overview](#1-overview)
 2. [Dashboard](#2-dashboard)
-3. [Phase Flow](#3-phase-flow)
+3. [Round & Turn Structure](#3-round--turn-structure)
 4. [Setup Phase](#4-setup-phase)
 5. [Initiative](#5-initiative)
-6. [Manoeuvre Step](#6-manoeuvre-step)
-7. [Attack Step — Firing Solution](#7-attack-step--firing-solution)
-8. [Attack Step — Reactions](#8-attack-step--reactions)
-9. [Actions Step — Crew Actions](#9-actions-step--crew-actions)
+6. [Manoeuvre](#6-manoeuvre)
+7. [Attack — Firing Solution](#7-attack--firing-solution)
+8. [Reactions](#8-reactions)
+9. [Crew Actions](#9-crew-actions)
 10. [Critical Hits](#10-critical-hits)
 11. [Drones & Missiles](#11-drones--missiles)
 12. [Boarding](#12-boarding)
@@ -97,19 +97,29 @@ Each profile stores the ship's combat statistics, weapons, sensors, computer, so
 
 ---
 
-## 3. Phase Flow
+## 3. Round & Turn Structure
 
-Each combat round follows this sequence. The HUD shows the current round and phase. Click **NEXT PHASE ⟶** to advance.
+There is no "Manoeuvre Step / Attack Step / Actions Step" cycle in 2300AD — that's a
+Traveller CRB structure 2300AD B3 doesn't use. There are only three **stages**, shown in the HUD:
 
-| Phase | What happens |
+| Stage | What happens |
 | ----- | ----------- |
 | **Setup** | Add ships to the battle (right-click background → Add ship). |
-| **Initiative** | Roll opposed Tactics(naval) check — order fixed for the engagement. |
-| **Manoeuvre** | Each ship's Pilot may attempt an opposed check to approach (Close) or flee (Open). |
-| **Attack** | Each ship in initiative order fires weapons, launches drones, or resolves a drone's own Firing Solution once it reaches Close/Adjacent range. |
-| **Actions** | Each ship in initiative order performs one crew action. |
+| **Initiative** | Roll opposed Tactics(naval) check — order fixed for the entire engagement. |
+| **Combat** | Ships act in initiative order, one ship's turn at a time, round after round. |
 
-At the end of Actions, the round counter increments and the sequence repeats from Manoeuvre.
+During **Combat**, a ship's turn is open-ended. While a ship is the current actor, the GM can
+freely open **Manoeuvre…**, **Attack…**, **Launch Drone…**, or **Crew Action…** for it, in any
+order, as many times as that ship's crew have budget for. Each crew **role** — not the ship as a
+whole — has its own action budget for the round, equal to that crew member's skill level in the
+role's primary skill (Pilot, Gunner, Engineer, etc.). Gunnery is always capped at 1 action per
+round regardless of skill (Fire Weapon / Deploy-Recharge Screens / Point Defence / Operate UTES
+Array share that single use); Pilot and most other roles can act multiple times.
+
+The HUD shows the current actor and each role's remaining budget. When the GM is done with that
+ship's turn — with or without spending every remaining action — click **END SHIP'S TURN ⟶** to
+pass to the next ship in initiative order. Once every ship has had its turn, click
+**NEXT ROUND ⟶** to reset action budgets and start the next round.
 
 ---
 
@@ -138,8 +148,6 @@ The Captain (or lead tactician) of each ship makes an opposed Tactics(naval) che
 The ship with the highest total acts first. In case of a tie, re-roll.
 Initiative order is fixed for the entire engagement.
 
-**Surprise:** a surprised ship cannot act in the first round.
-
 ### How to Roll
 
 Right-click background → **Roll Initiative**. The modal shows all ships.
@@ -152,9 +160,11 @@ Right-click background → **Roll Initiative**. The modal shows all ships.
 
 ---
 
-## 6. Manoeuvre Step
+## 6. Manoeuvre
 
-Each ship's Pilot may attempt to Open (flee) or Close (approach) against one opposing ship — an **opposed Pilot (DEX) check**, adding the ship's TAC Speed as a fixed DM. // 2300AD B3 p.54
+Any time during a ship's turn, its Pilot may attempt to Open (flee) or Close (approach) against
+one opposing ship — an **opposed Pilot (DEX) check**, adding the ship's TAC Speed as a fixed DM.
+// 2300AD B3 p.54
 
 Right-click a ship → **Manoeuvre…**
 
@@ -166,13 +176,16 @@ Right-click a ship → **Manoeuvre…**
 | **APPLY** | On success, the band shifts by the check's Effect in the attempted direction. On failure, the Effect is available for the enemy to close/open instead — the GM decides ("if desired") via a checkbox. |
 | **GM SET** | Override — sets the band directly, no roll. Use for initial placement. |
 
-TAC Speed is a **fixed DM**, never spent or depleted — Pilot can be used multiple times per round (unlike Gunner), so a ship isn't limited to one manoeuvre attempt per round. // 2300AD B3 p.53–54
+TAC Speed is a **fixed DM**, never spent or depleted. Pilot's action budget (skill level) can allow
+multiple manoeuvre attempts in the same round, unlike Gunner which is always capped at 1. // 2300AD B3 p.53–54
 
 ---
 
-## 7. Attack Step — Firing Solution
+## 7. Attack — Firing Solution
 
-Each ship in initiative order may attack. The attack is a **3-step task chain** — each step's positive Effect carries forward as a DM to the next step. // B3 p.56
+Any ship whose turn it is may attack, once per weapon mount per round (Gunnery is hard-capped at
+1 action/round regardless of skill). The attack is a **3-step task chain** — each step's positive
+Effect carries forward as a DM to the next step. // B3 p.56
 
 Right-click a ship → **Attack…**
 
@@ -230,13 +243,15 @@ Net damage is applied to Hull Points.
 
 ---
 
-## 8. Attack Step — Reactions
+## 8. Reactions
 
 The defender can declare reactions before each attack roll.
 
 ### Evade
 
-Declared during the Manoeuvre Step (right-click → Manoeuvre… → EVADE 🎲), not the Attack Step itself — but its effect lasts through the whole round. **Opposed Pilot (DEX) check** against the enemy's own Pilot check (Step 2 of the Firing Solution). // B3 p.54
+Declared via the **Manoeuvre…** modal (right-click → Manoeuvre… → EVADE 🎲) — its effect lasts
+through the whole round, not just the moment it's rolled. **Opposed Pilot (DEX) check** against
+the enemy's own Pilot check (Step 2 of the Firing Solution). // B3 p.54
 
 | Evading pilot's Effect | Effect on all enemy Electronics(sensors) and Gunner checks |
 | ----------------------- | ------------------------------------------------------------ |
@@ -259,9 +274,11 @@ Success destroys that specific drone before it can attack. A PDC-equipped ship c
 
 ---
 
-## 9. Actions Step — Crew Actions
+## 9. Crew Actions
 
-Each ship in initiative order may perform one crew action. Right-click a ship → **Crew Action…**
+Any time during a ship's turn, each crew role may spend its own remaining actions on a crew
+action — right-click a ship → **Crew Action…** The Captain can also spend a Leadership action to
+grant another role +1 action this round (**Issue Order**), distinct from Commands below.
 
 Select the action type, choose applicable target/options, roll (if required), then click **APPLY RESULT**.
 
@@ -269,7 +286,7 @@ Select the action type, choose applicable target/options, roll (if required), th
 
 | Action | Check | Effect |
 | ------ | ----- | ------ |
-| **Commands** | Average (8+) Leadership INT/SOC | Order one crew role. Effect 1–4 → DM+1, Effect 5–6 → DM+2 to their actions. Declared in this round's Actions Step, activates for the *following* round (Manoeuvre + Attack + Actions) — the current round's Manoeuvre/Attack steps have already passed. Auto-applied if targeting `gunner_turret` (Step 3 Gunner check) or `pilot` (Evade roll); for other roles the GM adds it manually. |
+| **Commands** | Routine (8+) Leadership INT/SOC | Order one crew role. Effect 1–4 → DM+1, Effect 5–6 → DM+2 to their actions. Active **immediately, this round** — the Captain acts first among the crew, so a Command issued early in the ship's turn is already available to that role's actions later the same round. Resets at the start of the next round if not re-issued. Auto-applied if targeting `gunner_turret` (Step 3 Gunner check) or `pilot` (Evade roll); for other roles the GM adds it manually. |
 | **Tactics Assist** | Difficult (10+) Tactics(naval) INT | Optional inline roll inside the Attack modal's Step 3 — adds its Effect to that single Gunner check only. Distinct from Commands, stacks with it. |
 
 ### Engineer
@@ -289,9 +306,13 @@ Select the action type, choose applicable target/options, roll (if required), th
 
 ### Gunner
 
-Point Defence moved to a reaction inside the Drone Attack modal — see §8. It is no longer a general Actions Step crew action, since it must be declared against one specific incoming drone, not chosen freely from the Actions menu. Gunner has no other Actions Step action.
+Point Defence is a reaction inside the Drone Attack modal — see §8. It is not a Crew Action menu
+entry, since it must be declared against one specific incoming drone, not chosen freely. Gunner
+has no other Crew Action beyond Fire Weapon / Deploy-Recharge Screens / Point Defence / Operate
+UTES Array, all sharing the same single Gunnery action per round.
 
-Evasion (opposed Pilot check, B3 p.55) is resolved directly in the Manoeuvre Step's **Manoeuvre…** modal (see §6/§8), not as an Actions Step crew action — Pilot has no entry in this menu.
+Evasion (opposed Pilot check, B3 p.55) is resolved directly in the **Manoeuvre…** modal (see
+§6/§8), not as a Crew Action — Pilot has no entry in this menu.
 
 ### Mechanic / Engineer
 
@@ -381,7 +402,7 @@ Damage is rolled the same way as a normal weapon hit (Effect does **not** add to
 ## 12. Boarding
 
 Boarding resolves in **one opposed roll per round**, continuing until one side wins or retreats.
-Only at **Adjacent range** during the Actions Step.
+Only at **Adjacent range**, spent from the Marines' own action budget.
 
 ### Attacker's Roll (Boarding Action)
 
