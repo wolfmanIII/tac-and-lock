@@ -119,7 +119,7 @@ Può esserci **un solo Pilot e un solo Captain**; tutti gli altri ruoli ammetton
 
 ---
 
-## 5. Step 1 — Manoeuvre Step
+## 5. Movimento e Manovra
 
 Ogni nave (in ordine di Iniziativa) distribuisce il suo **TAC Speed** tra:
 
@@ -129,7 +129,7 @@ Ogni nave (in ordine di Iniziativa) distribuisce il suo **TAC Speed** tra:
 
 ---
 
-## 6. Step 2 — Attack Step
+## 6. Firing Solution (Attacco)
 
 ### Firing Solution (Task Chain) — 2300AD B3 p.56
 
@@ -555,9 +555,9 @@ Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). Tirare sul
 - Successo: rimuove un hazard scelto dalla lista. Effect 4+: il pericolo è **soppresso per 1D round** (GM narrazione; rimane nella lista con tag "soppresso").
 - Fallimento: nessun effetto — il pericolo continua.
 
-### Boarding Action — Marine
+### Boarding Action — Marine // Trav2022 CRB p.175 (richiamato da 2300AD B3 p.57)
 
-- Solo a **Adjacent range**, durante l'Actions Step
+- Solo a **Adjacent range**, in qualsiasi momento del turno della nave (budget azioni Marine)
 - Ogni round di boarding si risolve con un **check opposto** (attacker vs defender).
 - **Formula attaccante**: 2D + Gun Combat/Melee + modificatori.
 - **Formula difensore**: 2D + Gun Combat/Melee + modificatori.
@@ -612,7 +612,7 @@ Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). Tirare sul
 
 - Ogni drone/missile è un'**unità individuale** (`launchDrone`) — lanciarne N significa creare N unità distinte, non un contatore di salvo.
 - Statistiche canoniche (p.61): Ritage-1 (TAC Speed 3, Endurance 6h = 60 round), Ritage-2 (TAC Speed 4, Endurance 4h = 40 round, single-shot), 'Whiskey' (TAC Speed 4, Endurance 2h = 20 round, batteria ripetibile o detonazione single-use).
-- Ogni round, il drone si avvicina di una fascia verso il bersaglio (come il Manoeuvre Step di una nave, semplificato a "chiude sempre alla massima velocità" — vedi `doc/drone-combat-redesign-spec.md` §2.3), finché non raggiunge Close/Adjacent (fascia d'ingaggio) o supera la propria Endurance (va inerte).
+- Ogni round, il drone si avvicina di una fascia verso il bersaglio (come il movimento di una nave, semplificato a "chiude sempre alla massima velocità" — vedi `doc/drone-combat-redesign-spec.md` §2.3), finché non raggiunge Close/Adjacent (fascia d'ingaggio) o supera la propria Endurance (va inerte).
 
 ### Firing Solution del drone — B3 p.55–56
 
