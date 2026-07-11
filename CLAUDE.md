@@ -163,10 +163,45 @@ Qualsiasi hit con Effect ≥ 3 triggerizza questo roll (anche se non penetra l'a
 
 #### Internal Critical Hits
 
-Come Trav2022 CRB p.158–159, con queste sostituzioni:
+Come Trav2022 CRB — B3 p.58 cita "p.158–159", ma in questo progetto (`doc/Traveller 2022 Core
+Rulebook 20-02-2026.pdf`) quel range è contenuto Sensor Operations non correlato: la vera
+Location table è a **p.169** stampata, la Effects table a **p.170** (verificato con estrazione
+diretta del PDF, due volte). Sostituzioni B3, lette con attenzione (facili da invertire):
 
-- J-Drive → **Stutterwarp Drive** (crit riduce TAC Speed di −1 per punto perso, non Thrust)
-- M-Drive → **Reaction Drive** (primo crit: inoperabile; secondo: distrutto)
+- La location "M-Drive" → **Reaction Drive**: **non** usa la tabella Severity di M-Drive — ha un
+  proprio meccanismo **binario** (non una scala 1–6): 1° crit = inoperabile finché non riparato,
+  2° crit = distrutto. Ignora del tutto la formula Effect-5 (vedi sotto) — avanza sempre di +1 per
+  hit, mai di più, anche con un Effect altissimo.
+- La location "J-Drive" → **Stutterwarp Drive**: riusa la tabella Severity di **M-Drive**
+  (Thrust reinterpretato come TAC Speed, −1 per punto perso), non la propria tabella FTL.
+
+Tabella location (2D):
+
+| 2D | Sistema | 2D | Sistema |
+| --- | --- | --- | --- |
+| 2 | Sensors | 8 | **Reaction Drive** |
+| 3 | Power Plant | 9 | Cargo |
+| 4 | Fuel | 10 | **Stutterwarp Drive** |
+| 5 | Weapon | 11 | Crew |
+| 6 | Armour | 12 | Bridge |
+| 7 | Hull | | |
+
+**Severity**: `Severity = Effect dell'attacco − 5`, oppure (se il sistema ha già un critical hit)
+`Severity precedente + 1`, **il maggiore dei due** — mai un semplice +1 fisso come nella build
+precedente. Cap a 6 (2 per Reaction Drive). Implementato in `computeCriticalSeverity(effect,
+prevSeverity, system)` + `getMaxSeverity(system)` in `data/criticalHits.js`, usati da
+`CriticalHitModal.jsx` e `addCriticalHit(shipId, system, effect)` in `battleStore.js` — l'`effect`
+dell'attacco scatenante viene passato nel payload della modale da `AttackModal.jsx`/
+`DroneAttackModal.jsx`. "Computer" (location inventata) e "Stutterwarp (FTL)" (12° sistema
+inventato, duplicato del vero Stutterwarp Drive) sono stati rimossi; "Cargo" (location reale,
+prima assente) è stato aggiunto. Il rientro "6D danno extra ignorando Armatura quando un sistema è
+già a Severity massima" (CRB p.169) resta puramente narrativo (nota informativa nella modale, come
+tutti gli altri `mechanics` di questa tabella — vedi sotto), non applicato automaticamente.
+
+> Nessuno dei campi `mechanics` per Internal Critical Hits o Surface Fixture Damage muta
+> automaticamente lo stato di gioco (DM, TAC Speed, Hull, equipaggio) — sono testo descrittivo che
+> il GM applica manualmente, stesso pattern delle azioni "informative" (`scan_target`,
+> `re_route_power`). Automatizzarli sarebbe un cambio di design più ampio, fuori scope.
 
 ### Weapon Traits — 2300AD B3 p.59
 
@@ -428,7 +463,7 @@ font-mono: 'Share Tech Mono' (body/values)
 - Nessun `position: {q,r}` / `vector: {q,r}` — posizione = `rangeBand` (string, chiave coppia)
 - Nessun `inDogfight` con hex grid — dogfight attivo quando `rangeBand === 'Adjacent' | 'Close'`
 - `jump` → `stutterwarp` (rating motore stutterwarp)
-- Critical tracks: 11 sistemi (aggiunge `stutterwarp`, rimuove `jumpDrive`)
+- Critical tracks: 11 sistemi — `sensors`, `powerPlant`, `fuel`, `weapon`, `armour`, `hull`, `reactionDrive`, `cargo`, `stutterwarpDrive`, `crew`, `bridge` (nessun `jumpDrive`/`mDrive` — vedi Internal Critical Hits sopra)
 
 ## DOCUMENTATION
 

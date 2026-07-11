@@ -334,16 +334,42 @@ Trigger: **Effect ≥ 3** su qualsiasi hit (anche non penetrante). Tirare 2D:
 
 ---
 
-## 10. Internal Critical Hits — CRB p.158–159 + sostituzioni B3
+## 10. Internal Critical Hits — CRB (location p.169 / effetti p.170 in questo progetto) + sostituzioni B3
 
-Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). Tirare sulla tabella CRB p.158–159 con le seguenti sostituzioni obbligatorie:
+Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). B3 p.58 cita "CRB p.158–159",
+ma in `doc/Traveller 2022 Core Rulebook 20-02-2026.pdf` quel range è Sensor Operations non
+correlato — verificato con estrazione diretta del PDF (due volte): la vera Location table è a
+p.169, la Effects table a p.170.
+
+**Tabella location (2D):**
+
+| 2D | Sistema | 2D | Sistema |
+| --- | --- | --- | --- |
+| 2 | Sensors | 8 | **Reaction Drive** |
+| 3 | Power Plant | 9 | Cargo |
+| 4 | Fuel | 10 | **Stutterwarp Drive** |
+| 5 | Weapon | 11 | Crew |
+| 6 | Armour | 12 | Bridge |
+| 7 | Hull | | |
+
+**Sostituzioni B3 p.58** — facili da invertire, lette con attenzione dal testo:
 
 | Sostituzione | Regola B3 |
 | --- | --- |
-| M-Drive → **Reaction Drive** | 1° crit: inoperabile; 2° crit: distrutto |
-| J-Drive → **Stutterwarp Drive** | Ogni crit riduce TAC Speed di −1 per punto di Thrust perso |
+| Location "M-Drive" → **Reaction Drive** | Meccanismo binario proprio, **non** la tabella Severity di M-Drive: 1° crit = inoperabile finché non riparato; 2° crit = distrutto. Ignora la formula Effect-5 sotto — avanza sempre di +1 per hit, mai oltre Severity 2, indipendentemente da quanto alto sia l'Effect. |
+| Location "J-Drive" → **Stutterwarp Drive** | Riusa la tabella Severity di **M-Drive** (Thrust reinterpretato come TAC Speed, −1 per punto perso), non la propria tabella FTL. |
 
-**Effetti per Severity 1–6** (tabella CRB p.158–159, systems aggiornati per 2300AD):
+**Severity**: `Severity = Effect dell'attacco − 5`, oppure (se il sistema ha già subito un
+critical hit) `Severity precedente + 1` — **il maggiore dei due** (CRB p.169). Cap a 6 (2 per
+Reaction Drive, vedi sopra). Implementato in `computeCriticalSeverity(effect, prevSeverity,
+system)` + `getMaxSeverity(system)` in `data/criticalHits.js`.
+
+> Quando un sistema è già a Severity massima, CRB p.169 prevede 6D danno extra (ignorando
+> Armatura) invece di un nuovo critical — non automatizzato, la modale mostra solo una nota
+> informativa per il GM, stesso trattamento degli altri `mechanics` di questa tabella (testo
+> descrittivo, nessuna mutazione automatica di stato — vedi nota generale sotto).
+
+**Effetti per Severity 1–6** (tabella CRB p.170, systems aggiornati per 2300AD):
 
 ### Sensors
 
@@ -411,16 +437,15 @@ Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). Tirare sul
 | 5 | 5D danno aggiuntivo |
 | 6 | 6D danno aggiuntivo |
 
-### Stutterwarp Drive
+### Reaction Drive (location 8 — meccanismo binario, non scala 1-6)
+
+Ignora del tutto la formula Effect-5 — avanza sempre di +1 per hit, mai oltre Severity 2,
+indipendentemente da quanto alto sia l'Effect (`computeCriticalSeverity` lo special-casa).
 
 | Sev | Effetto |
 | --- | --- |
-| 1 | Tutti i check Pilot DM-1 |
-| 2 | Pilot DM-1, TAC Speed -1 |
-| 3 | Pilot DM-1, TAC Speed -1 |
-| 4 | Pilot DM-1, TAC Speed -1 |
-| 5 | TAC Speed a 0 |
-| 6 | TAC Speed a 0, Hull Severity +1 |
+| 1 | Reaction Drive inoperabile finché non riparato |
+| 2 | Reaction Drive distrutto |
 
 ### Cargo
 
@@ -433,16 +458,16 @@ Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). Tirare sul
 | 5 | Tutto il cargo distrutto, Hull Severity +1 |
 | 6 | Tutto il cargo distrutto, Hull Severity +1 |
 
-### Stutterwarp (FTL)
+### Stutterwarp Drive (location 10 — riusa la tabella Severity di M-Drive, Thrust → TAC Speed)
 
 | Sev | Effetto |
 | --- | --- |
-| 1 | Tutti i check stutterwarp DM-2 |
-| 2 | Stutterwarp disabilitato (solo viaggio FTL) |
-| 3 | Stutterwarp distrutto |
-| 4 | Stutterwarp distrutto, Hull Severity +1 |
-| 5 | Stutterwarp distrutto, Hull Severity +1 |
-| 6 | Stutterwarp distrutto, Hull Severity +1 |
+| 1 | Tutti i check per controllare la nave DM-1 |
+| 2 | DM-1; TAC Speed -1 |
+| 3 | DM-1; TAC Speed -1 (come stampato) |
+| 4 | DM-1; TAC Speed -1 (come stampato) |
+| 5 | TAC Speed a 0 |
+| 6 | TAC Speed a 0, Hull Severity +1 |
 
 ### Crew
 
@@ -465,6 +490,10 @@ Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). Tirare sul
 | 4 | Postazione casuale distrutta; occupante prende 1D×1D danno |
 | 5 | Computer distrutto |
 | 6 | Postazione casuale distrutta; occupante prende 1D×1D danno; Hull Severity +1 |
+
+> Nessuno degli effetti sopra (né quelli di Surface Fixture Damage, §9) muta automaticamente lo
+> stato di gioco (DM, TAC Speed, Hull, equipaggio) — sono testo descrittivo che il GM applica
+> manualmente, stesso pattern delle azioni informative (`scan_target`, `re_route_power`, §12).
 
 ---
 
@@ -710,12 +739,13 @@ Le statistiche rilevanti per il combattimento spaziale:
 | Auto-Repair/2 | 11 | 20 | 2 tentativi/round (o DM+2) |
 | Archive | 10 | 0 | Banca dati (incluso) |
 
-### Critical Hit Tracks (6 livelli ciascuna)
+### Critical Hit Tracks (6 livelli ciascuna, 2 per Reaction Drive)
 
-Una nave ha le seguenti track, ognuna con 6 livelli di severità:
+Una nave ha le seguenti track:
 
-- Sensors · Power Plant · Fuel · Weapon · Armour · Hull
-- Stutterwarp Drive · Cargo · Stutterwarp (FTL) · Crew · Bridge
+- Sensors · Power Plant · Fuel · Weapon · Armour · Hull (6 livelli ciascuna)
+- Cargo · Stutterwarp Drive · Crew · Bridge (6 livelli ciascuna)
+- Reaction Drive (2 livelli — inoperabile/distrutto, non una scala 1-6, B3 p.58)
 
 ---
 
