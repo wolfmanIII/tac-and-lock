@@ -24,6 +24,7 @@
  *   tacSpeed?: number,        // drone/fighter only — closing speed // 2300AD B3 p.61
  *   enduranceRounds?: number, // drone/fighter only — max rounds before going inert (hours × 10) // 2300AD B3 p.61
  *   detonationMode?: { damage: string, traits: string[] }, // drone only — optional single-use alt warhead
+ *   isLaser?: boolean,        // engine-only flag: coherent-light weapon (incl. detonation/battery lasers) — Defensive Screens only block laser fire // 2300AD B3 p.60–62
  * }} WeaponDef
  */
 
@@ -49,6 +50,7 @@ export const WEAPONS = {
       Distant:  -8,
     },
     traits: [],
+    isLaser: true,
     notes: 'High damage at short range. Standard turret laser.',
   },
 
@@ -70,6 +72,7 @@ export const WEAPONS = {
       Distant:  -5,
     },
     traits: [],
+    isLaser: true,
     notes: 'Lower damage, longer effective range than pulse laser.',
   },
 
@@ -136,6 +139,7 @@ export const WEAPONS = {
       Distant: -20,
     },
     traits: ['Obsolete', 'Accurate'], // 2300AD B3 p.60
+    isLaser: true,
     notes: 'Darlan LL-88. Older surplus beam laser. Obsolete (−1 dmg/die), Accurate (DM+1 to hit). // 2300AD B3 p.60',
   },
 
@@ -157,6 +161,7 @@ export const WEAPONS = {
       Distant: -20,
     },
     traits: ['Obsolete'],       // 2300AD B3 p.60
+    isLaser: true,
     notes: 'Darlan G2 industrial laser drill. Adjacent range only. Obsolete (−1 dmg/die). // 2300AD B3 p.60',
   },
 
@@ -199,6 +204,7 @@ export const WEAPONS = {
       Distant: -20,
     },
     traits: ['Accurate'],  // 2300AD B3 p.60
+    isLaser: true,
     notes: 'Darlan LL-98. Standard 2300AD beam laser. Retractable surface mount. // 2300AD B3 p.60, p.80',
   },
 
@@ -220,6 +226,7 @@ export const WEAPONS = {
       Distant: -20,
     },
     traits: [],
+    isLaser: true,
     notes: '2300AD fighter primary energy weapon. Fixed retractable mount. // 2300AD B3 p.78',
   },
 
@@ -263,6 +270,7 @@ export const WEAPONS = {
       Distant: -20,
     },
     traits: ['Point Defence', 'Rapid Fire'], // 2300AD B3 p.60
+    isLaser: true,
     notes: 'Quinn Optronics PDC Type 17. Beam laser cluster. DM+2 vs missiles/drones/fighters at Close. // 2300AD B3 p.60',
   },
 
@@ -290,6 +298,9 @@ export const WEAPONS = {
     // above — it is not printed in the Submunitions stat block itself (B3 p.61),
     // which only lists Auto 4, Blast 4, Radiation.
     traits: ['Auto 4', 'Blast 4', 'Radiation', 'Slow'],
+    // "Submunitions are a class of ordnance, nuclear bomb-pumped laser warheads" — B3 p.59:
+    // Grape Shot is itself a detonation laser, so Defensive Screens (laser-only) apply to it.
+    isLaser: true,
     notes: 'French Mitraille submunition dispenser ("Grapeshot"). Guided by a TTA or UTES mount; fire control can be handed off to another vessel. // 2300AD B3 p.59, p.61',
   },
 
@@ -319,6 +330,9 @@ export const WEAPONS = {
     },
     traits: [], // B3 Combat Drones table lists no traits for Ritage-1 // 2300AD B3 p.61
     launchable: true, // tracked as an individual unit via DroneLaunchModal, not a "Smart" B3 trait
+    // "Combat drones are either nuclear bomb-pumped detonation lasers or battery lasers" — B3 p.60;
+    // Ritage-1 is a battery laser array (limited-shot beam laser).
+    isLaser: true,
     notes: 'French remote fighter drone. // 2300AD B3 p.61',
   },
 
@@ -346,6 +360,7 @@ export const WEAPONS = {
     // even then will suffer DM-2 to hit"), not printed in the stat block itself. // B3 p.59, p.61
     traits: ['Blast 6', 'Radiation', 'Slow'],
     launchable: true, // tracked as an individual unit via DroneLaunchModal, not a "Smart" B3 trait
+    isLaser: true, // nuclear bomb-pumped x-ray detonation laser // 2300AD B3 p.60
     notes: 'Nuclear x-ray laser warhead, single-shot — drone is destroyed on use. // 2300AD B3 p.61',
   },
 
@@ -370,6 +385,7 @@ export const WEAPONS = {
     },
     traits: [], // battery laser mode — no traits listed for Whiskey's base entry // 2300AD B3 p.61
     launchable: true, // tracked as an individual unit via DroneLaunchModal, not a "Smart" B3 trait
+    isLaser: true, // both modes (battery laser + detonation laser) are lasers // 2300AD B3 p.60
     // detonationMode: Blast 3, Radiation per the p.61 stat block; 'Slow' (DM-2) added per the
     // general detonation-laser rule ("must be fired at Close range and even then will suffer
     // DM-2 to hit"), not printed in the stat block itself. // B3 p.59, p.61
@@ -416,6 +432,7 @@ export const WEAPONS = {
       Distant: -20,
     },
     traits: ['Advanced', 'Inefficient'], // 2300AD B3 p.60 — NOT 'Extended Range'
+    isLaser: true,
     notes: "Kaefer 'Grumbler' High Power Laser Array. TL12. Advanced (+1 dmg/die), Inefficient (×2 power). // 2300AD B3 p.60, p.110",
   },
 
@@ -459,6 +476,7 @@ export const WEAPONS = {
       Distant: -12,
     },
     traits: ['AP12', 'Auto 3'],
+    isLaser: true, // "Tri-Beamer" — beam weapon, not from the p.60-61 canonical table but named/typed as a laser
     notes: 'Kaefer close-range rapid-fire weapon. Devastating only at Adjacent range. // 2300AD B3 p.110',
   },
 }

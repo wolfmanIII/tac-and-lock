@@ -20,7 +20,7 @@ import { WEAPONS }        from '../../data/weapons.js'
 import { SENSOR_TIME_LAG_DM } from '../../data/rangeBands.js'
 import { getAssignedSkill, getAssignedCharacteristic } from '../../utils/crew.js'
 import { getCharDM, roll2D6 } from '../../utils/dice.js'
-import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, computeEffectiveSignature, getPointDefenceDm, getEasyTargetAttackDm, getEasyTargetDamageMultiplier, getAtmosphericTargetDm, getOrtilleryDm, getFireControlDm } from '../../utils/combat.js'
+import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, computeEffectiveSignature, getPointDefenceDm, getEasyTargetAttackDm, getEasyTargetDamageMultiplier, getAtmosphericTargetDm, getOrtilleryDm, getFireControlDm, getScreenDm } from '../../utils/combat.js'
 import { DiceInput } from '../forms/DiceInput.jsx'
 
 const STEP_PD     = 0
@@ -91,6 +91,7 @@ export function DroneAttackModal({ payload, onClose }) {
   const drones      = useBattleStore((s) => s.drones)
   const applyDamage = useBattleStore((s) => s.applyDamage)
   const detonateDrone  = useBattleStore((s) => s.detonateDrone)
+  const depleteScreens  = useBattleStore((s) => s.depleteScreens)
   const interceptDrone = useBattleStore((s) => s.interceptDrone)
   const { openModal } = useUIStore()
 
@@ -200,7 +201,9 @@ export function DroneAttackModal({ payload, onClose }) {
     // Planetary surface / atmospheric flight range modifiers, and Ortillery vs. surface targets // B3 p.56, p.59
     const atmosphericDm = getAtmosphericTargetDm(target)
     const ortilleryDm   = getOrtilleryDm(weapon.traits, target)
-    const total = fireControlDm + rangeDm + step2CarryEffect + evasionDm + jammerPenalty + easyTargetDm + atmosphericDm + ortilleryDm
+    // Defensive Screens — negative DM equal to target's active Rating, laser weapons only // B3 p.62
+    const screenDm = getScreenDm(target, weapon)
+    const total = fireControlDm + rangeDm + step2CarryEffect + evasionDm + jammerPenalty + easyTargetDm + atmosphericDm + ortilleryDm + screenDm
     return {
       rows: [
         ['Fire Control', fireControlDm],
@@ -211,6 +214,7 @@ export function DroneAttackModal({ payload, onClose }) {
         ...(easyTargetDm !== 0 ? [['Stationary/reaction-drive target', easyTargetDm]] : []),
         ...(atmosphericDm !== 0 ? [['Planetary/atmospheric condition', atmosphericDm]] : []),
         ...(ortilleryDm !== 0 ? [['Ortillery', ortilleryDm]] : []),
+        ...(screenDm !== 0 ? [['Defensive Screens', screenDm]] : []),
       ],
       total,
     }
@@ -238,6 +242,7 @@ export function DroneAttackModal({ payload, onClose }) {
   function applyResults() {
     if (!damageResult || !target) return
     applyDamage(target.id, damageResult.net, owner?.id)
+    depleteScreens(target.id) // any hit depletes screens by 1, regardless of damage // B3 p.62
     detonateDrone(droneId)
     const effect = step3Result?.effect ?? 0
     if (isSurfaceFixtureDamage(effect)) {

@@ -133,11 +133,11 @@ L'attacco è una **catena di check**. Ogni Effect positivo si trasferisce come D
 - Assist Engineer (opzionale): Routine (8+) Engineer (power) **INT** (può aumentare temporaneamente il TAC Speed)
 
 **Step 3 — Gunner**: Difficult (10+) Gunner **INT** — target 10+
-- DM: +Fire Control software rating; +Effect accumulato dagli step 1–2; +weapon trait (Accurate +1, Slow −2)
-- DM aggiuntivi automatici: +`sensorLockDm` (target è sotto Sensor Lock); −`ewEffect` (propria nave è sotto EW jam); +evasione bersaglio (applicata anche allo Step 1, non solo qui — B3 p.54); +`commandBonus` se il Capitano ha dato un Command a `gunner_turret` nel round precedente (§12)
+- DM: +Fire Control software rating (**DM−8 se nessun Fire Control installato**, incluso il point defence — B3 p.62); +Effect accumulato dagli step 1–2; +weapon trait (Accurate +1, Slow −2)
+- DM aggiuntivi automatici: −`ewEffect` (propria nave è sotto EW jam); +evasione bersaglio (applicata anche allo Step 1, non solo qui — B3 p.54); +`commandBonus` se il Capitano ha dato un Command a `gunner_turret` nel round precedente (§12); +2/×2 danno se il bersaglio è stazionario o in reaction drive (§ sotto); DM da condizione planetaria/atmosferica del bersaglio (§ sotto); +4 (Ortillery) se l'arma ha quel trait e il bersaglio è su superficie planetaria; −Rating Defensive Screens del bersaglio, solo armi laser (§ sotto)
 - Assist Captain (opzionale, distinto dal Command): Difficult (10+) Tactics (naval) **INT** — roll inline nello Step 3, il suo Effect si somma solo a quel singolo tiro
 
-> Bersagli stazionari (reaction drive spento, in orbita): DM+2 e **danno doppio**. — B3 p.56
+> Bersagli stazionari o in movimento a reaction drive (non stutterwarp): DM+2 e **danno doppio** — la Firing Solution diventa banale. — B3 p.56
 
 ### DM di distanza per l'attacco — 2300AD B3 p.57
 
@@ -149,6 +149,16 @@ L'attacco è una **catena di check**. Ogni Effect positivo si trasferisce come D
 | Close | +0 |
 | Short | −6 |
 | Medium+ | N/A — nessuna arma da nave standard arriva |
+
+Condizioni situazionali del bersaglio (indipendenti dalla fascia, si applicano sempre):
+
+| Condizione bersaglio | DM all'attacco |
+| --- | --- |
+| Superficie planetaria (con atmosfera) | −6 |
+| Superficie planetaria (senza atmosfera) | −4 |
+| In volo atmosferico | −2 |
+
+Il trait **Ortillery** (DM+4 vs bersagli su superficie planetaria, con o senza atmosfera) si somma a queste condizioni se l'arma lo possiede.
 
 ### Sensor Time-lag — 2300AD B3 p.47
 
@@ -180,6 +190,22 @@ Ogni nave ha una **Signature base** (dal suo stat block B3). È un valore sempre
 | Solar Panels estesi | +2 |
 | Spin Habitat ritirato | −1 |
 | Stealth | −4 |
+
+### Defensive Screens — 2300AD B3 p.55, p.62
+
+Nubi ablative/campi elettromagnetici che disperdono **fasci laser in arrivo** — B3: "Defensive screens help blunt incoming laser fire... absorbing laser fire". **Non funzionano contro particle beam, armi cinetiche, o testate missilistiche/submunition** (queste ultime, però, sono a loro volta classificate come "detonation laser" nucleari — B3 p.59-60 — quindi *sono* soggette agli schermi).
+
+| Rating | TL | Power | DM all'attacco (solo laser) |
+| --- | --- | --- | --- |
+| 1 | 11 | 10 | −1 |
+| 2 | 11 | 20 | −2 |
+| 3 | 12 | 20 | −3 |
+
+- Ogni hit subito (indipendentemente dal danno inflitto) riduce il Rating attivo di 1.
+- **Deploy or Recharge Screens** è una **Gunner Action** (stesso elenco B3 p.55 di Fire Weapon / Point Defence / Operate UTES Array): il gunner quel round o spara **o** dispiega/ricarica lo schermo — non entrambi. Nessun check richiesto.
+- **Deploy** (prima attivazione in battaglia): gratuito, porta il Rating attivo al Rating installato.
+- **Recharge** (dopo che è stato depleto): consuma una reload trasportata, riporta il Rating attivo al Rating installato.
+- Solo uno schermo attivo alla volta (nessuna nave ne ha più di uno installato in questo progetto).
 
 ### Scala danno spacecraft vs ground
 

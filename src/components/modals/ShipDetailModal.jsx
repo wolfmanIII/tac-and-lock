@@ -201,6 +201,20 @@ export function ShipDetailModal({ payload, onClose }) {
         )}
       </div>
 
+      {/* Defensive Screens — Gunner Action equipment, not a Signature modifier // B3 p.62 */}
+      {ship.screenRating > 0 && (
+        <div className="bg-sky-950/30 border border-sky-800/50 rounded px-3 py-2">
+          <p className="text-[10px] font-display text-slate-500 tracking-widest mb-0.5">DEFENSIVE SCREENS</p>
+          <p className="text-sm font-mono font-bold text-sky-400">
+            Rating {ship.screenCurrentRating}/{ship.screenRating}
+            {ship.screenCurrentRating > 0 && ` (DM−${ship.screenCurrentRating} vs. laser attacks)`}
+          </p>
+          <p className="text-[9px] font-mono text-slate-600 mt-0.5">
+            {ship.screenDeployed ? `${ship.screenReloads} reload(s) left` : 'Not yet deployed'} — Deploy/Recharge via Attack Step // 2300AD B3 p.55, p.62
+          </p>
+        </div>
+      )}
+
       {/* Evasion state */}
       {evasionDm !== 0 && (
         <div className="bg-sky-950/30 border border-sky-800/50 rounded px-3 py-2">

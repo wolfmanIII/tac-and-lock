@@ -174,4 +174,19 @@ describe('2300AD canonical weapons', () => {
   it('grape_shot is not launchable (direct-fire Firing Solution weapon, not a tracked drone/missile)', () => {
     expect(WEAPONS.grape_shot.launchable).toBeFalsy()
   })
+
+  // isLaser — Defensive Screens (B3 p.62) only absorb laser fire, not particle beams or kinetic/missile
+  // warheads. Combat drones and submunitions are "nuclear bomb-pumped detonation lasers" per B3 p.59-60,
+  // so they count as laser too.
+  it('laser weapons are flagged isLaser: true', () => {
+    for (const id of ['pulse_laser', 'beam_laser', 'll88', 'darlan_g2', 'll98', 'ea1000', 'anti_missile_laser', 'grumbler', 'grape_shot', 'ritage1', 'ritage2', 'whiskey', 'tri_beamer']) {
+      expect(WEAPONS[id].isLaser).toBe(true)
+    }
+  })
+
+  it('non-laser weapons (particle beam, kinetic, missiles) are not flagged isLaser', () => {
+    for (const id of ['missile_rack', 'particle_barbette', 'allen_bmz50', 'aero12', 'autocannon_25mm', 'kingfisher']) {
+      expect(WEAPONS[id].isLaser).toBeFalsy()
+    }
+  })
 })

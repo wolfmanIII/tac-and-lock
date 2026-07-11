@@ -14,7 +14,7 @@ import { SENSOR_TIME_LAG_DM } from '../../data/rangeBands.js'
 import { pairKey }        from '../../utils/rangeBands.js'
 import { getAssignedSkill, getAssignedCharacteristic } from '../../utils/crew.js'
 import { getCharDM, roll2D6 } from '../../utils/dice.js'
-import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, getWeaponTraitAttackDm, computeEffectiveSignature, getEasyTargetAttackDm, getEasyTargetDamageMultiplier, getAtmosphericTargetDm, getOrtilleryDm, getFireControlDm } from '../../utils/combat.js'
+import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, getWeaponTraitAttackDm, computeEffectiveSignature, getEasyTargetAttackDm, getEasyTargetDamageMultiplier, getAtmosphericTargetDm, getOrtilleryDm, getFireControlDm, getScreenDm } from '../../utils/combat.js'
 import { DiceInput } from '../forms/DiceInput.jsx'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -134,6 +134,9 @@ export function AttackModal({ payload, onClose }) {
   const rangeBands     = useBattleStore((s) => s.rangeBands)
   const applyDamage    = useBattleStore((s) => s.applyDamage)
   const addCritical    = useBattleStore((s) => s.addCriticalHit)
+  const depleteScreens  = useBattleStore((s) => s.depleteScreens)
+  const deployScreens   = useBattleStore((s) => s.deployScreens)
+  const rechargeScreens = useBattleStore((s) => s.rechargeScreens)
   const { openModal }  = useUIStore()
 
   const attacker = ships.find((s) => s.id === attackerId) ?? ships[0]
@@ -247,7 +250,9 @@ export function AttackModal({ payload, onClose }) {
     // Planetary surface / atmospheric flight range modifiers, and Ortillery vs. surface targets // B3 p.56, p.59
     const atmosphericDm = getAtmosphericTargetDm(target)
     const ortilleryDm   = getOrtilleryDm(weapon.traits, target)
-    const total = gunnerSkill + intDm + fireControlDm + rangeDm + step2CarryEffect + evasionDm + weaponTraitDm + jammerPenalty + commandDm + captainAssistDm + easyTargetDm + atmosphericDm + ortilleryDm
+    // Defensive Screens — negative DM equal to target's active Rating, laser weapons only // B3 p.62
+    const screenDm = getScreenDm(target, weapon)
+    const total = gunnerSkill + intDm + fireControlDm + rangeDm + step2CarryEffect + evasionDm + weaponTraitDm + jammerPenalty + commandDm + captainAssistDm + easyTargetDm + atmosphericDm + ortilleryDm + screenDm
     return {
       rows: [
         ['Gunner skill',      gunnerSkill],
@@ -263,6 +268,7 @@ export function AttackModal({ payload, onClose }) {
         ...(easyTargetDm  !== 0 ? [['Stationary/reaction-drive target', easyTargetDm]] : []),
         ...(atmosphericDm !== 0 ? [['Planetary/atmospheric condition', atmosphericDm]] : []),
         ...(ortilleryDm   !== 0 ? [['Ortillery',         ortilleryDm]] : []),
+        ...(screenDm      !== 0 ? [['Defensive Screens', screenDm]] : []),
       ],
       total,
     }
@@ -330,6 +336,7 @@ export function AttackModal({ payload, onClose }) {
   function applyResults() {
     if (!damageResult || !target || applied) return
     applyDamage(target.id, damageResult.net, attacker?.id)
+    depleteScreens(target.id) // any hit depletes screens by 1, regardless of damage // B3 p.62
     const effect = step3Result?.effect ?? 0
     if (isSurfaceFixtureDamage(effect)) {
       openModal('critical-hit', { shipId: target.id, mode: 'surface', effect })
@@ -420,6 +427,37 @@ export function AttackModal({ payload, onClose }) {
             </p>
           )}
         </div>
+
+        {/* Defensive Screens — Gunner Action, alternative to firing this round // B3 p.55, p.62 */}
+        {attacker.screenRating > 0 && (
+          <div className="bg-sky-950/20 border border-sky-900/50 rounded p-3 space-y-2">
+            <p className="font-mono text-[10px] text-sky-400 tracking-widest uppercase">
+              Defensive Screens (Gunner Action — instead of firing this round)
+            </p>
+            <p className="font-mono text-[10px] text-slate-400">
+              Rating {attacker.screenCurrentRating}/{attacker.screenRating} · {attacker.screenReloads} reload(s) left
+              {!attacker.screenDeployed && <span className="text-amber-400"> · not yet deployed</span>}
+            </p>
+            <div className="flex gap-2">
+              {!attacker.screenDeployed && (
+                <button
+                  onClick={() => { deployScreens(attacker.id); onClose() }}
+                  className="flex-1 py-1.5 text-xs font-display tracking-widest text-sky-400 border border-sky-800 hover:bg-sky-900/20 rounded transition-colors"
+                >
+                  DEPLOY SCREENS
+                </button>
+              )}
+              {attacker.screenDeployed && attacker.screenCurrentRating < attacker.screenRating && attacker.screenReloads > 0 && (
+                <button
+                  onClick={() => { rechargeScreens(attacker.id); onClose() }}
+                  className="flex-1 py-1.5 text-xs font-display tracking-widest text-sky-400 border border-sky-800 hover:bg-sky-900/20 rounded transition-colors"
+                >
+                  RECHARGE SCREENS (−1 reload)
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Evasion DM — auto-read from target.evasionDm (set by ManoeuvreModal's opposed Pilot check), overridable */}
         <div className="space-y-1">

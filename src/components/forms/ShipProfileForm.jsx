@@ -12,7 +12,7 @@ import { FACTIONS } from '../../data/factions.js'
 import { SOFTWARE, SOFTWARE_IDS } from '../../data/software.js'
 import { blankCrewMember } from '../../utils/crew.js'
 import { blankCriticalTracks, blankSurfaceFixtureTracks } from '../../data/defaultProfiles.js'
-import { REACTION_DRIVE_TYPES } from '../../utils/combat.js'
+import { REACTION_DRIVE_TYPES, SCREEN_RATINGS } from '../../utils/combat.js'
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -30,6 +30,8 @@ function blankProfile() {
     hullPoints: 20, currentHull: 20, armour: 0, tacSpeed: 1,
     signature: 2,   // base Signature for enemy Electronics(sensors) // 2300AD B3 p.57
     reactionDriveType: 'rocket', // rocket/thruster/nuclear — Signature DM while active // 2300AD B3 p.57
+    screenRating: 0,    // Defensive Screens installed Rating, 0 = none fitted // 2300AD B3 p.62
+    screenReloads: 0,   // spare screen reloads carried
     sensors: { type: '', dm: 0 },
     computer: { model: '', bandwidth: 0 },
     weapons: [], software: [], crew: [],
@@ -240,6 +242,16 @@ export function ShipProfileForm({ profileId, onSave, onCancel }) {
               </select>
             </label>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex flex-col gap-0.5">
+              <span className={LABEL_CLS}>DEFENSIVE SCREENS</span>
+              <select value={form.screenRating ?? 0} onChange={(e) => set('screenRating', Number(e.target.value))} className={FIELD_CLS}>
+                {SCREEN_RATINGS.map((r) => <option key={r.rating} value={r.rating}>{r.label}</option>)}
+              </select>
+            </label>
+            <NumField label="SCREEN RELOADS CARRIED" value={form.screenReloads ?? 0} onChange={(v) => set('screenReloads', v)} min={0} />
+          </div>
+          <p className="font-mono text-[9px] text-slate-500">Defensive Screens: −DM to attack rolls (laser weapons only) equal to active Rating; depletes 1/hit, recharge with a reload // 2300AD B3 p.62</p>
         </section>
 
         {/* Sensors + Computer */}

@@ -468,3 +468,112 @@ test.describe('AttackModal — DM-8 penalty for weapons without fire control', (
     await expect(row).toContainText('-8')
   })
 })
+
+// === Defensive Screens — 2300AD B3 p.55, p.62 ==================================
+
+test.describe('AttackModal — Defensive Screens', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  /** Inject armed ships; ships[1] (target) gets the given screen fields. */
+  async function setupShipsWithTargetScreens(page, screenFields = {}) {
+    return page.evaluate(({ shipDefs, screenFields }) => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      for (const def of shipDefs) {
+        store.getState().addShip(
+          {
+            name: def.name, class: 'Test class', hullPoints: 20, armour: 0,
+            tacSpeed: 4, signature: 2,
+            sensors: { type: 'Basic Military', dm: 0 },
+            computer: { model: 'TL-10', bandwidth: 20 },
+            weapons: def.weapons, software: ['fire_control_1'],
+            crew: [], crewAssignments: {},
+          },
+          def.faction, 'Close',
+        )
+      }
+      const ships = store.getState().ships
+      if (Object.keys(screenFields).length) store.getState().updateShip(ships[1].id, screenFields)
+      return { id0: ships[0].id, id1: ships[1].id }
+    }, { shipDefs: ARMED_SHIPS, screenFields })
+  }
+
+  async function reachStep3(page) {
+    await page.getByText('BEGIN FIRING SOLUTION →').click()
+    await page.getByText('ROLL 2D6').click()
+    await page.getByText('NEXT → PILOT').click()
+    await page.getByText('ROLL 2D6').click()
+    await page.getByText('NEXT → GUNNER').click()
+    await expect(page.getByText('STEP 3 — GUNNER')).toBeVisible()
+  }
+
+  test('no Defensive Screens row when target has no active screen', async ({ page }) => {
+    const { id0 } = await setupShipsWithTargetScreens(page)
+    await page.evaluate((id) => window.__ZUSTAND_UI_STORE__.getState().openModal('attack', { attackerId: id }), id0)
+    await reachStep3(page)
+    await expect(page.getByText('Defensive Screens')).not.toBeVisible()
+  })
+
+  test('Step 3 shows Defensive Screens DM equal to target\'s active Rating (laser weapon ll98)', async ({ page }) => {
+    const { id0 } = await setupShipsWithTargetScreens(page, { screenRating: 2, screenDeployed: true, screenCurrentRating: 2 })
+    await page.evaluate((id) => window.__ZUSTAND_UI_STORE__.getState().openModal('attack', { attackerId: id }), id0)
+    await reachStep3(page)
+    const row = page.locator('div').filter({ hasText: 'Defensive Screens' }).last()
+    await expect(row).toContainText('-2')
+  })
+
+  test('a hit on a screened target depletes the screen by 1', async ({ page }) => {
+    const { id0, id1 } = await setupShipsWithTargetScreens(page, { screenRating: 3, screenDeployed: true, screenCurrentRating: 3 })
+    await page.evaluate((id) => window.__ZUSTAND_UI_STORE__.getState().openModal('attack', { attackerId: id }), id0)
+    await reachStep3(page)
+    await page.getByText('enter manually').last().click()
+    await page.locator('input[type="number"]').nth(0).fill('6')
+    await page.locator('input[type="number"]').nth(1).fill('6')
+    await page.getByText('APPLY DAMAGE').click()
+    const rating = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id).screenCurrentRating
+    , id1)
+    expect(rating).toBe(2)
+  })
+
+  test('SETUP screen shows DEPLOY SCREENS for an undeployed screen-equipped ship', async ({ page }) => {
+    const { id0 } = await setupShipsWithTargetScreens(page)
+    await page.evaluate((id) => window.__ZUSTAND_BATTLE_STORE__.getState().updateShip(id, { screenRating: 1 }), id0)
+    await page.evaluate((id) => window.__ZUSTAND_UI_STORE__.getState().openModal('attack', { attackerId: id }), id0)
+    await expect(page.getByText('DEPLOY SCREENS')).toBeVisible()
+    await page.getByText('DEPLOY SCREENS').click()
+    const ship = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
+    , id0)
+    expect(ship.screenDeployed).toBe(true)
+    expect(ship.screenCurrentRating).toBe(1)
+  })
+
+  test('SETUP screen shows RECHARGE SCREENS when deployed, depleted, and reloads remain', async ({ page }) => {
+    const { id0 } = await setupShipsWithTargetScreens(page)
+    await page.evaluate((id) => window.__ZUSTAND_BATTLE_STORE__.getState().updateShip(id, {
+      screenRating: 3, screenDeployed: true, screenCurrentRating: 1, screenReloads: 2,
+    }), id0)
+    await page.evaluate((id) => window.__ZUSTAND_UI_STORE__.getState().openModal('attack', { attackerId: id }), id0)
+    await expect(page.getByText('RECHARGE SCREENS (−1 reload)')).toBeVisible()
+    await page.getByText('RECHARGE SCREENS (−1 reload)').click()
+    const ship = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
+    , id0)
+    expect(ship.screenCurrentRating).toBe(3)
+    expect(ship.screenReloads).toBe(1)
+  })
+
+  test('RECHARGE SCREENS is absent when no reloads remain', async ({ page }) => {
+    const { id0 } = await setupShipsWithTargetScreens(page)
+    await page.evaluate((id) => window.__ZUSTAND_BATTLE_STORE__.getState().updateShip(id, {
+      screenRating: 3, screenDeployed: true, screenCurrentRating: 1, screenReloads: 0,
+    }), id0)
+    await page.evaluate((id) => window.__ZUSTAND_UI_STORE__.getState().openModal('attack', { attackerId: id }), id0)
+    await expect(page.getByText('Defensive Screens (Gunner Action')).toBeVisible()
+    await expect(page.getByText('RECHARGE SCREENS', { exact: false })).not.toBeVisible()
+    await expect(page.getByText('DEPLOY SCREENS')).not.toBeVisible()
+  })
+})

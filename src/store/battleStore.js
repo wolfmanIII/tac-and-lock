@@ -88,6 +88,10 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     stealthActive:           false,
     isStationary:            false, // not manoeuvring — DM+2/×2 damage to attackers // 2300AD B3 p.56
     atmosphericCondition:    'none', // 'none' | 'surface_atmo' | 'surface_vacuum' | 'atmo_flight' — attack range DM // 2300AD B3 p.56
+    screenRating:            profile.screenRating ?? 0,  // installed max Rating (0 = no screens fitted) // 2300AD B3 p.62
+    screenReloads:           profile.screenReloads ?? 0, // spare reloads carried, consumed by rechargeScreens
+    screenDeployed:          false, // has this ship activated its screen at all this battle
+    screenCurrentRating:     0,     // active Rating right now (0 until deployed, depletes on hits taken)
     initiative:              0,
     initiativeBreakdown:     null,
     initiativeBonusNextRound: 0,
@@ -640,6 +644,77 @@ export const useBattleStore = create((set, get) => {
             round, phase, type: 'action', shipId,
             message: `🔧 ${ship.profile.name}: repaired ${amount} hull (${newHull}/${ship.hullPoints}).`,
           })],
+        }))
+      },
+    ),
+
+    /**
+     * Deploy Defensive Screens for the first time this battle — free, no reload
+     * consumed. A Gunner Action, mutually exclusive with firing that round // 2300AD B3 p.55, p.62
+     * (the GM advances the turn via advanceActor() same as for a normal attack).
+     * @param {string} shipId
+     */
+    deployScreens: wh(
+      (shipId) => {
+        const ship = get().ships.find((s) => s.id === shipId)
+        return !!(ship && ship.screenRating > 0 && !ship.screenDeployed)
+      },
+      (shipId) => {
+        const { round, phase } = get()
+        const ship = get().ships.find((s) => s.id === shipId)
+        set((s) => ({
+          ships: s.ships.map((sh) => sh.id !== shipId ? sh : {
+            ...sh, screenDeployed: true, screenCurrentRating: sh.screenRating,
+          }),
+          log: [...s.log, makeLogEntry({
+            round, phase, type: 'action', shipId,
+            message: `🛡️ ${ship.profile.name}: Defensive Screens deployed (Rating ${ship.screenRating}).`,
+          })],
+        }))
+      },
+    ),
+
+    /**
+     * Recharge depleted Defensive Screens using a carried reload — a Gunner
+     * Action, mutually exclusive with firing that round. // 2300AD B3 p.55, p.62
+     * @param {string} shipId
+     */
+    rechargeScreens: wh(
+      (shipId) => {
+        const ship = get().ships.find((s) => s.id === shipId)
+        return !!(ship && ship.screenDeployed && ship.screenCurrentRating < ship.screenRating && ship.screenReloads > 0)
+      },
+      (shipId) => {
+        const { round, phase } = get()
+        const ship = get().ships.find((s) => s.id === shipId)
+        const newReloads = ship.screenReloads - 1
+        set((s) => ({
+          ships: s.ships.map((sh) => sh.id !== shipId ? sh : {
+            ...sh, screenCurrentRating: sh.screenRating, screenReloads: newReloads,
+          }),
+          log: [...s.log, makeLogEntry({
+            round, phase, type: 'action', shipId,
+            message: `🛡️ ${ship.profile.name}: Defensive Screens recharged to Rating ${ship.screenRating} (${newReloads} reload(s) left).`,
+          })],
+        }))
+      },
+    ),
+
+    /**
+     * Deplete a ship's active screen by 1 — triggered by any hit against it,
+     * regardless of damage dealt. // 2300AD B3 p.62
+     * @param {string} shipId
+     */
+    depleteScreens: wh(
+      (shipId) => {
+        const ship = get().ships.find((s) => s.id === shipId)
+        return !!(ship && ship.screenCurrentRating > 0)
+      },
+      (shipId) => {
+        set((s) => ({
+          ships: s.ships.map((sh) => sh.id !== shipId ? sh : {
+            ...sh, screenCurrentRating: sh.screenCurrentRating - 1,
+          }),
         }))
       },
     ),

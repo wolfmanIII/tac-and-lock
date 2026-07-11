@@ -405,6 +405,36 @@ export function getEasyTargetDamageMultiplier(target) {
   return isEasyTarget(target) ? 2 : 1
 }
 
+// === DEFENSIVE SCREENS — 2300AD B3 p.55, p.62 ===
+
+/**
+ * Screen Rating → TL/Power, for reference/UI (ship-profile equipment choice). // 2300AD B3 p.62
+ * @type {Array<{ rating: number, label: string }>}
+ */
+export const SCREEN_RATINGS = [
+  { rating: 0, label: 'None' },
+  { rating: 1, label: 'Rating 1 (TL11, Power 10)' },
+  { rating: 2, label: 'Rating 2 (TL11, Power 20)' },
+  { rating: 3, label: 'Rating 3 (TL12, Power 20)' },
+]
+
+/**
+ * Attack roll DM from a target's active Defensive Screens: −(current Rating),
+ * applied only against laser weapons. // 2300AD B3 p.62
+ * "Defensive screens help blunt incoming laser fire... Screens provide a negative
+ * DM on attack rolls made against screened craft equal to the Rating of the screen."
+ * The screen technology (ablative particle cloud dispersing coherent light) does not
+ * extend to particle beams, kinetic weapons, or missile/submunition warheads.
+ * @param {object} target — battle-state ship object
+ * @param {{ isLaser?: boolean }} weapon
+ * @returns {number}
+ */
+export function getScreenDm(target, weapon) {
+  if (!weapon?.isLaser) return 0
+  const rating = target?.screenCurrentRating ?? 0
+  return rating > 0 ? -rating : 0
+}
+
 // === HELPERS ===
 
 /**

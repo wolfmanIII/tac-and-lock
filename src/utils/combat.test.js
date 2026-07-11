@@ -26,6 +26,8 @@ import {
   getOrtilleryDm,
   ATMOSPHERIC_CONDITIONS,
   getFireControlDm,
+  getScreenDm,
+  SCREEN_RATINGS,
 } from './combat.js'
 
 // === parseDiceNotation ===
@@ -732,5 +734,31 @@ describe('getFireControlDm', () => {
 
   it('other unrelated software present, no fire control → still DM-8', () => {
     expect(getFireControlDm(['auto_repair_1', 'stutterwarp_control'])).toBe(-8)
+  })
+})
+
+// === Defensive Screens — 2300AD B3 p.55, p.62 ===
+
+describe('getScreenDm', () => {
+  it('laser weapon vs a screened target → −screenCurrentRating', () => {
+    expect(getScreenDm({ screenCurrentRating: 2 }, { isLaser: true })).toBe(-2)
+  })
+
+  it('laser weapon vs an unscreened target (Rating 0) → 0', () => {
+    expect(getScreenDm({ screenCurrentRating: 0 }, { isLaser: true })).toBe(0)
+  })
+
+  it('non-laser weapon (particle beam, kinetic, missile) is unaffected by screens', () => {
+    expect(getScreenDm({ screenCurrentRating: 3 }, { isLaser: false })).toBe(0)
+    expect(getScreenDm({ screenCurrentRating: 3 }, {})).toBe(0)
+  })
+
+  it('handles missing target/weapon gracefully', () => {
+    expect(getScreenDm(undefined, { isLaser: true })).toBe(0)
+    expect(getScreenDm({ screenCurrentRating: 2 }, undefined)).toBe(0)
+  })
+
+  it('SCREEN_RATINGS has the 4 documented entries (0 = None, 1-3 installed)', () => {
+    expect(SCREEN_RATINGS.map((r) => r.rating)).toEqual([0, 1, 2, 3])
   })
 })

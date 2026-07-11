@@ -185,6 +185,7 @@ export function HelpScreen({ onBack } = {}) {
             <KV k="Signature"        v="Base EM signature. Modified dynamically in battle." />
             <KV k="Sensors"          v="Type (Basic Military / Improved / Advanced) + DM." />
             <KV k="Software"         v="Fire Control/1–3, Auto-Repair/1–2, etc." />
+            <KV k="Defensive Screens" v="Optional Rating 1–3 + carried reloads — blunts incoming laser fire only, see Attack Step below." />
             <KV k="Crew"             v="Named members with Tactics, Pilot, Engineer, Gunner, Electronics skill ratings." />
           </Sub>
         </Section>
@@ -253,6 +254,12 @@ export function HelpScreen({ onBack } = {}) {
           <p>Each ship in initiative order may attack. The attack is a <span className="text-slate-200">3-step task chain</span> — positive Effect from each step carries forward as a DM to the next. // B3 p.56</p>
           <p>Right-click a ship → <span className="text-slate-200">Attack…</span></p>
 
+          <Sub title="GUNNER ACTIONS (choose one per round) // B3 p.55">
+            <KV k="Fire Weapon"              v="The 3-step Firing Solution below." />
+            <KV k="Point Defence"            v="Intercept one incoming drone/missile — see Reactions below." />
+            <KV k="Deploy or Recharge Screens" v="If the ship has Defensive Screens fitted — no check required, but uses this gunner's action instead of firing. See DEFENSIVE SCREENS below." />
+          </Sub>
+
           <Sub title="STEP 1 — SENSOR OPERATOR (Very Difficult 12+) Electronics(sensors) INT">
             <Table
               headers={['DM source', 'Value']}
@@ -280,19 +287,31 @@ export function HelpScreen({ onBack } = {}) {
             <Table
               headers={['DM source', 'Value']}
               rows={[
-                ['Fire Control software', '+1 per level (FC/1 = +1, /2 = +2, /3 = +3)'],
+                ['Fire Control software', '+1 per level (FC/1 = +1, /2 = +2, /3 = +3) — DM−8 if none installed at all, including point defence // B3 p.62'],
                 ['Effect from Step 2',    'Positive Effect carries forward'],
                 ['EW jamming',            '−1 (Effect 1–4) / −2 (Effect 5–6) / +1 if jammer badly failed (Effect ≤−5)'],
                 ['Command (Captain)',     '+1 or +2 if targeting gunner_turret this round'],
                 ['Weapon trait Accurate', '+1'],
                 ['Weapon trait Slow',     '−2'],
+                ['Weapon trait Ortillery', '+4 vs a target on a planetary surface'],
                 ['Evasion (opposed Pilot)', '−1/−2, or +1 vs a badly-failed evasion — applies to both Sensor and Gunner checks'],
+                ['Stationary / reaction-drive target', '+2 (and double damage — see note below)'],
+                ['Planetary/atmospheric condition', 'Surface w/ atmosphere −6, surface no atmosphere −4, atmospheric flight −2'],
+                ['Defensive Screens (target)', '−1 to −3 (target\'s active Rating) — laser weapons only // B3 p.62'],
                 ['Captain Tactics assist', 'Optional inline roll, Difficult (10+) Tactics(naval) INT — Effect adds to this check only'],
               ]}
             />
           </Sub>
 
-          <Note>Stationary targets (reaction drive off, in orbit): DM+2 and damage doubled. // B3 p.56</Note>
+          <Note>Stationary or reaction-drive-propelled targets (not manoeuvring under stutterwarp): DM+2 and damage doubled — their Firing Solution becomes trivial. // B3 p.56</Note>
+
+          <Sub title="DEFENSIVE SCREENS // B3 p.55, p.62">
+            <p>Ablative clouds/EM fields that disperse incoming <span className="text-slate-200">laser fire only</span> — no effect vs particle beams, kinetic weapons, or missile warheads (though nuclear "detonation laser" drones/submunitions count as laser).</p>
+            <KV k="Rating 1/2/3" v="DM−1/−2/−3 to attack rolls made against this ship, while active" />
+            <KV k="Depletion"    v="Any hit, regardless of damage, reduces the active Rating by 1" />
+            <KV k="Deploy"       v="Free — activates the screen at its installed Rating for the first time this battle" />
+            <KV k="Recharge"     v="Restores the screen to its installed Rating, consuming one carried reload" />
+          </Sub>
 
           <Sub title="DAMAGE">
             <p>Roll weapon damage. Subtract Armour. Apply net to Hull Points.</p>
