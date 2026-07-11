@@ -453,8 +453,10 @@ Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). Tirare sul
 
 ### Engineer
 
-- **Re-route Power**: Average (8+) Engineer (power) **EDU**. Riabilita sistemi o redistribuisce energia.
+- **Re-route Power** — Average (8+) Engineer (power) **EDU**. **Puramente informativo/narrativo** (stesso pattern di Scan Target): B3 non fornisce alcuna tabella Effect per questa azione — il libro rimanda esplicitamente all'"Aerospace Engineer's Handbook" (supplemento non presente in `doc/`) per gli effetti dettagliati sui radiator. Nessuna mutazione di stato: il GM narra la ridistribuzione di potenza (es. ripristino temporaneo di un sistema offline da un Power Plant/Radiator critical). // B3 p.54
 - **Boost Power Output**: Difficult (10+) Engineer (power) **EDU**. Successo: Effect% aumento Power. Effect −5 o peggio: critical hit Power Plant.
+
+> Nota: "Boost Power Output" e "Boost Tac Speed" (righe sotto) sono documentate qui ma **non implementate** in `crewActions.js`/`ActionModal.jsx` — gap trovato durante il lavoro sulla #18, non ancora tracciato in una issue dedicata.
 - **Overload Stutterwarp** — Difficult (10+) Engineer (stutterwarp) **INT**: porta il motore oltre i limiti di sicurezza. Successo: TAC Speed +1 questo round. Fallimento: critical hit sul sistema Stutterwarp Drive. // B3 p.55
 - **Emergency Repair** ("Damage Control team") — Difficult (10+) **Mechanic** (1D minuti, INT): ripara un danno nella fase corrente. // B3 p.56–57
   - Modalità *Critical System*: riduce la severity di un critical hit track di 1.

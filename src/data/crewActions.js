@@ -44,6 +44,17 @@ export const CREW_ACTIONS = {
 
   engineer: [
     {
+      id: 're_route_power',
+      label: 'Re-route Power',
+      phase: 'actions',
+      reaction: false,
+      skill: 'Engineer (power)',
+      difficulty: 8,
+      difficultyLabel: 'Average (8+)',
+      description: 'Redistribute available power after damage or a shortfall. No numeric Effect table in B3 (further detail is in the Aerospace Engineer\'s Handbook, a supplement not in this project\'s sources) — informational: GM narrates the resolution, e.g. temporarily restoring a system taken offline by a Power Plant or Radiator critical. // 2300AD B3 p.54',
+      requiresTarget: false,
+    },
+    {
       id: 'overload_stutterwarp',
       label: 'Overload Stutterwarp',
       phase: 'actions',

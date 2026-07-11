@@ -503,3 +503,21 @@ test.describe('Scan Target / Improve Critical', () => {
     await expect(page.getByText('⚠ INTERNAL CRITICAL HIT', { exact: false })).toBeVisible()
   })
 })
+
+// === Re-route Power — Engineer // 2300AD B3 p.54 (informational, no Effect table) ===
+
+test.describe('Re-route Power', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  test('ActionModal lists Re-route Power as Average (8+) Engineer (power)', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId: id })
+    }, id0)
+    await page.getByText('Re-route Power', { exact: true }).click()
+    await expect(page.getByText('SKILL LEVEL — Engineer (power) (Average (8+))')).toBeVisible()
+  })
+})
