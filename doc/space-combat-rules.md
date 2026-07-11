@@ -254,6 +254,29 @@ Nubi ablative/campi elettromagnetici che disperdono **fasci laser in arrivo** �
 | Ritage-2 | 12 | 5D | 4 | 4 ore | Blast 6, Radiation |
 | 'Whiskey' (Kaefer) | 12 | 1D laser / 3D det. | 4 | 2 ore | Blast 3, Radiation |
 
+### Auto X — fire mode Single/Burst/Full Auto (issue #11)
+
+Il trait `Auto X` (B3 p.59: "As described on page 75 of the Traveller Core Rulebook")
+è implementato in `AttackModal.jsx` come selettore **Single / Burst / Full Auto**,
+visibile solo per armi che portano il trait (es. Kaefer Tri-Beamer `Auto 3`, Mitraille
+Grape Shot `Auto 4`):
+
+- **Single**: tiro normale, nessun bonus.
+- **Burst** (default): un solo tiro di danno, +X (Auto score) al totale — `rollDamage(...,
+  autoBurstBonus)`.
+- **Full Auto**: X tiri di danno separati contro lo stesso bersaglio, armatura applicata
+  per tiro (armi corazzate riducono ogni volley separatamente) — `rollFullAuto(...)` in
+  `utils/combat.js`.
+
+Il trait **Rapid Fire** (Quinn Type 17 PDC) non ha un valore numerico e non è definito
+in nessuna tabella Weapon Traits di CRB/B3 (che definisce solo "Auto") — `getAutoScore()`
+restituisce sempre 0 per questa arma, quindi il selettore non appare mai: resta puramente
+narrativo, coerente con il suo ruolo di Point Defence già modellato altrove.
+
+Per Grape Shot, `Auto 4` e `Blast 4` non si sommano: `Auto` risolve contro un singolo
+bersaglio (Burst/Full Auto come sopra), mentre `Blast X` (bersagli multipli aggiuntivi a
+Close range) resta non implementato — nessun doppio conteggio.
+
 ---
 
 ## 8. Danno alla Nave — 2300AD B3 p.56–58
