@@ -135,7 +135,7 @@ export function ActionModal({ payload, onClose }) {
 
       case 'emergency_repair':
         if (success) {
-          if (repairMode === 'hull') repairHull(shipId, 1)
+          if (repairMode === 'hull') repairHull(shipId, 5)
           else if (critSystem) reduceCritical(shipId, critSystem)
         }
         break
@@ -266,7 +266,7 @@ export function ActionModal({ payload, onClose }) {
                 {['system', 'hull'].map((mode) => (
                   <button key={mode} onClick={() => setRepairMode(mode)}
                     className={`flex-1 py-1 text-xs font-mono border rounded ${repairMode === mode ? 'border-emerald-500 text-emerald-300 bg-emerald-900/30' : 'border-slate-700 text-slate-400'}`}>
-                    {mode === 'system' ? 'Critical System' : 'Hull (+1 HP)'}
+                    {mode === 'system' ? 'Critical System' : 'Hull (+5 HP)'}
                   </button>
                 ))}
               </div>

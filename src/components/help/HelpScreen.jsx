@@ -328,7 +328,7 @@ export function HelpScreen({ onBack } = {}) {
 
           <Sub title="ENGINEER">
             <KV k="Overload Stutterwarp" v="Difficult (10+) Engineer(stutterwarp) INT. Success: Effect 1–4 → TAC Speed +1, Effect 5–6 → +2 this round. Failure: critical hit on Stutterwarp." />
-            <KV k="Emergency Repair"     v="Average (8+) Engineer INT/EDU. System mode: reduce one critical severity by 1. Hull mode: restore 1 Hull Point." />
+            <KV k="Emergency Repair"     v="Difficult (10+) Mechanic INT/EDU. System mode: reduce one critical severity by 1. Hull mode: restore 5 Hull Points." />
           </Sub>
 
           <Sub title="SENSOR OPERATOR">

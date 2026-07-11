@@ -364,3 +364,59 @@ test.describe('Boarding — boardingDmNextRound carry-over', () => {
 
 // Sensor Lock removed — it was never a 2300AD B3 action (only exists in the
 // Traveller 2022 CRB, outside this project's declared CRB-fallback scope).
+
+// === Emergency Repair — Mechanic Difficult (10+), 5 Hull points // B3 p.56–57 ===
+
+test.describe('Emergency Repair — skill, difficulty, and repair amount', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  test('ActionModal shows Mechanic skill and Difficult (10+) for Emergency Repair', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId: id })
+    }, id0)
+    await page.getByText('Emergency Repair', { exact: true }).click()
+    await expect(page.getByText('SKILL LEVEL — Mechanic (Difficult (10+))')).toBeVisible()
+  })
+
+  test('hull mode button reads "Hull (+5 HP)"', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId: id })
+    }, id0)
+    await page.getByText('Emergency Repair', { exact: true }).click()
+    await expect(page.getByText('Hull (+5 HP)', { exact: true })).toBeVisible()
+  })
+
+  test('applying a successful hull-mode repair restores 5 hull points, not 1', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      const s = window.__ZUSTAND_BATTLE_STORE__.getState()
+      s.applyDamage(id, 8, 0) // drop currentHull well below max so +5 is observable
+    }, id0)
+    const before = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id).currentHull
+    , id0)
+
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId: id })
+    }, id0)
+    await page.getByText('Emergency Repair', { exact: true }).click()
+    await page.getByText('Hull (+5 HP)', { exact: true }).click()
+    await page.getByText('manual', { exact: true }).click()
+
+    const numberInputs = page.locator('input[type="number"]')
+    await numberInputs.nth(0).fill('6')
+    await numberInputs.nth(1).fill('6')
+    await expect(page.getByText('SUCCESS', { exact: false })).toBeVisible()
+    await page.getByText('APPLY RESULT', { exact: true }).click()
+
+    const after = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id).currentHull
+    , id0)
+    expect(after - before).toBe(5)
+  })
+})
