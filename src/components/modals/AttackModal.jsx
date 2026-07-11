@@ -77,21 +77,23 @@ function StepIndicator({ current }) {
   )
 }
 
-function RollBlock({ dm, onRoll, onManual, result, target }) {
+function RollBlock({ dm, onRoll, onManual, result, target, disabled = false }) {
   const [showManual, setShowManual] = useState(false)
 
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-3">
         <button
-          className="px-3 py-1.5 text-xs font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 hover:bg-(--neon-cyan)/10 rounded transition-colors"
+          className="px-3 py-1.5 text-xs font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 hover:bg-(--neon-cyan)/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           onClick={onRoll}
+          disabled={disabled}
         >
           ROLL 2D6
         </button>
         <button
           className="text-xs font-mono text-slate-500 hover:text-slate-400 transition-colors underline"
           onClick={() => setShowManual((v) => !v)}
+          disabled={disabled}
         >
           {showManual ? 'hide' : 'enter manually'}
         </button>
@@ -137,10 +139,20 @@ export function AttackModal({ payload, onClose }) {
   const depleteScreens  = useBattleStore((s) => s.depleteScreens)
   const deployScreens   = useBattleStore((s) => s.deployScreens)
   const rechargeScreens = useBattleStore((s) => s.rechargeScreens)
+  const spendCrewAction = useBattleStore((s) => s.spendCrewAction)
   const { openModal }  = useUIStore()
 
   const attacker = ships.find((s) => s.id === attackerId) ?? ships[0]
   const targets  = ships.filter((s) => s.id !== attacker?.id && !s.isDestroyed)
+  const budget   = attacker?.actionsRemaining ?? {}
+  // Tracks which roles have already spent an action this Firing Solution session,
+  // so re-rolling via ← BACK doesn't double-spend. // 2300AD B3 p.53
+  const [spentRoles, setSpentRoles] = useState(new Set())
+  function spendOnce(role) {
+    if (spentRoles.has(role)) return
+    spendCrewAction(attacker.id, role)
+    setSpentRoles((prev) => new Set(prev).add(role))
+  }
 
   const [step,          setStep]          = useState(STEP_SETUP)
   const [targetId,      setTargetId]      = useState(targets[0]?.id ?? '')
@@ -282,10 +294,12 @@ export function AttackModal({ payload, onClose }) {
     const total  = base + step1Dms.total
     const effect = total - 12  // Very Difficult
     setStep1Result({ dice, base, total, effect })
+    spendOnce('sensor_operator')
   }
 
   function manualStep1({ dice, total }) {
     setStep1Result({ dice, base: dice[0] + dice[1], total, effect: total - 12 })
+    spendOnce('sensor_operator')
   }
 
   function rollStep2() {
@@ -294,10 +308,12 @@ export function AttackModal({ payload, onClose }) {
     const total  = base + step2Dms.total
     const effect = total - 10  // Difficult
     setStep2Result({ dice, base, total, effect })
+    spendOnce('pilot')
   }
 
   function manualStep2({ dice, total }) {
     setStep2Result({ dice, base: dice[0] + dice[1], total, effect: total - 10 })
+    spendOnce('pilot')
   }
 
   function rollCaptainAssist() {
@@ -306,10 +322,12 @@ export function AttackModal({ payload, onClose }) {
     const total  = base + captainAssistDms.total
     const effect = total - 10  // Difficult
     setCaptainAssistResult({ dice, base, total, effect, success: total >= 10 })
+    spendOnce('captain')
   }
 
   function manualCaptainAssist({ dice, total }) {
     setCaptainAssistResult({ dice, base: dice[0] + dice[1], total, effect: total - 10, success: total >= 10 })
+    spendOnce('captain')
   }
 
   function rollStep3() {
@@ -318,6 +336,7 @@ export function AttackModal({ payload, onClose }) {
     const total  = base + step3Dms.total
     const effect = total - 10  // Difficult
     setStep3Result({ dice, base, total, effect })
+    spendOnce('gunner_turret')
     if (total >= 10) {
       const dmgResult = rollDamage(weaponId, weaponCount, target?.currentArmour ?? 0, null, getEasyTargetDamageMultiplier(target))
       setDamageResult(dmgResult)
@@ -327,6 +346,7 @@ export function AttackModal({ payload, onClose }) {
   function manualStep3({ dice, total }) {
     const effect = total - 10
     setStep3Result({ dice, base: dice[0] + dice[1], total, effect })
+    spendOnce('gunner_turret')
     if (total >= 10) {
       const dmgResult = rollDamage(weaponId, weaponCount, target?.currentArmour ?? 0, null, getEasyTargetDamageMultiplier(target))
       setDamageResult(dmgResult)
@@ -440,19 +460,24 @@ export function AttackModal({ payload, onClose }) {
               Rating {attacker.screenCurrentRating}/{attacker.screenRating} · {attacker.screenReloads} reload(s) left
               {!attacker.screenDeployed && <span className="text-amber-400"> · not yet deployed</span>}
             </p>
+            {budget.gunner_turret <= 0 && (
+              <p className="font-mono text-[10px] text-red-400">Gunner has no actions left this round (Gunnery cap — B3 p.53).</p>
+            )}
             <div className="flex gap-2">
               {!attacker.screenDeployed && (
                 <button
-                  onClick={() => { deployScreens(attacker.id); onClose() }}
-                  className="flex-1 py-1.5 text-xs font-display tracking-widest text-sky-400 border border-sky-800 hover:bg-sky-900/20 rounded transition-colors"
+                  onClick={() => { spendCrewAction(attacker.id, 'gunner_turret'); deployScreens(attacker.id); onClose() }}
+                  disabled={budget.gunner_turret <= 0}
+                  className="flex-1 py-1.5 text-xs font-display tracking-widest text-sky-400 border border-sky-800 hover:bg-sky-900/20 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   DEPLOY SCREENS
                 </button>
               )}
               {attacker.screenDeployed && attacker.screenCurrentRating < attacker.screenRating && attacker.screenReloads > 0 && (
                 <button
-                  onClick={() => { rechargeScreens(attacker.id); onClose() }}
-                  className="flex-1 py-1.5 text-xs font-display tracking-widest text-sky-400 border border-sky-800 hover:bg-sky-900/20 rounded transition-colors"
+                  onClick={() => { spendCrewAction(attacker.id, 'gunner_turret'); rechargeScreens(attacker.id); onClose() }}
+                  disabled={budget.gunner_turret <= 0}
+                  className="flex-1 py-1.5 text-xs font-display tracking-widest text-sky-400 border border-sky-800 hover:bg-sky-900/20 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   RECHARGE SCREENS (−1 reload)
                 </button>
@@ -473,12 +498,19 @@ export function AttackModal({ payload, onClose }) {
               className="w-20 bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1.5 focus:border-(--neon-cyan)/60 outline-none"
             />
             {evasionDmOverride === null && (target?.evasionDm ?? 0) !== 0 ? (
-              <span className="font-mono text-[10px] text-sky-400">auto da Manoeuvre Step</span>
+              <span className="font-mono text-[10px] text-sky-400">auto from Manoeuvre action</span>
             ) : (
               <span className="font-mono text-[10px] text-slate-500">0 if no evasion; −1/−2, or +1 vs a badly-failed evasion</span>
             )}
           </div>
         </div>
+
+        {budget.sensor_operator <= 0 && (
+          <p className="font-mono text-[10px] text-red-400">
+            Sensor Operator has no actions left this round — Firing Solution can't
+            start (UTES hand-off is issue #16, not yet implemented).
+          </p>
+        )}
 
         <div className="flex gap-2 pt-1">
           <button onClick={onClose}
@@ -486,7 +518,7 @@ export function AttackModal({ payload, onClose }) {
             CANCEL
           </button>
           <button onClick={() => setStep(STEP_SENSOR)}
-            disabled={!target || !weapon}
+            disabled={!target || !weapon || budget.sensor_operator <= 0}
             className="flex-1 py-2 text-xs font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 hover:bg-(--neon-cyan)/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
             BEGIN FIRING SOLUTION →
           </button>
@@ -525,11 +557,15 @@ export function AttackModal({ payload, onClose }) {
           </button>
           <button
             onClick={() => setStep(STEP_PILOT)}
-            disabled={!step1Result}
+            disabled={!step1Result || budget.pilot <= 0}
+            title={budget.pilot <= 0 ? 'Pilot has no actions left this round' : undefined}
             className="flex-1 py-2 text-xs font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 hover:bg-(--neon-cyan)/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
             NEXT → PILOT
           </button>
         </div>
+        {step1Result && budget.pilot <= 0 && (
+          <p className="font-mono text-[10px] text-red-400">Pilot has no actions left this round — Firing Solution can't continue.</p>
+        )}
       </div>
     )
   }
@@ -572,11 +608,15 @@ export function AttackModal({ payload, onClose }) {
           </button>
           <button
             onClick={() => setStep(STEP_GUNNER)}
-            disabled={!step2Result}
+            disabled={!step2Result || budget.gunner_turret <= 0}
+            title={budget.gunner_turret <= 0 ? 'Gunner has no actions left this round' : undefined}
             className="flex-1 py-2 text-xs font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 hover:bg-(--neon-cyan)/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
             NEXT → GUNNER
           </button>
         </div>
+        {step2Result && budget.gunner_turret <= 0 && (
+          <p className="font-mono text-[10px] text-red-400">Gunner has no actions left this round (Gunnery cap) — Firing Solution can't continue.</p>
+        )}
       </div>
     )
   }
@@ -618,6 +658,7 @@ export function AttackModal({ payload, onClose }) {
           <div className="bg-slate-800/40 border border-slate-700 rounded px-3 py-2 space-y-2">
             <p className="font-mono text-[10px] text-slate-500 tracking-widest uppercase">
               Captain assist (optional) · Difficult (10+) · Tactics (naval) · INT
+              {budget.captain <= 0 && <span className="text-red-400 normal-case"> — Captain has no actions left this round</span>}
             </p>
             <RollBlock
               dm={captainAssistDms.total}
@@ -625,6 +666,7 @@ export function AttackModal({ payload, onClose }) {
               onManual={manualCaptainAssist}
               result={captainAssistResult}
               target={10}
+              disabled={budget.captain <= 0}
             />
           </div>
         )}

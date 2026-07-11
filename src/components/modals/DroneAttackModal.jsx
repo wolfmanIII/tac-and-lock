@@ -54,15 +54,15 @@ function DmBreakdown({ rows, total }) {
   )
 }
 
-function RollBlock({ dm, onRoll, onManual, result, target }) {
+function RollBlock({ dm, onRoll, onManual, result, target, disabled = false }) {
   const [showManual, setShowManual] = useState(false)
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-3">
-        <button className="px-3 py-1.5 text-xs font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 hover:bg-(--neon-cyan)/10 rounded transition-colors" onClick={onRoll}>
+        <button className="px-3 py-1.5 text-xs font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 hover:bg-(--neon-cyan)/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed" onClick={onRoll} disabled={disabled}>
           ROLL 2D6
         </button>
-        <button className="text-xs font-mono text-slate-500 hover:text-slate-400 transition-colors underline" onClick={() => setShowManual((v) => !v)}>
+        <button className="text-xs font-mono text-slate-500 hover:text-slate-400 transition-colors underline" onClick={() => setShowManual((v) => !v)} disabled={disabled}>
           {showManual ? 'hide' : 'enter manually'}
         </button>
       </div>
@@ -93,12 +93,15 @@ export function DroneAttackModal({ payload, onClose }) {
   const detonateDrone  = useBattleStore((s) => s.detonateDrone)
   const depleteScreens  = useBattleStore((s) => s.depleteScreens)
   const interceptDrone = useBattleStore((s) => s.interceptDrone)
+  const spendCrewAction = useBattleStore((s) => s.spendCrewAction)
   const { openModal } = useUIStore()
 
   const drone  = drones.find((d) => d.id === droneId)
   const owner  = ships.find((s) => s.id === drone?.ownerId)
   const target = ships.find((s) => s.id === drone?.targetId)
   const weapon = WEAPONS[drone?.weaponId]
+  const ownerBudget  = owner?.actionsRemaining ?? {}
+  const targetBudget = target?.actionsRemaining ?? {}
 
   const [step, setStep] = useState(STEP_PD)
   const [sensorMode, setSensorMode] = useState('handoff') // 'handoff' | 'self'
@@ -108,6 +111,17 @@ export function DroneAttackModal({ payload, onClose }) {
   const [step3Result,   setStep3Result]   = useState(null)
   const [damageResult,  setDamageResult]  = useState(null)
   const [detonationMode, setDetonationMode] = useState(false) // Whiskey only — single-use alt warhead
+  // Tracks which (ship, role, step-slot) combos have already spent an action this
+  // session, so re-rolling the SAME step via ← BACK doesn't double-spend — but two
+  // different steps drawing on the same role (e.g. self-generated Step 1 + Step 2,
+  // both remote_pilot) each still spend independently. // 2300AD B3 p.53
+  const [spentSlots, setSpentSlots] = useState(new Set())
+  function spendOnce(shipId, role, slot) {
+    const key = `${shipId}:${role}:${slot}`
+    if (spentSlots.has(key)) return
+    spendCrewAction(shipId, role)
+    setSpentSlots((prev) => new Set(prev).add(key))
+  }
 
   // ── Point Defence — one-at-a-time intercept, target ship's own gunner // B3 p.55–56 ──
   const pdDms = useMemo(() => {
@@ -125,9 +139,11 @@ export function DroneAttackModal({ payload, onClose }) {
     const dice = roll2D6()
     const total = dice[0] + dice[1] + pdDms.total
     setPdResult({ dice, total, effect: total - 10, success: total >= 10 })
+    if (target) spendOnce(target.id, 'gunner_turret', 'pd')
   }
   function manualPd({ dice, total }) {
     setPdResult({ dice, total, effect: total - 10, success: total >= 10 })
+    if (target) spendOnce(target.id, 'gunner_turret', 'pd')
   }
   function applyIntercept() {
     interceptDrone(droneId)
@@ -159,9 +175,11 @@ export function DroneAttackModal({ payload, onClose }) {
     const dice = roll2D6()
     const total = dice[0] + dice[1] + step1Dms.total
     setStep1Result({ dice, total, effect: total - 12 })
+    if (owner) spendOnce(owner.id, sensorMode === 'handoff' ? 'sensor_operator' : 'remote_pilot', 'step1')
   }
   function manualStep1({ dice, total }) {
     setStep1Result({ dice, total, effect: total - 12 })
+    if (owner) spendOnce(owner.id, sensorMode === 'handoff' ? 'sensor_operator' : 'remote_pilot', 'step1')
   }
 
   // ── Step 2: Position Vessel — Remote Pilot, Electronics(remote ops) DEX // B3 p.55–56 ──
@@ -183,14 +201,20 @@ export function DroneAttackModal({ payload, onClose }) {
     const dice = roll2D6()
     const total = dice[0] + dice[1] + step2Dms.total
     setStep2Result({ dice, total, effect: total - 10 })
+    if (owner) spendOnce(owner.id, 'remote_pilot', 'step2')
   }
   function manualStep2({ dice, total }) {
     setStep2Result({ dice, total, effect: total - 10 })
+    if (owner) spendOnce(owner.id, 'remote_pilot', 'step2')
   }
 
   // ── Step 3: Gunner — Difficult (10+), Fire Control, range, target's reactive DMs // B3 p.56 ──
+  // Remote Pilot is the one who "fights drones" per the B3 p.53 Crew Actions table
+  // (not a separate turret gunner) — this step draws the owner's own remote_pilot skill.
   const step3Dms = useMemo(() => {
     if (!owner || !target || !weapon) return { rows: [], total: 0 }
+    const remotePilotSkill = getAssignedSkill('remote_pilot', owner.crewAssignments, owner.crew)
+    const remotePilotDexDm = getCharDM(getAssignedCharacteristic('remote_pilot', owner.crewAssignments, owner.crew, 'DEX'))
     const fireControlDm = getFireControlDm(owner.software)
     const rangeDm = getRangeDM(drone.weaponId, drone.currentBand)
     const evasionDm    = target.evasionDm ?? 0
@@ -205,9 +229,11 @@ export function DroneAttackModal({ payload, onClose }) {
     const screenDm = getScreenDm(target, weapon)
     // Weapon traits — Accurate +1, Slow −2 // B3 p.59
     const weaponTraitDm = getWeaponTraitAttackDm(weapon.traits)
-    const total = fireControlDm + rangeDm + step2CarryEffect + evasionDm + jammerPenalty + easyTargetDm + atmosphericDm + ortilleryDm + screenDm + weaponTraitDm
+    const total = remotePilotSkill + remotePilotDexDm + fireControlDm + rangeDm + step2CarryEffect + evasionDm + jammerPenalty + easyTargetDm + atmosphericDm + ortilleryDm + screenDm + weaponTraitDm
     return {
       rows: [
+        ['Remote Pilot skill', remotePilotSkill],
+        ['DEX DM', remotePilotDexDm],
         ['Fire Control', fireControlDm],
         [`Range (${drone.currentBand})`, rangeDm],
         ['Carry (Step 2)', step2CarryEffect],
@@ -230,6 +256,7 @@ export function DroneAttackModal({ payload, onClose }) {
     const total = dice[0] + dice[1] + step3Dms.total
     const effect = total - 10
     setStep3Result({ dice, total, effect })
+    if (owner) spendOnce(owner.id, 'remote_pilot', 'step3')
     if (total >= 10) {
       setDamageResult(rollDamage(drone.weaponId, 1, target.currentArmour ?? 0, damageOverride, getEasyTargetDamageMultiplier(target)))
     }
@@ -237,6 +264,7 @@ export function DroneAttackModal({ payload, onClose }) {
   function manualStep3({ dice, total }) {
     const effect = total - 10
     setStep3Result({ dice, total, effect })
+    if (owner) spendOnce(owner.id, 'remote_pilot', 'step3')
     if (total >= 10) {
       setDamageResult(rollDamage(drone.weaponId, 1, target.currentArmour ?? 0, damageOverride, getEasyTargetDamageMultiplier(target)))
     }
@@ -286,8 +314,11 @@ export function DroneAttackModal({ payload, onClose }) {
           <p className="text-[10px] font-display text-sky-400 tracking-widest uppercase">
             {target.profile?.name} — POINT DEFENCE · Gunner (turret) DEX · Difficult (10+) // B3 p.55–56
           </p>
+          {targetBudget.gunner_turret <= 0 && (
+            <p className="font-mono text-[10px] text-red-400">{target.profile?.name}'s Gunner has no actions left this round (Gunnery cap — B3 p.53).</p>
+          )}
           <DmBreakdown rows={pdDms.rows} total={pdDms.total} />
-          <RollBlock dm={pdDms.total} onRoll={rollPd} onManual={manualPd} result={pdResult} target={10} />
+          <RollBlock dm={pdDms.total} onRoll={rollPd} onManual={manualPd} result={pdResult} target={10} disabled={targetBudget.gunner_turret <= 0} />
         </div>
 
         <div className="flex gap-2 pt-1">
@@ -324,15 +355,24 @@ export function DroneAttackModal({ payload, onClose }) {
           </button>
         </div>
 
+        {(sensorMode === 'handoff' ? ownerBudget.sensor_operator : ownerBudget.remote_pilot) <= 0 && (
+          <p className="font-mono text-[10px] text-red-400">
+            {sensorMode === 'handoff' ? 'Sensor Operator' : 'Remote Pilot'} has no actions left this round.
+          </p>
+        )}
         <DmBreakdown rows={step1Dms.rows} total={step1Dms.total} />
-        <RollBlock dm={step1Dms.total} onRoll={rollStep1} onManual={manualStep1} result={step1Result} target={12} />
+        <RollBlock dm={step1Dms.total} onRoll={rollStep1} onManual={manualStep1} result={step1Result} target={12}
+          disabled={(sensorMode === 'handoff' ? ownerBudget.sensor_operator : ownerBudget.remote_pilot) <= 0} />
 
         <div className="flex gap-2 pt-1">
           <button onClick={() => setStep(STEP_PD)} className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-600 hover:border-slate-500 rounded transition-colors">← BACK</button>
-          <button onClick={() => setStep(STEP_PILOT)} disabled={!step1Result} className="flex-1 py-2 text-xs font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 hover:bg-(--neon-cyan)/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+          <button onClick={() => setStep(STEP_PILOT)} disabled={!step1Result || ownerBudget.remote_pilot <= 0} className="flex-1 py-2 text-xs font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 hover:bg-(--neon-cyan)/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
             NEXT → PILOT
           </button>
         </div>
+        {step1Result && ownerBudget.remote_pilot <= 0 && (
+          <p className="font-mono text-[10px] text-red-400">Remote Pilot has no actions left this round — Firing Solution can't continue.</p>
+        )}
       </div>
     )
   }
@@ -353,15 +393,21 @@ export function DroneAttackModal({ payload, onClose }) {
           </div>
         )}
 
+        {ownerBudget.remote_pilot <= 0 && (
+          <p className="font-mono text-[10px] text-red-400">Remote Pilot has no actions left this round.</p>
+        )}
         <DmBreakdown rows={step2Dms.rows} total={step2Dms.total} />
-        <RollBlock dm={step2Dms.total} onRoll={rollStep2} onManual={manualStep2} result={step2Result} target={10} />
+        <RollBlock dm={step2Dms.total} onRoll={rollStep2} onManual={manualStep2} result={step2Result} target={10} disabled={ownerBudget.remote_pilot <= 0} />
 
         <div className="flex gap-2 pt-1">
           <button onClick={() => { setStep(STEP_SENSOR); setStep2Result(null) }} className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-600 hover:border-slate-500 rounded transition-colors">← BACK</button>
-          <button onClick={() => setStep(STEP_GUNNER)} disabled={!step2Result} className="flex-1 py-2 text-xs font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 hover:bg-(--neon-cyan)/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+          <button onClick={() => setStep(STEP_GUNNER)} disabled={!step2Result || ownerBudget.remote_pilot <= 0} className="flex-1 py-2 text-xs font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 hover:bg-(--neon-cyan)/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
             NEXT → GUNNER
           </button>
         </div>
+        {step2Result && ownerBudget.remote_pilot <= 0 && (
+          <p className="font-mono text-[10px] text-red-400">Remote Pilot has no actions left this round — Firing Solution can't continue.</p>
+        )}
       </div>
     )
   }
@@ -399,8 +445,11 @@ export function DroneAttackModal({ payload, onClose }) {
         </div>
       )}
 
+      {ownerBudget.remote_pilot <= 0 && (
+        <p className="font-mono text-[10px] text-red-400">Remote Pilot has no actions left this round.</p>
+      )}
       <DmBreakdown rows={step3Dms.rows} total={step3Dms.total} />
-      <RollBlock dm={step3Dms.total} onRoll={rollStep3} onManual={manualStep3} result={step3Result} target={10} />
+      <RollBlock dm={step3Dms.total} onRoll={rollStep3} onManual={manualStep3} result={step3Result} target={10} disabled={ownerBudget.remote_pilot <= 0} />
 
       {hit && damageResult && (
         <div className="bg-red-950/40 border border-red-900/60 rounded px-3 py-2 space-y-1.5">
