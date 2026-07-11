@@ -94,6 +94,7 @@ export function DroneAttackModal({ payload, onClose }) {
   const depleteScreens  = useBattleStore((s) => s.depleteScreens)
   const interceptDrone = useBattleStore((s) => s.interceptDrone)
   const spendCrewAction = useBattleStore((s) => s.spendCrewAction)
+  const updateShip      = useBattleStore((s) => s.updateShip)
   const { openModal } = useUIStore()
 
   const drone  = drones.find((d) => d.id === droneId)
@@ -276,8 +277,11 @@ export function DroneAttackModal({ payload, onClose }) {
     depleteScreens(target.id) // any hit depletes screens by 1, regardless of damage // B3 p.62
     detonateDrone(droneId)
     const effect = step3Result?.effect ?? 0
-    // Improve Critical (Sensor Operator) lowers the threshold for this ship's next hit // B3 p.54
+    // Improve Critical (Sensor Operator) lowers the threshold for this ship's next shot
+    // this round — "next shot" is singular, so it's consumed here regardless of whether
+    // it actually produced a crit. // 2300AD B3 p.54
     const critThreshold = owner.improveCriticalThreshold ?? 6
+    if (owner.improveCriticalThreshold != null) updateShip(owner.id, { improveCriticalThreshold: null })
     if (isSurfaceFixtureDamage(effect)) {
       openModal('critical-hit', { shipId: target.id, mode: 'surface', effect })
     } else if (isInternalCriticalHit(effect, damageResult.net, target.currentHull, critThreshold)) {
@@ -287,6 +291,8 @@ export function DroneAttackModal({ payload, onClose }) {
   }
 
   function applyMiss() {
+    // "Next shot this round" is consumed by this attempt whether it hit or not.
+    if (owner.improveCriticalThreshold != null) updateShip(owner.id, { improveCriticalThreshold: null })
     detonateDrone(droneId)
     onClose()
   }

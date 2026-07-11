@@ -54,8 +54,9 @@ export function ActionModal({ payload, onClose }) {
   const targets = ships.filter((s) => s.id !== shipId && !s.isDestroyed)
   const budget  = ship?.actionsRemaining ?? {}
 
-  // Commands issued so far this round on this ship — capped at one per Leadership level. // B3 p.54
-  const issuedCommands = ship?.commandBonusNextRound ?? []
+  // Commands issued so far this round on this ship — capped at one per Leadership level;
+  // applies immediately this round (B3 p.53–54, literal "for that combat round"). // B3 p.54
+  const issuedCommands = ship?.commandBonus ?? []
   const availableCommandRoles = COMMAND_TARGET_ROLES.filter(
     (r) => !issuedCommands.some((cb) => cb.role === r),
   )
@@ -166,8 +167,8 @@ export function ActionModal({ payload, onClose }) {
         if (success) updateShip(shipId, { activeSensorsOn: true })
         break
 
-      case 'improve_critical': // B3 p.54 — lowers crit threshold for this ship's next Gunner hit, next round
-        if (success) updateShip(shipId, { improveCriticalNextRound: effect >= 6 ? 4 : 5 })
+      case 'improve_critical': // B3 p.54 — lowers crit threshold for this ship's next Gunner hit, this round
+        if (success) updateShip(shipId, { improveCriticalThreshold: effect >= 6 ? 4 : 5 })
         break
 
       case 'commands': { // B3 p.54 — activates next round, see applyCommand

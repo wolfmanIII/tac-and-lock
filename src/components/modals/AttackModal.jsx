@@ -140,6 +140,7 @@ export function AttackModal({ payload, onClose }) {
   const deployScreens   = useBattleStore((s) => s.deployScreens)
   const rechargeScreens = useBattleStore((s) => s.rechargeScreens)
   const spendCrewAction = useBattleStore((s) => s.spendCrewAction)
+  const updateShip      = useBattleStore((s) => s.updateShip)
   const { openModal }  = useUIStore()
 
   const attacker = ships.find((s) => s.id === attackerId) ?? ships[0]
@@ -358,8 +359,11 @@ export function AttackModal({ payload, onClose }) {
     applyDamage(target.id, damageResult.net, attacker?.id)
     depleteScreens(target.id) // any hit depletes screens by 1, regardless of damage // B3 p.62
     const effect = step3Result?.effect ?? 0
-    // Improve Critical (Sensor Operator) lowers the threshold for this ship's next hit // B3 p.54
+    // Improve Critical (Sensor Operator) lowers the threshold for this ship's next shot
+    // this round — "next shot" is singular, so it's consumed here regardless of whether
+    // it actually produced a crit. // 2300AD B3 p.54
     const critThreshold = attacker.improveCriticalThreshold ?? 6
+    if (attacker.improveCriticalThreshold != null) updateShip(attacker.id, { improveCriticalThreshold: null })
     if (isSurfaceFixtureDamage(effect)) {
       openModal('critical-hit', { shipId: target.id, mode: 'surface', effect })
     } else if (isInternalCriticalHit(effect, damageResult.net, target.currentHull, critThreshold)) {
@@ -710,7 +714,11 @@ export function AttackModal({ payload, onClose }) {
               className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-600 hover:border-slate-500 rounded transition-colors">
               ← BACK
             </button>
-            <button onClick={onClose}
+            <button onClick={() => {
+              // "Next shot this round" is consumed by this attempt whether it hit or not.
+              if (attacker.improveCriticalThreshold != null) updateShip(attacker.id, { improveCriticalThreshold: null })
+              onClose()
+            }}
               className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-700 hover:bg-slate-800 rounded transition-colors">
               MISS — CLOSE
             </button>

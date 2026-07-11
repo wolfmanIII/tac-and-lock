@@ -78,7 +78,7 @@ test.describe('Commands — applyCommand', () => {
     await gotoBattle(page)
   })
 
-  test('applyCommand sets commandBonusNextRound on the issuing ship only, not battle-wide', async ({ page }) => {
+  test('applyCommand sets commandBonus on the issuing ship only, not battle-wide, active immediately', async ({ page }) => {
     const { id0, id1 } = await setupShips(page)
     await page.evaluate((id) => {
       window.__ZUSTAND_BATTLE_STORE__.getState().applyCommand(id, 'gunner_turret', 1)
@@ -86,10 +86,11 @@ test.describe('Commands — applyCommand', () => {
     const state = await page.evaluate((ids) => {
       const ships = window.__ZUSTAND_BATTLE_STORE__.getState().ships
       return {
-        ship0: ships.find((s) => s.id === ids.id0).commandBonusNextRound,
-        ship1: ships.find((s) => s.id === ids.id1).commandBonusNextRound,
+        ship0: ships.find((s) => s.id === ids.id0).commandBonus,
+        ship1: ships.find((s) => s.id === ids.id1).commandBonus,
       }
     }, { id0, id1 })
+    // Immediate this round (B3 p.53–54, literal "for that combat round") — no NextRound staging.
     expect(state.ship0).toEqual([{ role: 'gunner_turret', dm: 1 }])
     expect(state.ship1).toEqual([])
   })
@@ -105,7 +106,7 @@ test.describe('Commands — applyCommand', () => {
     const ship0 = await page.evaluate((id) =>
       window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id),
     id0)
-    expect(ship0.commandBonusNextRound).toEqual([
+    expect(ship0.commandBonus).toEqual([
       { role: 'gunner_turret', dm: 1 },
       { role: 'pilot', dm: 2 },
       { role: 'sensor_operator', dm: 1 },
@@ -122,38 +123,36 @@ test.describe('Commands — applyCommand', () => {
     const ship0 = await page.evaluate((id) =>
       window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id),
     id0)
-    expect(ship0.commandBonusNextRound).toEqual([{ role: 'pilot', dm: 2 }])
+    expect(ship0.commandBonus).toEqual([{ role: 'pilot', dm: 2 }])
   })
 
-  test('commandBonusNextRound promotes to commandBonus only after the round advances', async ({ page }) => {
+  test('commandBonus clears at the start of the next round if not re-issued', async ({ page }) => {
     const { id0, id1 } = await setupShips(page)
     await page.evaluate((ids) => {
       const s = window.__ZUSTAND_BATTLE_STORE__.getState()
       s.applyCommand(ids.id0, 'gunner_turret', 2)
       s.setInitiativeOrder([ids.id0, ids.id1])
     }, { id0, id1 })
-    // Not active yet — this round's Manoeuvre/Attack already passed by the time it's issued
+    // Active immediately, this round.
     let ship0 = await page.evaluate((id) =>
       window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id),
     id0)
-    expect(ship0.commandBonus).toEqual([])
+    expect(ship0.commandBonus).toEqual([{ role: 'gunner_turret', dm: 2 }])
 
     await page.evaluate(() => window.__ZUSTAND_BATTLE_STORE__.getState().startNextRound())
     ship0 = await page.evaluate((id) =>
       window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id),
     id0)
-    expect(ship0.commandBonus).toEqual([{ role: 'gunner_turret', dm: 2 }])
-    expect(ship0.commandBonusNextRound).toEqual([])
+    expect(ship0.commandBonus).toEqual([])
   })
 
-  test('AttackModal step 3 shows Command row only for the ship that received it, targeting gunner_turret', async ({ page }) => {
+  test('AttackModal step 3 shows Command row immediately this round, targeting gunner_turret', async ({ page }) => {
     const { id0, id1 } = await setupShips(page)
     await page.evaluate((ids) => {
       const s = window.__ZUSTAND_BATTLE_STORE__.getState()
       s.applyCommand(ids.id0, 'gunner_turret', 1)
       s.setInitiativeOrder([ids.id0, ids.id1])
     }, { id0, id1 })
-    await page.evaluate(() => window.__ZUSTAND_BATTLE_STORE__.getState().startNextRound())
     await reachStep3(page, id0)
     await expect(page.getByText('Command (Captain)')).toBeVisible()
   })
@@ -450,7 +449,7 @@ test.describe('Scan Target / Improve Critical', () => {
     await expect(page.getByText('SKILL LEVEL — Electronics (sensors) (Very Difficult (12+))')).toBeVisible()
   })
 
-  test('a successful Improve Critical sets improveCriticalNextRound to 5 (Effect 1-4)', async ({ page }) => {
+  test('a successful Improve Critical sets improveCriticalThreshold to 5 (Effect 1-4) immediately', async ({ page }) => {
     const { id0 } = await setupShips(page)
     await page.evaluate((id) => {
       window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId: id })
@@ -464,27 +463,34 @@ test.describe('Scan Target / Improve Critical', () => {
     const ship = await page.evaluate((id) =>
       window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
     , id0)
-    expect(ship.improveCriticalNextRound).toBe(5)
+    // Applies immediately — "this ship's next Firing Solution shot this round" (B3 p.54, literal).
+    expect(ship.improveCriticalThreshold).toBe(5)
   })
 
-  test('improveCriticalNextRound promotes to improveCriticalThreshold at round start, shown on Ship Sheet', async ({ page }) => {
+  test('improveCriticalThreshold is shown on the Ship Sheet as soon as it is set', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().updateShip(id, { improveCriticalThreshold: 5 })
+    }, id0)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('ship-detail', { shipId: id })
+    }, id0)
+    await expect(page.getByText('IMPROVE CRITICAL ACTIVE')).toBeVisible()
+    await expect(page.getByText('Next hit crits at Effect 5+ instead of 6+')).toBeVisible()
+  })
+
+  test('improveCriticalThreshold clears at the start of the next round if not consumed by a shot', async ({ page }) => {
     const { id0 } = await setupShips(page)
     await page.evaluate((id) => {
       const s = window.__ZUSTAND_BATTLE_STORE__.getState()
-      s.updateShip(id, { improveCriticalNextRound: 5 })
+      s.updateShip(id, { improveCriticalThreshold: 5 })
       s.setInitiativeOrder(s.ships.map((sh) => sh.id))
       s.startNextRound()
     }, id0)
     const ship = await page.evaluate((id) =>
       window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
     , id0)
-    expect(ship.improveCriticalThreshold).toBe(5)
-
-    await page.evaluate((id) => {
-      window.__ZUSTAND_UI_STORE__.getState().openModal('ship-detail', { shipId: id })
-    }, id0)
-    await expect(page.getByText('IMPROVE CRITICAL ACTIVE')).toBeVisible()
-    await expect(page.getByText('Next hit crits at Effect 5+ instead of 6+')).toBeVisible()
+    expect(ship.improveCriticalThreshold).toBe(null)
   })
 
   test('AttackModal Step 3 shows the Improve Critical active banner', async ({ page }) => {

@@ -104,10 +104,16 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     // boolean. Recomputed at the start of every round (buildNextRoundState) and whenever
     // crew/crewAssignments change (updateShip). // 2300AD B3 p.53
     actionsRemaining:        buildActionBudget(profile.crewAssignments, profile.crew),
-    commandBonus:            [], // Array<{ role, dm }> — active this round, up to one per Leadership level // 2300AD B3 p.54
-    commandBonusNextRound:   [], // Array<{ role, dm }> — declared this round, activates next round (see open question re: timing, CLAUDE.md)
-    improveCriticalThreshold:    null, // 5 or 4 — lowers crit threshold for this ship's next Gunner hit // 2300AD B3 p.54
-    improveCriticalNextRound:    null, // declared this round, activates next round (same two-stage pattern as commandBonus; see open question re: timing, CLAUDE.md)
+    // Commands apply immediately, "for that combat round" (B3 p.54, literal) — the
+    // Captain "always acts first among the crew" (B3 p.53), so a Command issued
+    // early in a ship's turn is available to other roles' actions later that same
+    // round. Cleared at the start of every new round (buildNextRoundState), not
+    // promoted from a NextRound staging field. // 2300AD B3 p.53–54
+    commandBonus:            [], // Array<{ role, dm }> — active this round, up to one per Leadership level
+    // Lowers the crit threshold for this ship's next Gunner hit THIS round (B3: "next
+    // shot this round") — consumed after one qualifying shot (AttackModal/
+    // DroneAttackModal applyResults), cleared at the start of every new round. // 2300AD B3 p.54
+    improveCriticalThreshold:    null, // 5 or 4
   }
 }
 
@@ -179,15 +185,11 @@ export const useBattleStore = create((set, get) => {
         actionsRemaining:         buildActionBudget(sh.crewAssignments, sh.crew),
         initiative:               sh.initiative + bonus,
         initiativeBonusNextRound: 0,
-        // Commands promotion: a Command declared in round N activates for round N+1,
-        // then clears at the start of N+2 — same two-stage pattern as initiativeBonusNextRound.
-        // // B3 p.54 — see CLAUDE.md open question re: whether this should be immediate instead.
-        commandBonus:             sh.commandBonusNextRound ?? [],
-        commandBonusNextRound:    [],
-        // Improve Critical: same two-stage promotion — declared this round, active for the
-        // following round's next Gunner hit only, then cleared. // 2300AD B3 p.54
-        improveCriticalThreshold: sh.improveCriticalNextRound ?? null,
-        improveCriticalNextRound: null,
+        // Commands and Improve Critical both apply immediately, "for that combat
+        // round" / "next shot this round" (B3 p.53-54, literal) — cleared here so
+        // they don't carry over into the new round unless re-declared.
+        commandBonus:             [],
+        improveCriticalThreshold: null,
       }
     })
 
@@ -929,10 +931,9 @@ export const useBattleStore = create((set, get) => {
      * Effect 5–6, they receive DM+2." A Captain with Leadership 3 can therefore issue three
      * separate Commands to three different crew roles in the same round — the per-round cap
      * is the Captain's shared actionsRemaining.captain budget, enforced in ActionModal.jsx, not
-     * here. Currently activates for the FOLLOWING round (via the commandBonusNextRound →
-     * commandBonus promotion in buildNextRoundState) — B3 literally says "for that combat
-     * round" (this round); the next-round deferral predates #19's action-economy rework and is
-     * a known open question now that there's no forced Manoeuvre/Attack/Actions ordering.
+     * here. Applies immediately, THIS round, matching B3's literal "for that combat round" —
+     * the Captain "always acts first among the crew" (B3 p.53), so a Command issued early in
+     * a ship's turn is available to other roles' actions later that same round.
      * Re-issuing to a role already commanded this round replaces that role's DM.
      * @param {string} shipId
      * @param {string} role — crew role receiving the order (pilot, gunner_turret, etc.)
@@ -946,14 +947,14 @@ export const useBattleStore = create((set, get) => {
         set((s) => ({
           ships: s.ships.map((sh) => sh.id !== shipId ? sh : {
             ...sh,
-            commandBonusNextRound: [
-              ...(sh.commandBonusNextRound ?? []).filter((cb) => cb.role !== role),
+            commandBonus: [
+              ...(sh.commandBonus ?? []).filter((cb) => cb.role !== role),
               { role, dm },
             ],
           }),
           log: [...s.log, makeLogEntry({
             round, phase, type: 'action', shipId,
-            message: `🎖 ${ship?.profile.name}: Command issued to ${role} — DM+${dm} next round.`,
+            message: `🎖 ${ship?.profile.name}: Command issued to ${role} — DM+${dm} this round.`,
           })],
         }))
       },

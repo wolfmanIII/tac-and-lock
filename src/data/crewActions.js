@@ -40,7 +40,7 @@ export const CREW_ACTIONS = {
       skill: 'Leadership',
       difficulty: 8,
       difficultyLabel: 'Average (8+)',
-      description: 'Leadership (INT or SOC) Average (8+). One command per Leadership skill level, each to a different crew member. Effect 1–4: DM+1 to their actions next round. Effect 5–6: DM+2. Currently activates the round AFTER this one (B3 literally says "for that combat round" — this project applies it next round instead, a known open question). Draws from the Captain\'s shared action budget (actionsRemaining.captain), same pool as the Tactics assist and Issue Order. // 2300AD B3 p.53–54',
+      description: 'Leadership (INT or SOC) Average (8+). One command per Leadership skill level, each to a different crew member. Effect 1–4: DM+1 to their actions this round. Effect 5–6: DM+2. Applies immediately — the Captain acts first, so a Command issued early in the ship\'s turn is available to that role\'s actions later this same round. Draws from the Captain\'s shared action budget (actionsRemaining.captain), same pool as the Tactics assist and Issue Order. // 2300AD B3 p.53–54',
       requiresTarget: false,
       targetsCrewRole: true, // picks a role of this ship's own crew, not an enemy ship
     },
@@ -158,7 +158,7 @@ export const CREW_ACTIONS = {
       skill: 'Electronics (sensors)',
       difficulty: 12,
       difficultyLabel: 'Very Difficult (12+)',
-      description: 'Find a weakness in a target\'s defences (DM−1 per range band). On success, this ship\'s next Firing Solution shot next round scores a critical hit at Effect 5+ instead of 6+ (or Effect 4+ if this check itself had Effect 6+). // 2300AD B3 p.54',
+      description: 'Find a weakness in a target\'s defences (DM−1 per range band). On success, this ship\'s next Firing Solution shot this round scores a critical hit at Effect 5+ instead of 6+ (or Effect 4+ if this check itself had Effect 6+). // 2300AD B3 p.54',
       requiresTarget: false,
     },
   ],

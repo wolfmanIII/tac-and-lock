@@ -263,7 +263,6 @@ test.describe('AttackModal — Captain Tactics Assist', () => {
       s.applyCommand(id, 'gunner_turret', 1)
       s.setInitiativeOrder(s.ships.map((sh) => sh.id))
     }, id0)
-    await page.evaluate(() => window.__ZUSTAND_BATTLE_STORE__.getState().startNextRound())
 
     await page.evaluate((id) => {
       window.__ZUSTAND_UI_STORE__.getState().openModal('attack', { attackerId: id })
