@@ -136,20 +136,36 @@ Ogni nave (in ordine di Iniziativa) distribuisce il suo **TAC Speed** tra:
 L'attacco è una **catena di check**. Ogni Effect positivo si trasferisce come DM al check successivo.
 
 **Step 1 — Sensor Operator**: Very Difficult (12+) Electronics (sensors) **INT**
+
 - DM: +Signature del bersaglio; +Sensor Time-lag (tabella sotto); qualità sensori (Basic Military +0, Improved +1, Advanced +2)
 - Assist Engineer (opzionale): Routine (8+) Engineer (power) **INT**
-- In alternativa al sensor operator: il gunner può usare un array UTES per sviluppare la Firing Solution da solo. Very Difficult (12+) Gunner **EDU**, richiede 2 round. Effect 1–4: DM+1 al prossimo Gunner check; Effect 5–6: DM+2.
+- **Operate UTES Array** (Gunner Action, B3 p.53, issue #16): se il weapon mount selezionato ha `targetingSystem === 'utes'`, il gunner può sviluppare la Firing Solution da solo per quello slot, bypassando del tutto lo Step 1 (Sensor Operator, nessuna sua azione spesa). Very Difficult (12+) Gunner **EDU**. Successo: Effect 1–4 → DM+1, Effect 5–6 → DM+2 al **prossimo** Gunner check per quello stesso weapon slot. Poiché Gunnery è sempre cap 1 azione/round in questa VTT (§4/issue #19), sviluppare e sparare richiedono sempre **2 round separati** — il ramo B3 "se il gunner ha più di un'azione, stesso round" non è mai raggiungibile qui. Stato: `ship.utesSolutionDm` (1 o 2) + `ship.utesSolutionSlotIdx`, consumato dopo il primo tiro Gunner per quel weapon slot, azzerato a inizio round successivo se non usato.
 
 **Step 2 — Pilot**: Difficult (10+) Pilot **DEX**
+
 - DM: +TAC Speed della nave
 - Assist Engineer (opzionale): Routine (8+) Engineer (power) **INT** (può aumentare temporaneamente il TAC Speed)
 
 **Step 3 — Gunner**: Difficult (10+) Gunner **INT** — target 10+
-- DM: +Fire Control software rating (**DM−8 se nessun Fire Control installato**, incluso il point defence — B3 p.62); +Effect accumulato dagli step 1–2; +weapon trait (Accurate +1, Slow −2)
-- DM aggiuntivi automatici: −`ewEffect` (propria nave è sotto EW jam); +evasione bersaglio (applicata anche allo Step 1, non solo qui — B3 p.54); +`commandBonus` se il Capitano ha dato un Command a `gunner_turret` nel round precedente (§12); +2/×2 danno se il bersaglio è stazionario o in reaction drive (§ sotto); DM da condizione planetaria/atmosferica del bersaglio (§ sotto); +4 (Ortillery) se l'arma ha quel trait e il bersaglio è su superficie planetaria; −Rating Defensive Screens del bersaglio, solo armi laser (§ sotto)
+
+- DM: +Fire Control software rating (**DM−8 se nessun Fire Control installato**, incluso il point defence — B3 p.62); +Targeting System hardware del weapon mount selezionato (Light TTA/TTA/UTES — separato e stackabile dal Fire Control software, tabella sotto, B3 p.62); +Effect accumulato dagli step 1–2; +weapon trait (Accurate +1, Slow −2)
+- DM aggiuntivi automatici: −`ewEffect` (propria nave è sotto EW jam); +evasione bersaglio (applicata anche allo Step 1, non solo qui — B3 p.54); +`commandBonus` se il Capitano ha dato un Command a `gunner_turret` questo round (§12); +`utesSolutionDm` se una Operate UTES Array precedente è ancora attiva per questo weapon slot (sopra); +2/×2 danno se il bersaglio è stazionario o in reaction drive (§ sotto); DM da condizione planetaria/atmosferica del bersaglio (§ sotto); +4 (Ortillery) se l'arma ha quel trait e il bersaglio è su superficie planetaria; −Rating Defensive Screens del bersaglio, solo armi laser (§ sotto)
 - Assist Captain (opzionale, distinto dal Command): Difficult (10+) Tactics (naval) **INT** — roll inline nello Step 3, il suo Effect si somma solo a quel singolo tiro
 
 > Bersagli stazionari o in movimento a reaction drive (non stutterwarp): DM+2 e **danno doppio** — la Firing Solution diventa banale. — B3 p.56
+
+### Targeting Systems — 2300AD B3 p.62
+
+Fonte DM separata e stackabile dal Fire Control software (§4) — hardware di puntamento per singolo weapon mount, non software di bordo.
+
+| Targeting System | TL | Armi controllate | Fire Control DM |
+| --- | --- | --- | --- |
+| Light TTA | 11 | 4 | 0 |
+| TTA | 10 | 10 | −1 |
+| UTES | 12 | 1 (raro fino a 4) | +1 |
+| Drone Controller | 10 | 2 | 0 |
+
+Campo `targetingSystem` per weapon slot (`ship.weapons[i].targetingSystem`), editabile in `ShipProfileForm.jsx`. Applicato solo alle armi turret/bay attaccate via `AttackModal.jsx` (incluso Grape Shot, "guided by a TTA or UTES mount" — B3 p.59) — non ai droni/missili tracciati individualmente (`DroneAttackModal.jsx`), che non hanno un'attribuzione stabile al weapon slot di lancio. Drone Controller è selezionabile per completezza profilo ma contribuisce DM+0 e nessun limite droni ("not exactly a targeting system" — B3; il limite di 2 droni/controller è un sistema di risorse separato, non modellato).
 
 ### DM di distanza per l'attacco — 2300AD B3 p.57
 
@@ -496,6 +512,7 @@ Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). Tirare sul
 - **Boost Power Output**: Difficult (10+) Engineer (power) **EDU**. Successo: Effect% aumento Power. Effect −5 o peggio: critical hit Power Plant.
 
 > Nota: "Boost Power Output" e "Boost Tac Speed" (righe sotto) sono documentate qui ma **non implementate** in `crewActions.js`/`ActionModal.jsx` — gap trovato durante il lavoro sulla #18, non ancora tracciato in una issue dedicata.
+
 - **Overload Stutterwarp** — Difficult (10+) Engineer (stutterwarp) **INT**: porta il motore oltre i limiti di sicurezza. Successo: TAC Speed +1 questo round. Fallimento: critical hit sul sistema Stutterwarp Drive. // B3 p.55
 - **Emergency Repair** ("Damage Control team") — Difficult (10+) **Mechanic** (1D minuti, INT): ripara un danno nella fase corrente. // B3 p.56–57
   - Modalità *Critical System*: riduce la severity di un critical hit track di 1.
@@ -600,6 +617,7 @@ Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). Tirare sul
 ### Firing Solution del drone — B3 p.55–56
 
 **Step 1 — Sensor/Firing Solution generation**: due opzioni —
+
 - **Hand-off** da un Sensor Operator di una nave/drone sensore vicino: nessuna penalità aggiuntiva; DM−1 se la piattaforma sensori è a Long range o oltre (lightspeed lag).
 - **Self-generated**: il Remote Pilot della nave lanciante usa un'azione di Piloting al posto di Electronics(sensors), **DM−2** al check. Stesso target 12+ in entrambi i casi.
 
@@ -659,7 +677,7 @@ Le statistiche rilevanti per il combattimento spaziale:
 | **Signature** | Valore base dal stat block B3 (sempre ≥ 1). DM positivo per i check Electronics (sensors) nemici nello step 1 della Firing Solution. Si ricava dal profilo nave B3; può essere modificato da stealth, heat sink, EW, ecc. |
 | **Sensors** | Tipo e DM (Basic Military +0, Improved +1, Advanced +2 allo step 1) |
 | **Computer** | Modello + Bandwidth (limite software installabili) |
-| **Weapons** | Lista: tipo, mount, TL, range, danno, traits |
+| **Weapons** | Lista: tipo, mount, TL, range, danno, traits, Targeting System per-slot (Light TTA/TTA/UTES — §6) |
 
 ### Caratteristiche crew rilevanti per la Firing Solution
 
@@ -670,6 +688,7 @@ Le statistiche rilevanti per il combattimento spaziale:
 | Step 2 | Pilot | Pilot | **DEX** |
 | Step 3 | Gunner | Gunner | **INT** |
 | Point Defence | Gunner | Gunner | **DEX** |
+| Operate UTES Array | Gunner | Gunner | **EDU** |
 | Commands (target) | qualsiasi ruolo | — | — |
 | Captain assist (step 3) | Captain | Tactics (naval) | **INT** |
 | Engineer assist | Engineer | Engineer (power) | **INT** (step 1) / **INT** (step 2) |
