@@ -391,10 +391,22 @@ describe('rollDamage', () => {
     expect(r.bonus).toBe(4) // flatBonus(2) + traitBonus(2)
   })
 
-  it('particle_barbette ignores armour (Radiation trait → AP∞)', () => {
-    const r = rollDamage('particle_barbette', 1, 20)
-    expect(r.armour).toBe(0)
-    expect(r.net).toBe(r.gross)
+  it('Radiation trait has no armour interaction — armour applies normally', () => {
+    // particle_barbette: 4D, each die mocked to 4 → gross = 16
+    const full = rollDamage('particle_barbette', 1, 20)
+    expect(full.armour).toBe(20)
+    expect(full.net).toBe(0) // fully absorbed by armour ≥ gross
+
+    const partial = rollDamage('particle_barbette', 1, 5)
+    expect(partial.armour).toBe(5)
+    expect(partial.gross).toBe(16)
+    expect(partial.net).toBe(11) // 16 - 5
+  })
+
+  it('Radiation + AP X together still gets the AP reduction', () => {
+    const r = rollDamage('particle_barbette', 1, 10, { traits: ['Radiation', 'AP 4'] })
+    expect(r.armour).toBe(6) // 10 - 4
+    expect(r.net).toBe(10) // 16 - 6
   })
 
   it('unknown weapon returns zeroes', () => {

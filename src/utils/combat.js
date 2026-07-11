@@ -236,13 +236,13 @@ export function rollAttack(totalDm) {
 
 /**
  * Resolve AP penetration from weapon traits. // 2300AD B3 p.59
- * "Radiation" (particle barbette) = AP∞. "AP X" = ignore X armour points.
+ * "AP X" = ignore X armour points. "Radiation" has no armour interaction — it only
+ * inflicts rads (Effect × 10) separately from the damage roll.
  * @param {string[]} traits
  * @param {number} armour
  * @returns {number} effective armour after AP reduction
  */
 function resolveArmour(traits, armour) {
-  if (traits.includes('Radiation')) return 0
   const apTrait = traits.find((t) => /^AP\s*\d+$/i.test(t))
   if (apTrait) {
     const apValue = parseInt(apTrait.replace(/\D/g, ''), 10)

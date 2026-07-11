@@ -116,7 +116,7 @@ export const WEAPONS = {
       Distant:  -3,
     },
     traits: ['Radiation'],
-    notes: 'Ignores armour (AP∞). On hit, crew in targeted compartment take 2D6 radiation exposure.',
+    notes: 'On hit, crew in targeted compartment take 2D6 radiation exposure.',
   },
 
   // ── 2300AD canonical weapons — B3 p.60–61 ────────────────────────────────
