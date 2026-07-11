@@ -749,8 +749,11 @@ test.describe('AttackModal — Auto X fire mode', () => {
     await page.getByText('enter manually').last().click()
     await page.locator('input[type="number"]').nth(0).fill('6')
     await page.locator('input[type="number"]').nth(1).fill('6')
-    // tri_beamer: 5D, Burst +3 — bonus shown in the damage breakdown
-    await expect(page.getByText('+3', { exact: false })).toBeVisible()
+    // tri_beamer: 5D, Burst +3 — bonus shown in the damage breakdown. Scoped to the
+    // damage line specifically — a bare "+3" text search can collide with other random
+    // DM/dice values elsewhere on screen since damage rolls aren't seeded in e2e.
+    const damageLine = page.locator('p').filter({ hasText: 'Kaefer Tri-Beamer:' })
+    await expect(damageLine).toContainText('+3')
   })
 
   test('Full Auto mode fires 3 volleys, shown as ×3 in the damage breakdown', async ({ page }) => {
@@ -761,5 +764,167 @@ test.describe('AttackModal — Auto X fire mode', () => {
     await page.locator('input[type="number"]').nth(0).fill('6')
     await page.locator('input[type="number"]').nth(1).fill('6')
     await expect(page.getByText('Full Auto ×3', { exact: false })).toBeVisible()
+  })
+})
+
+// === Targeting Systems (TTA/UTES) and Operate UTES Array // 2300AD B3 p.53, p.62 (#16) ===
+
+test.describe('AttackModal — Targeting Systems and Operate UTES Array', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  async function openTargetingAttack(page, targetingSystem) {
+    await page.evaluate(({ targetingSystem }) => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const crew = [{
+        id: 'crew-full', name: 'Full Crew', role: null,
+        skills: { pilot: 2, tactics: 2, engineer: 2, gunner: 2, sensors: 2, countermeasures: 2, leadership: 2, mechanic: 2, gunCombat: 2, melee: 2, remoteOps: 2 },
+        characteristics: { STR: 7, DEX: 7, END: 7, INT: 7, EDU: 7, SOC: 7 },
+      }]
+      const crewAssignments = {
+        pilot: 'crew-full', captain: 'crew-full', engineer: 'crew-full', sensor_operator: 'crew-full',
+        gunner_turret: 'crew-full', gunner_bay: 'crew-full', marine: 'crew-full', remote_pilot: 'crew-full',
+      }
+      store.getState().addShip(
+        {
+          name: 'Targeting Test Ship', class: 'Test class', hullPoints: 20, armour: 3,
+          tacSpeed: 4, signature: 2,
+          sensors: { type: 'Basic Military', dm: 0 },
+          computer: { model: 'TL-10', bandwidth: 20 },
+          weapons: [{ weaponId: 'll98', count: 1, label: 'Test Weapon', targetingSystem }],
+          software: ['fire_control_1'],
+          crew, crewAssignments,
+        },
+        'players', 'Close',
+      )
+      store.getState().addShip(
+        {
+          name: 'Enemy Target', class: 'Test class', hullPoints: 20, armour: 3,
+          tacSpeed: 4, signature: 2,
+          sensors: { type: 'Basic Military', dm: 0 },
+          computer: { model: 'TL-10', bandwidth: 20 },
+          weapons: [{ weaponId: 'll88', count: 1, label: 'Enemy Weapon' }],
+          software: ['fire_control_1'],
+          crew, crewAssignments,
+        },
+        'npc', 'Close',
+      )
+      const ships = store.getState().ships
+      window.__ZUSTAND_UI_STORE__.getState().openModal('attack', { attackerId: ships[0].id })
+    }, { targetingSystem })
+    await expect(page.getByText('FIRING SOLUTION', { exact: true })).toBeVisible()
+  }
+
+  async function reachStep3(page) {
+    await page.getByText('BEGIN FIRING SOLUTION →').click()
+    await page.getByText('ROLL 2D6').click()
+    await page.getByText('NEXT → PILOT').click()
+    await page.getByText('ROLL 2D6').click()
+    await page.getByText('NEXT → GUNNER').click()
+    await expect(page.getByText('STEP 3 — GUNNER')).toBeVisible()
+  }
+
+  test('TTA-equipped weapon shows a DM−1 Targeting System row in Step 3', async ({ page }) => {
+    await openTargetingAttack(page, 'tta')
+    await reachStep3(page)
+    const row = page.locator('div').filter({ hasText: 'Targeting System' }).last()
+    await expect(row).toContainText('-1')
+  })
+
+  test('UTES-equipped weapon shows a DM+1 Targeting System row in Step 3 (passive hardware)', async ({ page }) => {
+    await openTargetingAttack(page, 'utes')
+    await reachStep3(page)
+    const row = page.locator('div').filter({ hasText: 'Targeting System' }).last()
+    await expect(row).toContainText('+1')
+  })
+
+  test('no Targeting System row for an unequipped weapon', async ({ page }) => {
+    await openTargetingAttack(page, 'none')
+    await reachStep3(page)
+    await expect(page.getByText('Targeting System', { exact: false })).not.toBeVisible()
+  })
+
+  test('Operate UTES Array block only appears for a UTES-equipped weapon', async ({ page }) => {
+    await openTargetingAttack(page, 'utes')
+    await expect(page.getByText('Operate UTES Array', { exact: false })).toBeVisible()
+  })
+
+  test('no Operate UTES Array block for a TTA-equipped (non-UTES) weapon', async ({ page }) => {
+    await openTargetingAttack(page, 'tta')
+    await expect(page.getByText('Operate UTES Array', { exact: false })).not.toBeVisible()
+  })
+
+  test('a successful manual Operate UTES Array roll sets utesSolutionDm/utesSolutionSlotIdx and spends the Gunner budget', async ({ page }) => {
+    await openTargetingAttack(page, 'utes')
+    await page.getByText('enter manually').click()
+    // SETUP also renders the TARGET EVASION DM number input before this one — skip it.
+    await page.locator('input[type="number"]').nth(1).fill('6')
+    await page.locator('input[type="number"]').nth(2).fill('6')
+    await page.getByText('CONFIRM (ends this ship\'s Firing Solution this round)').click()
+
+    const id0 = await page.evaluate(() => window.__ZUSTAND_BATTLE_STORE__.getState().ships[0].id)
+    const ship = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
+    , id0)
+    // Full crew: gunner skill 2 + EDU DM 0 = +2; dice 6+6=12 → total 14, effect 2 → success, DM+1
+    expect(ship.utesSolutionDm).toBe(1)
+    expect(ship.utesSolutionSlotIdx).toBe(0)
+    expect(ship.actionsRemaining.gunner_turret).toBe(0)
+  })
+
+  test('reopening with a matching UTES solution shows the ready banner and skips Step 1', async ({ page }) => {
+    await openTargetingAttack(page, 'utes')
+    const id0 = await page.evaluate(() => window.__ZUSTAND_BATTLE_STORE__.getState().ships[0].id)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().updateShip(id, { utesSolutionDm: 1, utesSolutionSlotIdx: 0 })
+    }, id0)
+    await page.evaluate((id) => window.__ZUSTAND_UI_STORE__.getState().openModal('attack', { attackerId: id }), id0)
+    await expect(page.getByText('UTES Solution Ready', { exact: false })).toBeVisible()
+    await page.getByText('BEGIN FIRING SOLUTION (SKIP SENSOR STEP) →').click()
+    await expect(page.getByText('STEP 2 — PILOT')).toBeVisible()
+    await expect(page.getByText('STEP 1 — SENSOR OPERATOR')).not.toBeVisible()
+  })
+
+  test('the UTES solution DM row appears in Step 3 and clears after the hit is applied', async ({ page }) => {
+    await openTargetingAttack(page, 'utes')
+    const id0 = await page.evaluate(() => window.__ZUSTAND_BATTLE_STORE__.getState().ships[0].id)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().updateShip(id, { utesSolutionDm: 2, utesSolutionSlotIdx: 0 })
+    }, id0)
+    await page.evaluate((id) => window.__ZUSTAND_UI_STORE__.getState().openModal('attack', { attackerId: id }), id0)
+    await page.getByText('BEGIN FIRING SOLUTION (SKIP SENSOR STEP) →').click()
+    await page.getByText('ROLL 2D6').click()
+    await page.getByText('NEXT → GUNNER').click()
+    const row = page.locator('div').filter({ hasText: 'UTES solution (prev. round)' }).last()
+    await expect(row).toContainText('+2')
+
+    await page.getByText('enter manually').last().click()
+    await page.locator('input[type="number"]').nth(0).fill('6')
+    await page.locator('input[type="number"]').nth(1).fill('6')
+    await page.getByText('APPLY DAMAGE', { exact: true }).click()
+
+    const ship = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
+    , id0)
+    expect(ship.utesSolutionDm).toBe(null)
+    expect(ship.utesSolutionSlotIdx).toBe(null)
+  })
+
+  test('an unused UTES solution clears at the next round boundary', async ({ page }) => {
+    await openTargetingAttack(page, 'utes')
+    const id0 = await page.evaluate(() => window.__ZUSTAND_BATTLE_STORE__.getState().ships[0].id)
+    await page.evaluate((id) => {
+      const s = window.__ZUSTAND_BATTLE_STORE__.getState()
+      s.updateShip(id, { utesSolutionDm: 1, utesSolutionSlotIdx: 0 })
+      s.setInitiativeOrder(s.ships.map((sh) => sh.id))
+      s.startNextRound()
+    }, id0)
+    const ship = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
+    , id0)
+    expect(ship.utesSolutionDm).toBe(null)
+    expect(ship.utesSolutionSlotIdx).toBe(null)
   })
 })

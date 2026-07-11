@@ -14,7 +14,7 @@ import { SENSOR_TIME_LAG_DM } from '../../data/rangeBands.js'
 import { pairKey }        from '../../utils/rangeBands.js'
 import { getAssignedSkill, getAssignedCharacteristic } from '../../utils/crew.js'
 import { getCharDM, roll2D6 } from '../../utils/dice.js'
-import { getRangeDM, rollDamage, rollFullAuto, getAutoScore, isSurfaceFixtureDamage, isInternalCriticalHit, getWeaponTraitAttackDm, computeEffectiveSignature, getEasyTargetAttackDm, getEasyTargetDamageMultiplier, getAtmosphericTargetDm, getOrtilleryDm, getFireControlDm, getScreenDm } from '../../utils/combat.js'
+import { getRangeDM, rollDamage, rollFullAuto, getAutoScore, isSurfaceFixtureDamage, isInternalCriticalHit, getWeaponTraitAttackDm, computeEffectiveSignature, getEasyTargetAttackDm, getEasyTargetDamageMultiplier, getAtmosphericTargetDm, getOrtilleryDm, getFireControlDm, getScreenDm, getTargetingSystemDm } from '../../utils/combat.js'
 import { DiceInput } from '../forms/DiceInput.jsx'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -187,6 +187,7 @@ export function AttackModal({ payload, onClose }) {
   const weaponSlot  = shipWeapons[weaponIdx] ?? { weaponId: 'll98', count: 1, label: '' }
   const weaponId    = weaponSlot.weaponId
   const weapon      = WEAPONS[weaponId]
+  const weaponTargetingSystem = weaponSlot.targetingSystem ?? 'none'
 
   // ── DM calculations ────────────────────────────────────────────────────────
 
@@ -248,6 +249,37 @@ export function AttackModal({ payload, onClose }) {
     return { skill, intDm, total: skill + intDm }
   }, [attacker])
 
+  // Operate UTES Array — Gunner develops a Firing Solution alone for this weapon slot,
+  // bypassing the Sensor Operator (Very Difficult 12+, Gunner EDU). // 2300AD B3 p.53
+  const hasUtesSolution = attacker?.utesSolutionSlotIdx === weaponIdx && attacker?.utesSolutionDm != null
+  const utesDevDms = useMemo(() => {
+    if (!attacker) return { skill: 0, eduDm: 0, total: 0 }
+    const skill = getAssignedSkill('gunner_turret', attacker.crewAssignments, attacker.crew)
+    const eduDm = getCharDM(getAssignedCharacteristic('gunner_turret', attacker.crewAssignments, attacker.crew, 'EDU'))
+    return { skill, eduDm, total: skill + eduDm }
+  }, [attacker])
+  const [utesDevResult, setUtesDevResult] = useState(null)
+
+  function rollUtesDev() {
+    const dice  = roll2D6()
+    const base  = dice[0] + dice[1]
+    const total = base + utesDevDms.total
+    setUtesDevResult({ dice, base, total, effect: total - 12 })
+  }
+
+  function manualUtesDev({ dice, total }) {
+    setUtesDevResult({ dice, base: dice[0] + dice[1], total, effect: total - 12 })
+  }
+
+  function confirmUtesDev() {
+    if (!utesDevResult) return
+    spendCrewAction(attacker.id, 'gunner_turret')
+    if (utesDevResult.total >= 12) {
+      updateShip(attacker.id, { utesSolutionDm: utesDevResult.effect >= 6 ? 2 : 1, utesSolutionSlotIdx: weaponIdx })
+    }
+    onClose()
+  }
+
   const step3Dms = useMemo(() => {
     if (!attacker || !weapon) return { rows: [], total: 0 }
     const gunnerSkill    = getAssignedSkill('gunner_turret', attacker.crewAssignments, attacker.crew)
@@ -268,7 +300,13 @@ export function AttackModal({ payload, onClose }) {
     const ortilleryDm   = getOrtilleryDm(weapon.traits, target)
     // Defensive Screens — negative DM equal to target's active Rating, laser weapons only // B3 p.62
     const screenDm = getScreenDm(target, weapon)
-    const total = gunnerSkill + intDm + fireControlDm + rangeDm + step2CarryEffect + evasionDm + weaponTraitDm + jammerPenalty + commandDm + captainAssistDm + easyTargetDm + atmosphericDm + ortilleryDm + screenDm
+    // Targeting System hardware on this mount (Light TTA/TTA/UTES) — separate, stackable
+    // DM from Fire Control software above. // 2300AD B3 p.62
+    const targetingSystemDm = getTargetingSystemDm({ targetingSystem: weaponTargetingSystem })
+    // Operate UTES Array — a Gunner-developed solution from a previous round, tied to
+    // this specific weapon slot, consumed after the next Gunner check. // 2300AD B3 p.53
+    const utesSolutionDm = attacker.utesSolutionSlotIdx === weaponIdx ? (attacker.utesSolutionDm ?? 0) : 0
+    const total = gunnerSkill + intDm + fireControlDm + rangeDm + step2CarryEffect + evasionDm + weaponTraitDm + jammerPenalty + commandDm + captainAssistDm + easyTargetDm + atmosphericDm + ortilleryDm + screenDm + targetingSystemDm + utesSolutionDm
     return {
       rows: [
         ['Gunner skill',      gunnerSkill],
@@ -285,10 +323,12 @@ export function AttackModal({ payload, onClose }) {
         ...(atmosphericDm !== 0 ? [['Planetary/atmospheric condition', atmosphericDm]] : []),
         ...(ortilleryDm   !== 0 ? [['Ortillery',         ortilleryDm]] : []),
         ...(screenDm      !== 0 ? [['Defensive Screens', screenDm]] : []),
+        ...(targetingSystemDm !== 0 ? [['Targeting System', targetingSystemDm]] : []),
+        ...(utesSolutionDm    !== 0 ? [['UTES solution (prev. round)', utesSolutionDm]] : []),
       ],
       total,
     }
-  }, [attacker, weaponId, band, step2CarryEffect, evasionDm, weapon, ships, captainAssistDm, target])
+  }, [attacker, weaponId, weaponIdx, weaponTargetingSystem, band, step2CarryEffect, evasionDm, weapon, ships, captainAssistDm, target])
 
   // ── Roll handlers ──────────────────────────────────────────────────────────
 
@@ -377,6 +417,9 @@ export function AttackModal({ payload, onClose }) {
     // it actually produced a crit. // 2300AD B3 p.54
     const critThreshold = attacker.improveCriticalThreshold ?? 6
     if (attacker.improveCriticalThreshold != null) updateShip(attacker.id, { improveCriticalThreshold: null })
+    // UTES solution DM applied to "the following Gunner check" (singular) — consumed here
+    // the same way, regardless of hit/miss on the roll it fed. // 2300AD B3 p.53
+    if (hasUtesSolution) updateShip(attacker.id, { utesSolutionDm: null, utesSolutionSlotIdx: null })
     if (isSurfaceFixtureDamage(effect)) {
       openModal('critical-hit', { shipId: target.id, mode: 'surface', effect })
     } else if (isInternalCriticalHit(effect, damageResult.net, target.currentHull, critThreshold)) {
@@ -549,10 +592,49 @@ export function AttackModal({ payload, onClose }) {
           </div>
         </div>
 
-        {budget.sensor_operator <= 0 && (
+        {/* Operate UTES Array — Gunner Action, bypasses Sensor Operator for this weapon // B3 p.53 */}
+        {weaponSlot.targetingSystem === 'utes' && !hasUtesSolution && (
+          <div className="bg-violet-950/20 border border-violet-900/50 rounded p-3 space-y-2">
+            <p className="font-mono text-[10px] text-violet-400 tracking-widest uppercase">
+              Operate UTES Array (Gunner Action — develop Firing Solution alone, no Sensor Operator needed)
+            </p>
+            <p className="font-mono text-[10px] text-slate-400">
+              Very Difficult (12+) · Gunner · EDU — success applies DM+1 (Effect 1–4) or DM+2
+              (Effect 5–6) to this weapon's Gunner check next round.
+            </p>
+            {budget.gunner_turret <= 0 && (
+              <p className="font-mono text-[10px] text-red-400">Gunner has no actions left this round (Gunnery cap — B3 p.53).</p>
+            )}
+            <RollBlock
+              dm={utesDevDms.total}
+              onRoll={rollUtesDev}
+              onManual={manualUtesDev}
+              result={utesDevResult}
+              target={12}
+              disabled={budget.gunner_turret <= 0}
+            />
+            {utesDevResult && (
+              <button
+                onClick={confirmUtesDev}
+                className="w-full py-1.5 text-xs font-display tracking-widest text-violet-400 border border-violet-800 hover:bg-violet-900/20 rounded transition-colors"
+              >
+                CONFIRM (ends this ship's Firing Solution this round)
+              </button>
+            )}
+          </div>
+        )}
+
+        {hasUtesSolution && (
+          <div className="bg-violet-950/20 border border-violet-900/50 rounded p-3">
+            <p className="font-mono text-[10px] text-violet-400 tracking-widest uppercase">
+              UTES Solution Ready — DM{attacker.utesSolutionDm > 0 ? `+${attacker.utesSolutionDm}` : attacker.utesSolutionDm} on this weapon's next Gunner check
+            </p>
+          </div>
+        )}
+
+        {!hasUtesSolution && weaponSlot.targetingSystem !== 'utes' && budget.sensor_operator <= 0 && (
           <p className="font-mono text-[10px] text-red-400">
-            Sensor Operator has no actions left this round — Firing Solution can't
-            start (UTES hand-off is issue #16, not yet implemented).
+            Sensor Operator has no actions left this round — Firing Solution can't start.
           </p>
         )}
 
@@ -561,10 +643,10 @@ export function AttackModal({ payload, onClose }) {
             className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-600 hover:border-slate-500 rounded transition-colors">
             CANCEL
           </button>
-          <button onClick={() => setStep(STEP_SENSOR)}
-            disabled={!target || !weapon || budget.sensor_operator <= 0}
+          <button onClick={() => setStep(hasUtesSolution ? STEP_PILOT : STEP_SENSOR)}
+            disabled={!target || !weapon || (!hasUtesSolution && budget.sensor_operator <= 0)}
             className="flex-1 py-2 text-xs font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 hover:bg-(--neon-cyan)/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-            BEGIN FIRING SOLUTION →
+            {hasUtesSolution ? 'BEGIN FIRING SOLUTION (SKIP SENSOR STEP) →' : 'BEGIN FIRING SOLUTION →'}
           </button>
         </div>
       </div>
@@ -756,8 +838,10 @@ export function AttackModal({ payload, onClose }) {
               ← BACK
             </button>
             <button onClick={() => {
-              // "Next shot this round" is consumed by this attempt whether it hit or not.
+              // "Next shot this round" / "the following Gunner check" are consumed by this
+              // attempt whether it hit or not.
               if (attacker.improveCriticalThreshold != null) updateShip(attacker.id, { improveCriticalThreshold: null })
+              if (hasUtesSolution) updateShip(attacker.id, { utesSolutionDm: null, utesSolutionSlotIdx: null })
               onClose()
             }}
               className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-700 hover:bg-slate-800 rounded transition-colors">
