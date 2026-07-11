@@ -674,3 +674,92 @@ test.describe('AttackModal — Gunnery action budget (one use per round)', () =>
     await expect(page.getByText('Gunner has no actions left this round', { exact: false })).toBeVisible()
   })
 })
+
+// === Auto X fire mode — Single/Burst/Full Auto selector // 2300AD B3 p.59, Trav2022 CRB p.75 (#11) ===
+
+test.describe('AttackModal — Auto X fire mode', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  const AUTO_SHIPS = [
+    { name: 'Auto Gunship', faction: 'players', weapons: [{ weaponId: 'tri_beamer', count: 1, label: 'Tri-Beamer' }] },
+    { name: 'Kaefer Geist', faction: 'npc', weapons: [{ weaponId: 'll88', count: 1, label: 'Main Laser' }] },
+  ]
+
+  async function openAutoAttack(page) {
+    await page.evaluate((shipDefs) => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      for (const def of shipDefs) {
+        store.getState().addShip(
+          {
+            name: def.name, class: 'Test class', hullPoints: 20, armour: 3,
+            tacSpeed: 4, signature: 2,
+            sensors: { type: 'Basic Military', dm: 0 },
+            computer: { model: 'TL-10', bandwidth: 20 },
+            weapons: def.weapons, software: ['fire_control_1'],
+            crew: [{
+              id: 'crew-full', name: 'Full Crew', role: null,
+              skills: { pilot: 2, tactics: 2, engineer: 2, gunner: 2, sensors: 2, countermeasures: 2, leadership: 2, mechanic: 2, gunCombat: 2, melee: 2, remoteOps: 2 },
+              characteristics: { STR: 7, DEX: 7, END: 7, INT: 7, EDU: 7, SOC: 7 },
+            }],
+            crewAssignments: {
+              pilot: 'crew-full', captain: 'crew-full', engineer: 'crew-full', sensor_operator: 'crew-full',
+              gunner_turret: 'crew-full', gunner_bay: 'crew-full', marine: 'crew-full', remote_pilot: 'crew-full',
+            },
+          },
+          def.faction, 'Adjacent', // tri_beamer's optimal range
+        )
+      }
+      const ships = store.getState().ships
+      window.__ZUSTAND_UI_STORE__.getState().openModal('attack', { attackerId: ships[0].id })
+    }, AUTO_SHIPS)
+    await expect(page.getByText('FIRING SOLUTION', { exact: true })).toBeVisible()
+  }
+
+  async function reachStep3(page) {
+    await page.getByText('BEGIN FIRING SOLUTION →').click()
+    await page.getByText('ROLL 2D6').click()
+    await page.getByText('NEXT → PILOT').click()
+    await page.getByText('ROLL 2D6').click()
+    await page.getByText('NEXT → GUNNER').click()
+    await expect(page.getByText('STEP 3 — GUNNER')).toBeVisible()
+  }
+
+  test('fire-mode selector is shown for a weapon with Auto X, defaulting to Burst', async ({ page }) => {
+    await openAutoAttack(page)
+    await expect(page.getByText('Fire Mode (Kaefer Tri-Beamer — Auto 3)')).toBeVisible()
+    await expect(page.getByLabel('Burst (+3 dmg)')).toBeChecked()
+  })
+
+  test('no fire-mode selector for a weapon without Auto X', async ({ page }) => {
+    await openAutoAttack(page)
+    await expect(page.getByLabel('Full Auto (×3)')).toBeVisible() // sanity: selector exists for tri_beamer first
+    await page.evaluate(() => {
+      const s = window.__ZUSTAND_BATTLE_STORE__.getState()
+      s.updateShip(s.ships[0].id, { weapons: [{ weaponId: 'll88', count: 1, label: 'Main Laser' }] })
+    })
+    await expect(page.getByText('Fire Mode', { exact: false })).not.toBeVisible()
+  })
+
+  test('Burst mode adds the Auto score to the damage total', async ({ page }) => {
+    await openAutoAttack(page)
+    await reachStep3(page)
+    await page.getByText('enter manually').last().click()
+    await page.locator('input[type="number"]').nth(0).fill('6')
+    await page.locator('input[type="number"]').nth(1).fill('6')
+    // tri_beamer: 5D, Burst +3 — bonus shown in the damage breakdown
+    await expect(page.getByText('+3', { exact: false })).toBeVisible()
+  })
+
+  test('Full Auto mode fires 3 volleys, shown as ×3 in the damage breakdown', async ({ page }) => {
+    await openAutoAttack(page)
+    await page.getByLabel('Full Auto (×3)').check()
+    await reachStep3(page)
+    await page.getByText('enter manually').last().click()
+    await page.locator('input[type="number"]').nth(0).fill('6')
+    await page.locator('input[type="number"]').nth(1).fill('6')
+    await expect(page.getByText('Full Auto ×3', { exact: false })).toBeVisible()
+  })
+})

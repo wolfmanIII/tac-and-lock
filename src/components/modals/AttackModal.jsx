@@ -14,7 +14,7 @@ import { SENSOR_TIME_LAG_DM } from '../../data/rangeBands.js'
 import { pairKey }        from '../../utils/rangeBands.js'
 import { getAssignedSkill, getAssignedCharacteristic } from '../../utils/crew.js'
 import { getCharDM, roll2D6 } from '../../utils/dice.js'
-import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, getWeaponTraitAttackDm, computeEffectiveSignature, getEasyTargetAttackDm, getEasyTargetDamageMultiplier, getAtmosphericTargetDm, getOrtilleryDm, getFireControlDm, getScreenDm } from '../../utils/combat.js'
+import { getRangeDM, rollDamage, rollFullAuto, getAutoScore, isSurfaceFixtureDamage, isInternalCriticalHit, getWeaponTraitAttackDm, computeEffectiveSignature, getEasyTargetAttackDm, getEasyTargetDamageMultiplier, getAtmosphericTargetDm, getOrtilleryDm, getFireControlDm, getScreenDm } from '../../utils/combat.js'
 import { DiceInput } from '../forms/DiceInput.jsx'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -159,6 +159,9 @@ export function AttackModal({ payload, onClose }) {
   const [targetId,      setTargetId]      = useState(targets[0]?.id ?? '')
   const [weaponIdx,     setWeaponIdx]     = useState(0)
   const [weaponCount,   setWeaponCount]   = useState(1)
+  // Auto X fire mode — Single/Burst/Full Auto selector, Burst default (inert on non-Auto weapons)
+  // // 2300AD B3 p.59, Trav2022 CRB p.75
+  const [autoMode,      setAutoMode]      = useState('burst')
   // evasionDm auto-reads target.evasionDm (set by ManoeuvreModal's opposed Pilot check // B3 p.54);
   // GM can still override manually for untracked crew — null override means "use the auto value"
   const [evasionDmOverride, setEvasionDmOverride] = useState(null)
@@ -331,6 +334,17 @@ export function AttackModal({ payload, onClose }) {
     spendOnce('captain')
   }
 
+  // Auto X fire mode — Single/Burst/Full Auto // 2300AD B3 p.59, Trav2022 CRB p.75
+  function resolveDamage() {
+    const autoScore = getAutoScore(weapon?.traits)
+    const armour    = target?.currentArmour ?? 0
+    const mult      = getEasyTargetDamageMultiplier(target)
+    if (autoMode === 'full' && autoScore > 0) {
+      return rollFullAuto(weaponId, weaponCount, armour, null, mult, autoScore)
+    }
+    return rollDamage(weaponId, weaponCount, armour, null, mult, autoMode === 'burst' ? autoScore : 0)
+  }
+
   function rollStep3() {
     const dice   = roll2D6()
     const base   = dice[0] + dice[1]
@@ -339,8 +353,7 @@ export function AttackModal({ payload, onClose }) {
     setStep3Result({ dice, base, total, effect })
     spendOnce('gunner_turret')
     if (total >= 10) {
-      const dmgResult = rollDamage(weaponId, weaponCount, target?.currentArmour ?? 0, null, getEasyTargetDamageMultiplier(target))
-      setDamageResult(dmgResult)
+      setDamageResult(resolveDamage())
     }
   }
 
@@ -349,7 +362,7 @@ export function AttackModal({ payload, onClose }) {
     setStep3Result({ dice, base: dice[0] + dice[1], total, effect })
     spendOnce('gunner_turret')
     if (total >= 10) {
-      const dmgResult = rollDamage(weaponId, weaponCount, target?.currentArmour ?? 0, null, getEasyTargetDamageMultiplier(target))
+      const dmgResult = resolveDamage()
       setDamageResult(dmgResult)
     }
   }
@@ -453,6 +466,33 @@ export function AttackModal({ payload, onClose }) {
             </p>
           )}
         </div>
+
+        {/* Auto X fire-mode selector — Single/Burst/Full Auto // 2300AD B3 p.59, Trav2022 CRB p.75 */}
+        {weapon && getAutoScore(weapon.traits) > 0 && (
+          <div className="bg-slate-800/40 border border-slate-700 rounded p-3 space-y-2">
+            <p className="font-mono text-[10px] text-slate-400 tracking-widest uppercase">
+              Fire Mode ({weapon.name} — Auto {getAutoScore(weapon.traits)})
+            </p>
+            <div className="flex gap-3">
+              {[
+                ['single', 'Single'],
+                ['burst',  `Burst (+${getAutoScore(weapon.traits)} dmg)`],
+                ['full',   `Full Auto (×${getAutoScore(weapon.traits)})`],
+              ].map(([mode, label]) => (
+                <label key={mode} className="flex items-center gap-1.5 font-mono text-xs text-slate-300 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="autoMode"
+                    checked={autoMode === mode}
+                    onChange={() => setAutoMode(mode)}
+                    className="accent-(--neon-cyan)"
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Defensive Screens — Gunner Action, alternative to firing this round // B3 p.55, p.62 */}
         {attacker.screenRating > 0 && (
@@ -692,6 +732,7 @@ export function AttackModal({ payload, onClose }) {
             <p className="font-mono text-xs text-slate-300">
               {weapon?.name}: {damageResult.rolls.join('+')}
               {damageResult.bonus !== 0 ? ` ${fmtDm(damageResult.bonus)}` : ''} = {damageResult.gross}
+              {damageResult.volleys > 1 ? ` (Full Auto ×${damageResult.volleys})` : ''}
             </p>
             <p className="font-mono text-xs text-slate-400">
               ARM {damageResult.armour} → Net: <span className="text-red-400 font-bold">{damageResult.net}</span>
