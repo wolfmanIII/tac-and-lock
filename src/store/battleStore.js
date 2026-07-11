@@ -6,6 +6,7 @@ import { WEAPONS } from '../data/weapons.js'
 import { exportBattle, importBattle } from '../utils/io.js'
 import { rollInitiative } from '../utils/combat.js'
 import { buildActionBudget } from '../utils/crew.js'
+import { computeCriticalSeverity } from '../data/criticalHits.js'
 
 // Stages: 'setup' → 'initiative' → 'combat'. There is no "Manoeuvre/Attack/Actions
 // Step" in 2300AD B3 — that structure does not appear anywhere in B3 p.52-62 (verified
@@ -604,19 +605,21 @@ export const useBattleStore = create((set, get) => {
     ),
 
     /**
-     * Record a critical hit on a ship system. Increments severity by 1.
+     * Record a critical hit on a ship system. Severity = Effect-5, or the previous
+     * severity+1, whichever is higher (CRB p.169), capped at the system's max.
      * @param {string} shipId
      * @param {string} system — key from CRITICAL_HIT_SYSTEMS
+     * @param {number} effect — the triggering attack roll's Effect
      */
     addCriticalHit: wh(
       (shipId) => !!get().ships.find((s) => s.id === shipId),
-      (shipId, system) => {
+      (shipId, system, effect) => {
         const { round, phase } = get()
         const ship = get().ships.find((s) => s.id === shipId)
         if (!ship) return
 
         const prevSeverity = ship.criticalTracks[system] ?? 0
-        const newSeverity  = Math.min(6, prevSeverity + 1)
+        const newSeverity  = computeCriticalSeverity(effect, prevSeverity, system)
 
         set((s) => ({
           ships: s.ships.map((sh) =>

@@ -1,7 +1,7 @@
 /**
  * CriticalHitModal — two modes:
  *   mode 'surface'  → Surface Fixture Damage (B3 p.58): any hit Effect ≥ 3
- *   mode 'internal' → Internal Critical Hit (CRB p.158–159 + 2300AD substitutions)
+ *   mode 'internal' → Internal Critical Hit (CRB location/effects tables + 2300AD substitutions)
  */
 
 import { useState } from 'react'
@@ -13,8 +13,18 @@ import {
   INTERNAL_LOCATION_TABLE,
   CRITICAL_HIT_EFFECTS,
   CRITICAL_HIT_SYSTEM_LABELS,
+  computeCriticalSeverity,
+  getMaxSeverity,
 } from '../../data/criticalHits.js'
 import { roll2D6 } from '../../utils/dice.js'
+
+/** Reaction Drive is a 2-state binary (inoperable/destroyed), not a numeric severity. */
+function severityLabel(system, severity) {
+  if (system === 'reactionDrive') {
+    return severity >= 2 ? 'DESTROYED' : severity >= 1 ? 'INOPERABLE' : 'OK'
+  }
+  return severity
+}
 
 // ── Surface Fixture mode ───────────────────────────────────────────────────
 
@@ -119,18 +129,20 @@ function SurfaceFixtureMode({ ship, onClose }) {
 
 // ── Internal Critical Hit mode ─────────────────────────────────────────────
 
-function InternalCritMode({ ship, onClose }) {
+function InternalCritMode({ ship, effect: attackEffect, onClose }) {
   const addCritical = useBattleStore((s) => s.addCriticalHit)
 
   const [roll,    setRoll]    = useState(null)
   const [manual,  setManual]  = useState('')
   const [applied, setApplied] = useState(false)
 
-  const total    = roll ?? (manual ? Math.max(2, Math.min(12, parseInt(manual, 10))) : null)
-  const system   = total !== null ? INTERNAL_LOCATION_TABLE[total] : null
+  const total      = roll ?? (manual ? Math.max(2, Math.min(12, parseInt(manual, 10))) : null)
+  const system     = total !== null ? INTERNAL_LOCATION_TABLE[total] : null
   const currentSev = ship?.criticalTracks?.[system] ?? 0
-  const newSev     = Math.min(6, currentSev + 1)
-  const effect     = system ? CRITICAL_HIT_EFFECTS[system]?.[newSev] : null
+  const maxSev     = system ? getMaxSeverity(system) : 6
+  const isMaxed    = system ? currentSev >= maxSev : false
+  const newSev     = system && !isMaxed ? computeCriticalSeverity(attackEffect, currentSev, system) : null
+  const effectEntry = system && newSev !== null ? CRITICAL_HIT_EFFECTS[system]?.[newSev] : null
 
   function doRoll() {
     const dice = roll2D6()
@@ -139,8 +151,8 @@ function InternalCritMode({ ship, onClose }) {
   }
 
   function apply() {
-    if (!system || applied) return
-    addCritical(ship.id, system)
+    if (!system || applied || isMaxed) return
+    addCritical(ship.id, system, attackEffect)
     setApplied(true)
   }
 
@@ -189,11 +201,16 @@ function InternalCritMode({ ship, onClose }) {
               {CRITICAL_HIT_SYSTEM_LABELS[system] ?? system}
             </p>
             <span className="font-mono text-xs text-slate-400">
-              {currentSev} → <span className="text-red-400">{newSev}</span>
+              {severityLabel(system, currentSev)} → <span className="text-red-400">{isMaxed ? severityLabel(system, currentSev) : severityLabel(system, newSev)}</span>
             </span>
           </div>
-          {effect && <p className="font-mono text-xs text-slate-200">{effect.label}</p>}
-          {effect?.mechanics?.map((m, i) => (
+          {isMaxed && (
+            <p className="font-mono text-xs text-amber-400">
+              {CRITICAL_HIT_SYSTEM_LABELS[system] ?? system} already at max severity — CRB: this hit instead inflicts 6D extra damage, ignoring Armour (apply manually).
+            </p>
+          )}
+          {!isMaxed && effectEntry && <p className="font-mono text-xs text-slate-200">{effectEntry.label}</p>}
+          {!isMaxed && effectEntry?.mechanics?.map((m, i) => (
             <p key={i} className="font-mono text-[10px] text-slate-400">⟩ {m.type}{m.value !== undefined ? `: ${m.value}` : ''}</p>
           ))}
         </div>
@@ -204,7 +221,7 @@ function InternalCritMode({ ship, onClose }) {
           className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-700 hover:bg-slate-800 rounded">
           {applied ? 'CLOSE' : 'SKIP'}
         </button>
-        {system && !applied && (
+        {system && !applied && !isMaxed && (
           <button onClick={apply}
             className="flex-1 py-2 text-xs font-display tracking-widest text-red-400 border border-red-800 hover:bg-red-900/20 rounded">
             APPLY CRITICAL
@@ -218,12 +235,12 @@ function InternalCritMode({ ship, onClose }) {
 // ── Root ──────────────────────────────────────────────────────────────────
 
 export function CriticalHitModal({ payload, onClose }) {
-  const { shipId, mode = 'internal' } = payload ?? {}
+  const { shipId, mode = 'internal', effect } = payload ?? {}
   const ships = useBattleStore((s) => s.ships)
   const ship  = ships.find((s) => s.id === shipId)
 
   if (mode === 'surface') {
     return <SurfaceFixtureMode ship={ship} onClose={onClose} />
   }
-  return <InternalCritMode ship={ship} onClose={onClose} />
+  return <InternalCritMode ship={ship} effect={effect} onClose={onClose} />
 }

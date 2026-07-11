@@ -423,7 +423,7 @@ export function AttackModal({ payload, onClose }) {
     if (isSurfaceFixtureDamage(effect)) {
       openModal('critical-hit', { shipId: target.id, mode: 'surface', effect })
     } else if (isInternalCriticalHit(effect, damageResult.net, target.currentHull, critThreshold)) {
-      openModal('critical-hit', { shipId: target.id, mode: 'internal' })
+      openModal('critical-hit', { shipId: target.id, mode: 'internal', effect })
     }
     setApplied(true)
     onClose()
