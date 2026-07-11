@@ -5,12 +5,17 @@ import { FACTION_COLOR } from '../data/factions.js'
 import { WEAPONS } from '../data/weapons.js'
 import { exportBattle, importBattle } from '../utils/io.js'
 import { rollInitiative } from '../utils/combat.js'
+import { buildActionBudget } from '../utils/crew.js'
 
-/** Phase sequence. Drives all transitions — no special cases needed. // 2300AD B3 p.53 */
-const PHASE_ORDER = ['setup', 'initiative', 'manoeuvre', 'attack', 'actions']
-
-/** Phases during which actor turns cycle through initiativeOrder. */
-const ACTOR_TURN_PHASES = new Set(['manoeuvre', 'attack', 'actions'])
+// Stages: 'setup' → 'initiative' → 'combat'. There is no "Manoeuvre/Attack/Actions
+// Step" in 2300AD B3 — that structure does not appear anywhere in B3 p.52-62 (verified
+// by full-text search); it is the Traveller 2022 CRB's own generic spacecraft combat
+// loop (CRB p.163-165), which this project's rules hierarchy forbids using for core
+// mechanics. B3 p.53 instead gives each crew role its own per-round action budget
+// (see ship.actionsRemaining, buildActionBudget in utils/crew.js) — a ship's turn in
+// 'combat' is open-ended: the GM spends any role's remaining actions in any order via
+// spendCrewAction, then ends the ship's turn (advanceActor) when ready.
+const STAGE_ORDER = ['setup', 'initiative', 'combat']
 
 // === HELPERS ===
 
@@ -95,11 +100,14 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     initiative:              0,
     initiativeBreakdown:     null,
     initiativeBonusNextRound: 0,
-    hasActedThisPhase:       false,
+    // Per-role action budget for this round — replaces the old single hasActedThisPhase
+    // boolean. Recomputed at the start of every round (buildNextRoundState) and whenever
+    // crew/crewAssignments change (updateShip). // 2300AD B3 p.53
+    actionsRemaining:        buildActionBudget(profile.crewAssignments, profile.crew),
     commandBonus:            [], // Array<{ role, dm }> — active this round, up to one per Leadership level // 2300AD B3 p.54
-    commandBonusNextRound:   [], // Array<{ role, dm }> — declared in Actions Step, activates next round
+    commandBonusNextRound:   [], // Array<{ role, dm }> — declared this round, activates next round (see open question re: timing, CLAUDE.md)
     improveCriticalThreshold:    null, // 5 or 4 — lowers crit threshold for this ship's next Gunner hit // 2300AD B3 p.54
-    improveCriticalNextRound:    null, // declared in Actions Step, activates next round (same two-stage pattern as commandBonus)
+    improveCriticalNextRound:    null, // declared this round, activates next round (same two-stage pattern as commandBonus; see open question re: timing, CLAUDE.md)
   }
 }
 
@@ -166,14 +174,17 @@ export const useBattleStore = create((set, get) => {
         ewTarget:                 null,
         ewEffect:                 0,
         boardingDmNextRound:      0,
-        hasActedThisPhase:        false,
+        // Recompute every role's action budget for the new round — crew/skills may
+        // have changed since the last round started. // 2300AD B3 p.53
+        actionsRemaining:         buildActionBudget(sh.crewAssignments, sh.crew),
         initiative:               sh.initiative + bonus,
         initiativeBonusNextRound: 0,
-        // Commands promotion: a Command declared in round N's Actions Step activates for round N+1,
-        // then clears at the start of N+2 — same two-stage pattern as initiativeBonusNextRound. // B3 p.54
+        // Commands promotion: a Command declared in round N activates for round N+1,
+        // then clears at the start of N+2 — same two-stage pattern as initiativeBonusNextRound.
+        // // B3 p.54 — see CLAUDE.md open question re: whether this should be immediate instead.
         commandBonus:             sh.commandBonusNextRound ?? [],
         commandBonusNextRound:    [],
-        // Improve Critical: same two-stage promotion — declared in Actions Step, active for the
+        // Improve Critical: same two-stage promotion — declared this round, active for the
         // following round's next Gunner hit only, then cleared. // 2300AD B3 p.54
         improveCriticalThreshold: sh.improveCriticalNextRound ?? null,
         improveCriticalNextRound: null,
@@ -394,41 +405,38 @@ export const useBattleStore = create((set, get) => {
       }))
     },
 
-    // === PHASE ===
+    // === STAGE / TURN ===
 
     /**
-     * Advance to the next phase via PHASE_ORDER. // 2300AD B3 p.53
-     * Actor-turn phases reset hasActedThisPhase. End of actions → next round.
+     * Advance to the next stage via STAGE_ORDER (setup → initiative → combat).
+     * // 2300AD B3 p.53. Once in 'combat', rounds advance via advanceActor
+     * (ends a ship's turn) and startNextRound (after the last ship's turn ends),
+     * not via this action — there is no next stage after 'combat' to walk to.
      */
     advancePhase: wh(() => {
       const { phase } = get()
-      const idx = PHASE_ORDER.indexOf(phase)
+      const idx = STAGE_ORDER.indexOf(phase)
+      if (idx === -1 || idx === STAGE_ORDER.length - 1) return // already in 'combat' — no-op
 
-      // End of actions (last phase) → start next round
-      if (idx === -1 || idx === PHASE_ORDER.length - 1) {
-        set((s) => buildNextRoundState(s))
-        return
-      }
-
-      const nextPhase = PHASE_ORDER[idx + 1]
+      const nextStage = STAGE_ORDER[idx + 1]
       set((s) => ({
-        phase:             nextPhase,
+        phase:             nextStage,
         currentActorIndex: 0,
-        ships: s.ships.map((sh) => ({ ...sh, hasActedThisPhase: false })),
         log: [...s.log, makeLogEntry({
-          round: s.round, phase: nextPhase, type: 'system',
-          message: `Phase: ${nextPhase.toUpperCase()}`,
+          round: s.round, phase: nextStage, type: 'system',
+          message: `Stage: ${nextStage.toUpperCase()}`,
         })],
       }))
     }),
 
     /**
-     * Mark the current actor as having acted; advance to the next actor,
-     * skipping destroyed ships. // 2300AD B3 p.53
+     * End the current actor's (ship's) turn; advance to the next ship in
+     * initiativeOrder, skipping destroyed ships. Actions remaining are tracked
+     * per-role on the ship (actionsRemaining), not by this pointer — a ship may
+     * end its turn with unspent actions if the GM chooses to move on. // 2300AD B3 p.53
      */
     advanceActor: wh(() => {
       const { initiativeOrder, currentActorIndex, ships } = get()
-      const shipId = initiativeOrder[currentActorIndex]
 
       let next = currentActorIndex + 1
       while (next < initiativeOrder.length) {
@@ -437,13 +445,57 @@ export const useBattleStore = create((set, get) => {
         next++
       }
 
-      set((s) => ({
-        currentActorIndex: next,
-        ships: s.ships.map((sh) =>
-          sh.id === shipId ? { ...sh, hasActedThisPhase: true } : sh,
-        ),
-      }))
+      set(() => ({ currentActorIndex: next }))
     }),
+
+    /**
+     * Spend one of a ship's per-role actions this round. // 2300AD B3 p.53
+     * No-op (returns false via the guard) if that role has none left — callers
+     * can fire this defensively without pre-checking the budget everywhere.
+     * @param {string} shipId
+     * @param {string} role
+     */
+    spendCrewAction: wh(
+      (shipId, role) => (get().ships.find((s) => s.id === shipId)?.actionsRemaining?.[role] ?? 0) > 0,
+      (shipId, role) => {
+        set((s) => ({
+          ships: s.ships.map((sh) => sh.id !== shipId ? sh : {
+            ...sh,
+            actionsRemaining: { ...sh.actionsRemaining, [role]: Math.max(0, (sh.actionsRemaining[role] ?? 0) - 1) },
+          }),
+        }))
+      },
+    ),
+
+    /**
+     * Captain's Order: spend one of the Captain's own actions to grant another
+     * role +1 action this round. Distinct from Commands (applyCommand), which is
+     * a DM+1/+2 buff activating next round — this is an immediate action-economy
+     * transfer, no check required. // 2300AD B3 p.53
+     * @param {string} shipId
+     * @param {string} role — recipient role
+     */
+    grantExtraAction: wh(
+      (shipId) => (get().ships.find((s) => s.id === shipId)?.actionsRemaining?.captain ?? 0) > 0,
+      (shipId, role) => {
+        const { round, phase } = get()
+        const ship = get().ships.find((s) => s.id === shipId)
+        set((s) => ({
+          ships: s.ships.map((sh) => sh.id !== shipId ? sh : {
+            ...sh,
+            actionsRemaining: {
+              ...sh.actionsRemaining,
+              captain: Math.max(0, sh.actionsRemaining.captain - 1),
+              [role]:  (sh.actionsRemaining[role] ?? 0) + 1,
+            },
+          }),
+          log: [...s.log, makeLogEntry({
+            round, phase, type: 'action', shipId,
+            message: `🎖 ${ship?.profile.name}: Captain issues an order — +1 action to ${role} this round.`,
+          })],
+        }))
+      },
+    ),
 
     // === MOVEMENT ===
 
@@ -727,12 +779,22 @@ export const useBattleStore = create((set, get) => {
 
     /**
      * Patch arbitrary fields on a ship instance (used for crew/assignment updates).
+     * If the patch touches crew or crewAssignments, recompute actionsRemaining in
+     * the same call so a mid-round crew reassignment takes effect immediately.
+     * // 2300AD B3 p.53
      * @param {string} shipId
      * @param {object} patch
      */
     updateShip: (shipId, patch) => {
       set((s) => ({
-        ships: s.ships.map((sh) => sh.id !== shipId ? sh : { ...sh, ...patch }),
+        ships: s.ships.map((sh) => {
+          if (sh.id !== shipId) return sh
+          const next = { ...sh, ...patch }
+          if ('crew' in patch || 'crewAssignments' in patch) {
+            next.actionsRemaining = buildActionBudget(next.crewAssignments, next.crew)
+          }
+          return next
+        }),
       }))
     },
 
@@ -866,10 +928,11 @@ export const useBattleStore = create((set, get) => {
      * On Effect 1–4, the recipient gains DM+1 to their actions for that combat round. On
      * Effect 5–6, they receive DM+2." A Captain with Leadership 3 can therefore issue three
      * separate Commands to three different crew roles in the same round — the per-round cap
-     * is enforced in the Actions Step UI (ActionModal.jsx), not here. Declared during the
-     * Actions Step; activates for the FOLLOWING round (via the commandBonusNextRound →
-     * commandBonus promotion in buildNextRoundState), since the Manoeuvre/Attack steps of the
-     * current round have already passed by the time a ship reaches its own Actions turn.
+     * is the Captain's shared actionsRemaining.captain budget, enforced in ActionModal.jsx, not
+     * here. Currently activates for the FOLLOWING round (via the commandBonusNextRound →
+     * commandBonus promotion in buildNextRoundState) — B3 literally says "for that combat
+     * round" (this round); the next-round deferral predates #19's action-economy rework and is
+     * a known open question now that there's no forced Manoeuvre/Attack/Actions ordering.
      * Re-issuing to a role already commanded this round replaces that role's DM.
      * @param {string} shipId
      * @param {string} role — crew role receiving the order (pilot, gunner_turret, etc.)

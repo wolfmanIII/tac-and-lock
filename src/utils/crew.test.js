@@ -13,6 +13,7 @@ import {
   getAssignedCharacteristic,
   getEffectiveSkill,
   migrateCrew,
+  buildActionBudget,
 } from './crew.js'
 
 // === CREW_SKILLS ===
@@ -236,6 +237,54 @@ describe('getEffectiveSkill', () => {
 
   it('returns 0 when nobody assigned', () => {
     expect(getEffectiveSkill('pilot', { pilot: null }, [])).toBe(0)
+  })
+})
+
+// === buildActionBudget — 2300AD B3 p.53 ===
+
+describe('buildActionBudget', () => {
+  it('returns an entry for every role in CREW_SKILLS', () => {
+    const budget = buildActionBudget({}, [])
+    for (const role of Object.keys(CREW_SKILLS)) {
+      expect(budget).toHaveProperty(role)
+    }
+  })
+
+  it('unassigned roles all budget to 0', () => {
+    const budget = buildActionBudget({}, [])
+    for (const value of Object.values(budget)) {
+      expect(value).toBe(0)
+    }
+  })
+
+  it('non-gunner role budget equals the assigned crew member\'s skill level', () => {
+    const crew = [{ ...blankCrewMember('c1'), skills: { ...blankCrewMember('x').skills, pilot: 3 } }]
+    const budget = buildActionBudget({ pilot: 'c1' }, crew)
+    expect(budget.pilot).toBe(3)
+  })
+
+  it('gunner_turret is capped at 1 action even with a high skill level (Gunnery cannot be used more than once) // B3 p.53', () => {
+    const crew = [{ ...blankCrewMember('c1'), skills: { ...blankCrewMember('x').skills, gunner: 4 } }]
+    const budget = buildActionBudget({ gunner_turret: 'c1' }, crew)
+    expect(budget.gunner_turret).toBe(1)
+  })
+
+  it('gunner_bay is also capped at 1', () => {
+    const crew = [{ ...blankCrewMember('c1'), skills: { ...blankCrewMember('x').skills, gunner: 3 } }]
+    const budget = buildActionBudget({ gunner_bay: 'c1' }, crew)
+    expect(budget.gunner_bay).toBe(1)
+  })
+
+  it('a gunner with skill 0 still budgets to 0, not negative', () => {
+    const crew = [{ ...blankCrewMember('c1'), skills: { ...blankCrewMember('x').skills, gunner: 0 } }]
+    const budget = buildActionBudget({ gunner_turret: 'c1' }, crew)
+    expect(budget.gunner_turret).toBe(0)
+  })
+
+  it('handles missing crewAssignments/crew gracefully (all zero)', () => {
+    const budget = buildActionBudget(undefined, undefined)
+    expect(budget.pilot).toBe(0)
+    expect(budget.gunner_turret).toBe(0)
   })
 })
 

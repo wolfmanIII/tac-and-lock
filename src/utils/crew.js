@@ -115,6 +115,27 @@ export function getEffectiveSkill(role, assignments, crewList) {
 }
 
 /**
+ * Build the per-role action budget for a round: "Travellers can take a number of
+ * actions on their turn equal to their skill level in the primary skill for their
+ * role." Gunnery is the explicit exception — "Gunnery cannot" be used more than
+ * once per round, so gunner_turret/gunner_bay are hard-capped at 1 regardless of
+ * skill level. // 2300AD B3 p.53
+ * @param {Record<string, string | null>} [crewAssignments] — role → crew ID
+ * @param {CrewMember[]} [crew]
+ * @returns {Record<string, number>} role → actions remaining this round
+ */
+export function buildActionBudget(crewAssignments, crew) {
+  const budget = {}
+  for (const role of Object.keys(CREW_SKILLS)) {
+    const skill = getAssignedSkill(role, crewAssignments ?? {}, crew ?? [])
+    budget[role] = (role === 'gunner_turret' || role === 'gunner_bay')
+      ? Math.min(1, skill)
+      : Math.max(0, skill)
+  }
+  return budget
+}
+
+/**
  * The primary characteristic used by each crew role in 2300AD combat checks. // 2300AD B3 p.53–56
  * Sensor Op: INT (Electronics sensors check). Pilot: DEX (Pilot check). Gunner: INT (Gunner check).
  * Captain: INT (Tactics naval check). Engineer: INT (Engineer power/stutterwarp check).
