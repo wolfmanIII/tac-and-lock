@@ -269,6 +269,9 @@ export const WEAPONS = {
       VeryLong:-20,
       Distant: -20,
     },
+    // 'Rapid Fire' has no numeric rating and is not defined anywhere in CRB/B3's own Weapon
+    // Traits table (which only defines 'Auto') — getAutoScore() always returns 0 for it, so
+    // the Single/Burst/Full Auto fire-mode selector never appears for this weapon (#11).
     traits: ['Point Defence', 'Rapid Fire'], // 2300AD B3 p.60
     isLaser: true,
     notes: 'Quinn Optronics PDC Type 17. Beam laser cluster. DM+2 vs missiles/drones/fighters at Close. // 2300AD B3 p.60',
@@ -297,6 +300,8 @@ export const WEAPONS = {
     // 'Slow' (DM-2) is the detonation-laser Close-range penalty from the prose rule
     // above — it is not printed in the Submunitions stat block itself (B3 p.61),
     // which only lists Auto 4, Blast 4, Radiation.
+    // Auto 4's Burst/Full Auto fire modes (#11) resolve against a single target — Blast 4
+    // (multi-target at Close range) is separately unmodeled, so there is no double-count.
     traits: ['Auto 4', 'Blast 4', 'Radiation', 'Slow'],
     // "Submunitions are a class of ordnance, nuclear bomb-pumped laser warheads" — B3 p.59:
     // Grape Shot is itself a detonation laser, so Defensive Screens (laser-only) apply to it.

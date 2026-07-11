@@ -12,6 +12,8 @@ import {
   rollAttack,
   rollInitiative,
   rollDamage,
+  getAutoScore,
+  rollFullAuto,
   isSurfaceFixtureDamage,
   isInternalCriticalHit,
   isCriticalHit,
@@ -491,6 +493,83 @@ describe('rollDamage — Advanced/Obsolete traits', () => {
     const r = rollDamage('ll98', 1, 0)
     expect(r.gross).toBe(8)
     expect(r.bonus).toBe(0)
+  })
+})
+
+// === getAutoScore — Auto X fire-mode trait // 2300AD B3 p.59, Trav2022 CRB p.75 ===
+
+describe('getAutoScore', () => {
+  it('parses the numeric rating out of an "Auto X" trait string', () => {
+    expect(getAutoScore(['Auto 4'])).toBe(4)
+    expect(getAutoScore(['AP12', 'Auto 3'])).toBe(3)
+  })
+
+  it('"Rapid Fire" (Quinn PDC) has no numeric rating → 0', () => {
+    expect(getAutoScore(['Point Defence', 'Rapid Fire'])).toBe(0)
+  })
+
+  it('no traits / missing Auto trait → 0', () => {
+    expect(getAutoScore([])).toBe(0)
+    expect(getAutoScore()).toBe(0)
+    expect(getAutoScore(['Accurate', 'Slow'])).toBe(0)
+  })
+})
+
+// === rollDamage — Auto X Burst fire mode (flat +score to damage) ===
+
+describe('rollDamage — Auto X Burst mode', () => {
+  beforeEach(() => vi.spyOn(Math, 'random').mockReturnValue(0.5))
+  afterEach(() => vi.restoreAllMocks())
+
+  // Math.floor(0.5 * 6) + 1 = 4 per die
+
+  it('tri_beamer (5D, Auto 3) with Burst bonus: gross = 5×4 + 3 = 23', () => {
+    const r = rollDamage('tri_beamer', 1, 0, null, 1, 3)
+    expect(r.gross).toBe(23)
+    expect(r.bonus).toBe(3)
+    expect(r.net).toBe(23)
+  })
+
+  it('autoBurstBonus defaults to 0 — existing 5-arg calls unaffected', () => {
+    const r = rollDamage('tri_beamer', 1, 0)
+    expect(r.gross).toBe(20)
+    expect(r.bonus).toBe(0)
+  })
+
+  it('Burst bonus stacks with AP X armour reduction', () => {
+    // tri_beamer: AP12 → effective armour = max(0, 15-12) = 3; gross = 23; net = 20
+    const r = rollDamage('tri_beamer', 1, 15, null, 1, 3)
+    expect(r.armour).toBe(3)
+    expect(r.net).toBe(20)
+  })
+})
+
+// === rollFullAuto — Auto X Full Auto fire mode (N separate volleys) // Trav2022 CRB p.75 ===
+
+describe('rollFullAuto', () => {
+  beforeEach(() => vi.spyOn(Math, 'random').mockReturnValue(0.5))
+  afterEach(() => vi.restoreAllMocks())
+
+  it('tri_beamer (5D, Auto 3) fires 3 volleys of 5 dice each', () => {
+    const r = rollFullAuto('tri_beamer', 1, 0, null, 1, 3)
+    expect(r.volleys).toBe(3)
+    expect(r.rolls).toHaveLength(15)
+    expect(r.gross).toBe(60)  // 3 × 20
+    expect(r.net).toBe(60)
+  })
+
+  it('armour is applied per volley, not once on the combined total', () => {
+    // tri_beamer: AP12 → effective armour = max(0, 15-12) = 3 per volley
+    // per-volley: gross 20, net 17; 3 volleys → net 51, not 60-3=57
+    const r = rollFullAuto('tri_beamer', 1, 15, null, 1, 3)
+    expect(r.armour).toBe(3)
+    expect(r.net).toBe(51)
+  })
+
+  it('n defaults to a single volley when omitted or below 1', () => {
+    const r = rollFullAuto('tri_beamer', 1, 0, null, 1, 0)
+    expect(r.volleys).toBe(1)
+    expect(r.gross).toBe(20)
   })
 })
 

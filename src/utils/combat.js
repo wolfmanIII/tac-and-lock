@@ -221,18 +221,34 @@ function resolveArmour(traits, armour) {
 }
 
 /**
+ * Auto X trait rating, for the Single/Burst/Full Auto fire-mode selector. // 2300AD B3
+ * p.59 ("Auto: As described on page 75 of the Traveller Core Rulebook"); Trav2022 CRB p.75
+ * defines Burst (+Auto score to damage) and Full Auto (Auto-score separate attacks).
+ * "Rapid Fire" (Quinn Type 17 PDC — B3 p.60) is not a numbered Auto rating and has no
+ * standalone definition in CRB/B3, so it always resolves to 0 (no fire-mode effect).
+ * @param {string[]} traits
+ * @returns {number}
+ */
+export function getAutoScore(traits = []) {
+  const autoTrait = traits.find((t) => /^Auto\s+\d+$/i.test(t))
+  return autoTrait ? parseInt(autoTrait.replace(/\D/g, ''), 10) : 0
+}
+
+/**
  * Roll damage for a weapon hit.
- * Handles flat bonus in dice notation ("2D+2"), AP X trait, and multi-weapon bonus.
- * // 2300AD B3 p.59–60; Trav2022 CRB p.167
+ * Handles flat bonus in dice notation ("2D+2"), AP X trait, multi-weapon bonus, and the
+ * Burst fire mode of the Auto X trait (flat +score to damage, one attack). // 2300AD B3
+ * p.59–60; Trav2022 CRB p.75, p.167
  *
  * @param {string} weaponId
  * @param {number} weaponCount — number of same weapon type in turret (1–3)
  * @param {number} armour      — target's current armour value
  * @param {{ damage?: string, traits?: string[] }} [overrides] — e.g. a drone's detonationMode
  * @param {number} [damageMultiplier] — e.g. 2 for a stationary/reaction-drive target // B3 p.56
+ * @param {number} [autoBurstBonus] — Burst fire mode: flat +Auto score to damage // CRB p.75
  * @returns {{ rolls: number[], bonus: number, gross: number, armour: number, net: number }}
  */
-export function rollDamage(weaponId, weaponCount = 1, armour = 0, overrides = null, damageMultiplier = 1) {
+export function rollDamage(weaponId, weaponCount = 1, armour = 0, overrides = null, damageMultiplier = 1, autoBurstBonus = 0) {
   const base = WEAPONS[weaponId]
   if (!base) return { rolls: [], bonus: 0, gross: 0, armour: 0, net: 0 }
   const weapon = overrides ? { ...base, ...overrides } : base
@@ -252,13 +268,39 @@ export function rollDamage(weaponId, weaponCount = 1, armour = 0, overrides = nu
   if (traits.includes('Obsolete')) perDieMod -= 1
   const traitBonus = n * perDieMod
 
-  const bonus = flatBonus + multiBonus + traitBonus
+  const bonus = flatBonus + multiBonus + traitBonus + autoBurstBonus
   const gross = Math.max(0, diceTotal + bonus) * damageMultiplier
 
   const effectiveArmour = resolveArmour(traits, armour)
   const net = Math.max(0, gross - effectiveArmour)
 
   return { rolls, bonus, gross, armour: effectiveArmour, net }
+}
+
+/**
+ * Full Auto fire mode of the Auto X trait: make N separate attacks (N = Auto score),
+ * each its own damage roll against the (single) target, armour applied per volley.
+ * // Trav2022 CRB p.75 ("Full Auto: Make a number of attacks equal to the Auto score")
+ * @param {string} weaponId
+ * @param {number} weaponCount
+ * @param {number} armour
+ * @param {{ damage?: string, traits?: string[] }} [overrides]
+ * @param {number} [damageMultiplier]
+ * @param {number} n — number of volleys (the weapon's Auto score)
+ * @returns {{ rolls: number[], bonus: number, gross: number, armour: number, net: number, volleys: number }}
+ */
+export function rollFullAuto(weaponId, weaponCount = 1, armour = 0, overrides = null, damageMultiplier = 1, n = 1) {
+  const volleys = Array.from({ length: Math.max(1, n) }, () =>
+    rollDamage(weaponId, weaponCount, armour, overrides, damageMultiplier),
+  )
+  return {
+    rolls:  volleys.flatMap((v) => v.rolls),
+    bonus:  volleys.reduce((a, v) => a + v.bonus, 0),
+    gross:  volleys.reduce((a, v) => a + v.gross, 0),
+    armour: volleys[0]?.armour ?? 0,
+    net:    volleys.reduce((a, v) => a + v.net, 0),
+    volleys: volleys.length,
+  }
 }
 
 // === CRITICAL HITS — 2300AD B3 p.58 ===
