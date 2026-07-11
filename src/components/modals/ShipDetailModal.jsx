@@ -210,7 +210,7 @@ export function ShipDetailModal({ payload, onClose }) {
             {ship.screenCurrentRating > 0 && ` (DM−${ship.screenCurrentRating} vs. laser attacks)`}
           </p>
           <p className="text-[9px] font-mono text-slate-600 mt-0.5">
-            {ship.screenDeployed ? `${ship.screenReloads} reload(s) left` : 'Not yet deployed'} — Deploy/Recharge via Attack Step // 2300AD B3 p.55, p.62
+            {ship.screenDeployed ? `${ship.screenReloads} reload(s) left` : 'Not yet deployed'} — Deploy/Recharge via the Attack modal (Gunner Action) // 2300AD B3 p.55, p.62
           </p>
         </div>
       )}

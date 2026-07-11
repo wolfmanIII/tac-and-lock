@@ -9,7 +9,7 @@ import { useUIStore } from '../../store/uiStore.js'
 const SECTIONS = [
   { id: 'overview',    label: 'Overview' },
   { id: 'dashboard',  label: 'Dashboard' },
-  { id: 'phase-flow', label: 'Phase Flow' },
+  { id: 'phase-flow', label: 'Round Flow' },
   { id: 'setup',      label: '— Setup' },
   { id: 'initiative', label: '— Initiative' },
   { id: 'manoeuvre',  label: '— Manoeuvre' },
@@ -185,38 +185,44 @@ export function HelpScreen({ onBack } = {}) {
             <KV k="Signature"        v="Base EM signature. Modified dynamically in battle." />
             <KV k="Sensors"          v="Type (Basic Military / Improved / Advanced) + DM." />
             <KV k="Software"         v="Fire Control/1–3, Auto-Repair/1–2, etc." />
-            <KV k="Defensive Screens" v="Optional Rating 1–3 + carried reloads — blunts incoming laser fire only, see Attack Step below." />
+            <KV k="Defensive Screens" v="Optional Rating 1–3 + carried reloads — blunts incoming laser fire only, see Attack below." />
             <KV k="Crew"             v="Named members with Tactics, Pilot, Engineer, Gunner, Electronics skill ratings." />
           </Sub>
         </Section>
 
         {/* PHASE FLOW */}
-        <Section id="phase-flow" title="Phase Flow">
-          <p>Each round follows this sequence. HUD shows current round and phase. Click <span className="text-slate-200">NEXT PHASE ⟶</span> to advance.</p>
+        <Section id="phase-flow" title="Round Flow">
+          <p>
+            There is no "Manoeuvre/Attack/Actions Step" in 2300AD B3 — that structure
+            is the Traveller CRB's own generic spacecraft combat loop, not B3's. B3
+            instead gives <span className="text-slate-200">each crew role its own
+            action budget</span> (skill level in that role's primary skill; Gunnery
+            is capped at 1 use/round). A ship's turn is open-ended: manoeuvre, attack,
+            launch a drone, or run a crew action, in any order, until every role is
+            out of actions or the GM ends the ship's turn. // 2300AD B3 p.53
+          </p>
           <Table
-            headers={['Phase', 'What happens']}
+            headers={['Stage', 'What happens']}
             rows={[
               ['Setup',      'Add ships to the battle via right-click → Add ship.'],
               ['Initiative', 'Opposed Tactics(naval) check — order fixed for the engagement.'],
-              ['Manoeuvre',  'Each ship spends TAC Speed to approach or flee.'],
-              ['Attack',     'Each ship in initiative order fires, launches drones, or resolves a drone attack.'],
-              ['Actions',    'Each ship in initiative order performs one crew action.'],
+              ['Combat',     'Ships act in initiative order. Each ship\'s turn: open Manoeuvre/Attack/Launch Drone/Crew Action freely, each spending the relevant role\'s action budget, until the GM clicks END SHIP\'S TURN.'],
             ]}
           />
-          <Note>At the end of Actions the round counter increments and the sequence repeats from Manoeuvre.</Note>
+          <Note>Once every ship has ended its turn, click NEXT ROUND — the round counter increments, Initiative is re-rolled, and every ship's action budget refills for the new round.</Note>
         </Section>
 
         {/* SETUP */}
         <Section id="setup" title="Setup Phase">
           <p>Right-click the background → <span className="text-slate-200">Add ship</span>. Choose profile, faction, and initial range band.</p>
           <p>Ships appear as bento cards grouped by faction. Each card shows hull bar, TAC Speed, armour, effective signature, weapons, critical tracks, and inbound drone ETA.</p>
-          <p>Right-click a card → context menu. Available actions depend on phase and initiative turn.</p>
+          <p>Right-click a card → context menu. Manoeuvre/Attack/Launch Drone/Crew Action are only enabled during that ship's own turn in Combat.</p>
           <Sub title="CONTEXT MENU GATING">
             <KV k="Ship Sheet"       v="Always available." />
-            <KV k="Manoeuvre…"       v="Manoeuvre phase · current actor only." />
-            <KV k="Attack…"          v="Attack phase · current actor only · unfired slots remain." />
-            <KV k="Launch Drone…"    v="Attack phase · current actor only. Launches one drone/missile unit (no salvo size)." />
-            <KV k="Crew Action…"     v="Actions phase · current actor only." />
+            <KV k="Manoeuvre…"       v="Combat stage · this ship's turn only." />
+            <KV k="Attack…"          v="Combat stage · this ship's turn only (Sensor Operator needs an action left to start a Firing Solution)." />
+            <KV k="Launch Drone…"    v="Combat stage · this ship's turn only. Launches one drone/missile unit (no salvo size)." />
+            <KV k="Crew Action…"     v="Combat stage · this ship's turn only — each action self-checks its own role's budget." />
             <KV k="Resolve drone attack…" v="Appears once one of this ship's own drones closes to Close/Adjacent range." />
             <KV k="Assign Crew…"     v="Always available." />
             <KV k="Remove from battle" v="Always available." />
@@ -237,7 +243,7 @@ export function HelpScreen({ onBack } = {}) {
         </Section>
 
         {/* MANOEUVRE */}
-        <Section id="manoeuvre" title="Manoeuvre Step">
+        <Section id="manoeuvre" title="Manoeuvre">
           <p>Each ship's Pilot may attempt to Open (flee) or Close (approach) against one opposing ship — an opposed Pilot (DEX) check, adding the ship's TAC Speed as a DM. // 2300AD B3 p.54</p>
           <p>Right-click a ship → <span className="text-slate-200">Manoeuvre…</span></p>
           <Sub title="CONTROLS">
@@ -250,7 +256,7 @@ export function HelpScreen({ onBack } = {}) {
         </Section>
 
         {/* ATTACK */}
-        <Section id="attack" title="Attack Step — Firing Solution">
+        <Section id="attack" title="Attack — Firing Solution">
           <p>Each ship in initiative order may attack. The attack is a <span className="text-slate-200">3-step task chain</span> — positive Effect from each step carries forward as a DM to the next. // B3 p.56</p>
           <p>Right-click a ship → <span className="text-slate-200">Attack…</span></p>
 
@@ -322,11 +328,11 @@ export function HelpScreen({ onBack } = {}) {
         </Section>
 
         {/* REACTIONS */}
-        <Section id="reactions" title="Attack Step — Reactions">
+        <Section id="reactions" title="Reactions">
           <p>The defender declares reactions before each attack resolves.</p>
 
           <Sub title="EVADE">
-            <p>Opposed Pilot (DEX) check, declared during the Manoeuvre Step. Effect 1–4: <span className="text-slate-200">DM−1</span>; Effect 5+: <span className="text-slate-200">DM−2</span>; Effect ≤−5: enemy gains <span className="text-slate-200">DM+1</span>. Applies to both the enemy's Sensor Operator and Gunner checks for the rest of the round.</p>
+            <p>Opposed Pilot (DEX) check, declared during a ship's turn (Manoeuvre action). Effect 1–4: <span className="text-slate-200">DM−1</span>; Effect 5+: <span className="text-slate-200">DM−2</span>; Effect ≤−5: enemy gains <span className="text-slate-200">DM+1</span>. Applies to both the enemy's Sensor Operator and Gunner checks for the rest of the round.</p>
           </Sub>
 
           <Sub title="POINT DEFENCE">
@@ -336,13 +342,14 @@ export function HelpScreen({ onBack } = {}) {
         </Section>
 
         {/* ACTIONS */}
-        <Section id="actions" title="Actions Step — Crew Actions">
+        <Section id="actions" title="Crew Actions">
           <p>Each ship in initiative order may perform one crew action. Right-click a ship → <span className="text-slate-200">Crew Action…</span></p>
           <p>Select the action, configure options, roll (if required), click <span className="text-slate-200">APPLY RESULT</span>.</p>
 
           <Sub title="CAPTAIN">
-            <KV k="Commands" v="Average (8+) Leadership (INT or SOC). Order one crew role. Effect 1–4 → DM+1, Effect 5–6 → DM+2 to their actions. Declared in this round's Actions Step, activates for the following round (Manoeuvre + Attack + Actions)." />
-            <KV k="Tactics assist" v="Optional inline roll inside the Attack modal, Difficult (10+) Tactics(naval) INT — adds its Effect to that single Gunner check only." />
+            <KV k="Commands" v="Average (8+) Leadership (INT or SOC). Order one crew role. Effect 1–4 → DM+1, Effect 5–6 → DM+2 to their actions. Cap = the Captain's own action budget this round. Currently activates the following round." />
+            <KV k="Issue Order" v="No check — spend one of the Captain's own actions to grant another role +1 action this round. Distinct from Commands (a DM buff, not an extra action)." />
+            <KV k="Tactics assist" v="Optional inline roll inside the Attack modal, Difficult (10+) Tactics(naval) INT — adds its Effect to that single Gunner check only. Also costs a Captain action." />
           </Sub>
 
           <Sub title="ENGINEER">
@@ -363,7 +370,7 @@ export function HelpScreen({ onBack } = {}) {
             <KV k="Point Defence" v="Moved to the Drone Attack modal — see REACTIONS above. Intercepts one drone at a time, not a crew action." />
           </Sub>
 
-          <Note>Evasion (opposed Pilot check, B3 p.55) is resolved in the Manoeuvre Step's Manoeuvre… modal, not here — Pilot has no Actions Step entry.</Note>
+          <Note>Evasion (opposed Pilot check, B3 p.55) is resolved in the Manoeuvre… modal, not here — Pilot has no separate Crew Action entry.</Note>
 
           <Sub title="MECHANIC / ENGINEER">
             <KV k="Damage Control" v="Average (8+) Mechanic INT/EDU. Pick an active hazard (fire, breach, fuel leak, radiation). Success removes it. Effect ≥ 4: suppressed 1D rounds." />
@@ -433,7 +440,7 @@ export function HelpScreen({ onBack } = {}) {
 
         {/* BOARDING */}
         <Section id="boarding" title="Boarding">
-          <p>Close-quarters resolution. One opposed roll per round. Only at <span className="text-slate-200">Adjacent range</span> during the Actions Step.</p>
+          <p>Close-quarters resolution. One opposed roll per round. Only at <span className="text-slate-200">Adjacent range</span>, during a ship's turn.</p>
           <p>Attacker declares <span className="text-slate-200">Boarding Action</span>; defender declares <span className="text-slate-200">Repel Boarders</span>.</p>
           <p>Both roll 2D6 + Gun Combat/Melee + modifiers. Attacker total − Defender total = difference.</p>
 

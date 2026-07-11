@@ -14,16 +14,28 @@
 
 ## 1. Struttura del Round di Combattimento
 
-Il round spaziale dura **6 minuti** (eccezione: dogfight = 6 secondi).  
-Ogni round si svolge in tre step, eseguiti **in ordine di Iniziativa**:
+Il round spaziale dura **6 minuti** (eccezione: dogfight = 6 secondi).
+
+> **Non esiste** una struttura "Manoeuvre Step → Attack Step → Actions Step" in 2300AD B3 — ricerca a testo pieno sui tre sourcebook 2300AD non trova questa terminologia da nessuna parte. È il sistema di combattimento spaziale generico del **Traveller 2022 CRB** (p.163–165), che questo progetto vieta esplicitamente di usare per le meccaniche core. Era un'importazione mai verificata contro B3, corretta in un rework completo (issue #19).
+
+B3 p.53 descrive un'economia di azioni **per membro d'equipaggio**, senza fasi rigide:
+
+> *"Within each combat round, Travellers can take a number of actions on their turn equal to their skill level in the primary skill for their role... Some skills can be used multiple times in a combat round, while others cannot. Pilot, for example, can be used multiple times for multiple actions but Gunnery cannot."*
 
 ```text
-1. MANOEUVRE STEP  →  ogni nave spende il Thrust
-2. ATTACK STEP     →  i gunner aprono il fuoco
-3. ACTIONS STEP    →  azioni speciali di ogni membro dell'equipaggio
+1. Le navi agiscono in ORDINE DI INIZIATIVA (fisso per tutta la battaglia).
+2. Al proprio turno, una nave non ha fasi: manovra, attacco, lancio droni e azioni
+   equipaggio sono tutti disponibili liberamente, in qualsiasi ordine, finché ogni
+   RUOLO ha ancora azioni nel proprio budget (skill level nello skill primario del
+   ruolo; Gunnery hard-capped a 1 — Fire Weapon / Deploy-Recharge Screens /
+   Point Defence condividono lo stesso singolo uso).
+3. Il GM termina il turno di quella nave (bottone END SHIP'S TURN) quando vuole,
+   anche con azioni residue — poi passa alla nave successiva in iniziativa.
 ```
 
-Al termine dell'Actions Step, se ci sono ancora navi in combattimento, il round ricomincia.
+Il Capitano può anche **Issue Order** (B3 p.53, paragrafo introduttivo): spende una propria azione per dare **+1 azione** (non un DM) a un altro ruolo, questo round — distinto da **Commands** (B3 p.54, DM+1/+2, si attiva al round successivo — vedi nota aperta al §12).
+
+Una volta che ogni nave ha terminato il proprio turno, se ci sono ancora navi in combattimento, il round ricomincia (nuova Iniziativa, budget azioni ricalcolato per ogni nave).
 
 ---
 
@@ -442,12 +454,18 @@ Trigger: danno netto > 0 **e** (Effect ≥ 6 oppure Hull scende a 0). Tirare sul
 
 ---
 
-## 12. Step 3 — Actions Step — 2300AD B3 p.53–55
+## 12. Azioni Equipaggio — Captain / Engineer / Sensor Operator / Marine — 2300AD B3 p.53–55
+
+> Titolo storico "Step 3 — Actions Step" rimosso (issue #19) — non esiste più una fase separata: queste sono semplicemente le azioni disponibili ai ruoli Captain/Engineer/Sensor Operator/Marine, spendibili in qualsiasi momento del turno di una nave, ciascuna dal proprio budget azioni/round (§1).
 
 ### Captain
 
-- **Commands**: Average (8+) Leadership **INT o SOC**. Effect 1–4: DM+1 a un membro crew scelto (un ruolo). Effect 5–6: DM+2. Crew che disobbedisce: DM−1. Dichiarato durante l'Actions Step, si attiva per il round **successivo** (Manoeuvre + Attack + Actions), non quello corrente — quegli step sono già passati quando l'azione diventa disponibile. Salvato per-nave come `commandBonusNextRound` → promosso a `commandBonus` all'inizio del round dopo (stesso pattern di `initiativeBonusNextRound`). Applicato automaticamente se il target è `gunner_turret` (AttackModal) o `pilot` (ManoeuvreModal evasione); per gli altri ruoli il GM lo somma a mano.
-- **Tactics** (assist al Gunner): come da Firing Solution step 3 — Difficult (10+) Tactics (naval) **INT**. Roll opzionale inline nello Step 3 dell'AttackModal, distinto da Commands: il suo Effect si somma solo a quel singolo tiro Gunner, non persiste tra round.
+- **Commands**: Average (8+) Leadership **INT o SOC**. Effect 1–4: DM+1 a un membro crew scelto (un ruolo). Effect 5–6: DM+2. Crew che disobbedisce: DM−1. Cap per round = `ship.actionsRemaining.captain` (skill Leadership del Capitano assegnato), condiviso con Tactics assist e Issue Order. Salvato per-nave come `commandBonusNextRound` → promosso a `commandBonus` all'inizio del round dopo (stesso pattern di `initiativeBonusNextRound`). Applicato automaticamente se il target è `gunner_turret` (AttackModal) o `pilot` (ManoeuvreModal evasione); per gli altri ruoli il GM lo somma a mano.
+
+  > **Nota aperta post-#19**: B3 dice letteralmente "DM+1/+2 to their actions **for that combat round**" — lo STESSO round, non quello dopo. L'attivazione "al round successivo" risale a quando l'Actions Step era forzatamente l'ultimo step del round (ora rimosso). Con l'economia di azioni per-ruolo, il Capitano potrebbe dichiarare un Command PRIMA che gli altri ruoli della sua nave spendano le proprie azioni in quello stesso round, rendendo l'applicazione immediata di nuovo possibile e più fedele a RAW. Stessa nota per **Improve Critical** (§ Sensor Operator sotto) — "next shot **this round**". Non ancora corretto (fuori scope dal rework #19), richiede una decisione esplicita prima di cambiare `commandBonusNextRound`/`improveCriticalNextRound` in applicazione immediata.
+
+- **Issue Order** (`grantExtraAction`) — nessun check, B3 p.53 paragrafo introduttivo: il Capitano spende una propria azione per dare **+1 azione** (non un DM) a un altro ruolo, questo round. Distinto da Commands (sopra).
+- **Tactics** (assist al Gunner): come da Firing Solution step 3 — Difficult (10+) Tactics (naval) **INT**. Roll opzionale inline nello Step 3 dell'AttackModal, distinto da Commands: il suo Effect si somma solo a quel singolo tiro Gunner, non persiste tra round; costa un'azione dal budget condiviso del Capitano.
 
 > Nota: "Leading Fire" (Tactics naval, bonus a tutti gli attacchi della nave, DM battle-wide) non è una regola B3 — non compare nel manuale a p.54. Era un mix homebrew mai verificato contro il manuale, sostituito da Commands + Tactics assist sopra.
 
