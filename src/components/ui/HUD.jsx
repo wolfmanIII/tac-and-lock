@@ -9,24 +9,25 @@ import { useUIStore } from '../../store/uiStore.js'
 import { Tooltip } from './Tooltip.jsx'
 import { Modal } from '../modals/Modal.jsx'
 
+// No "Manoeuvre/Attack/Actions Step" in 2300AD B3 (see battleStore.js) — a ship's
+// turn in 'combat' is open-ended, gated by per-role actionsRemaining instead.
 const PHASE_LABEL = {
   setup:      'SETUP',
   initiative: 'INITIATIVE',
-  manoeuvre:  'MANOEUVRE',
-  attack:     'ATTACK',
-  actions:    'ACTIONS',
+  combat:     'COMBAT',
 }
 
 const PHASE_COLOR = {
   setup:      'text-slate-300',
   initiative: 'text-amber-400',
-  manoeuvre:  'text-(--neon-cyan)',
-  attack:     'text-red-400',
-  actions:    'text-emerald-400',
+  combat:     'text-(--neon-cyan)',
 }
 
-/** Phases where the initiative order drives per-ship turns. // 2300AD B3 p.53 */
-const ACTOR_TURN_PHASES = new Set(['manoeuvre', 'attack', 'actions'])
+/** Short label for each crew role's action budget readout. */
+const ROLE_ABBR = {
+  pilot: 'Pilot', captain: 'Capt', engineer: 'Eng', sensor_operator: 'Sensor',
+  gunner_turret: 'Gun', gunner_bay: 'Bay', marine: 'Marine', remote_pilot: 'RC',
+}
 
 export function HUD() {
   const round               = useBattleStore((s) => s.round)
@@ -39,6 +40,7 @@ export function HUD() {
   const redoStack           = useBattleStore((s) => s.redoStack)
   const advancePhase        = useBattleStore((s) => s.advancePhase)
   const advanceActor        = useBattleStore((s) => s.advanceActor)
+  const startNextRound      = useBattleStore((s) => s.startNextRound)
   const undo                = useBattleStore((s) => s.undo)
   const redo                = useBattleStore((s) => s.redo)
   const exportBattleState   = useBattleStore((s) => s.exportBattleState)
@@ -59,13 +61,17 @@ export function HUD() {
     [drones],
   )
 
+  // In 'combat' there is no next stage to walk to (advancePhase only drives
+  // setup → initiative → combat) — round advancement is NEXT ROUND (startNextRound),
+  // rendered inline in the ACTING NOW block below, gated by the same drone check.
   const canAdvance = useMemo(() => {
-    if (dronesInRange.length > 0)     return false
-    if (phase === 'setup')            return ships.length > 0
-    if (phase === 'initiative')       return initiativeOrder.length > 0
-    if (ACTOR_TURN_PHASES.has(phase)) return allActorsGone
-    return true
-  }, [phase, ships, initiativeOrder, dronesInRange, allActorsGone])
+    if (dronesInRange.length > 0) return false
+    if (phase === 'setup')      return ships.length > 0
+    if (phase === 'initiative') return initiativeOrder.length > 0
+    return false
+  }, [phase, ships, initiativeOrder, dronesInRange])
+
+  const canAdvanceRound = dronesInRange.length === 0
 
   useEffect(() => { if (canAdvance) setBlockMsg(null) }, [canAdvance])
 
@@ -77,14 +83,21 @@ export function HUD() {
         setBlockMsg('Add at least one ship first.')
       } else if (phase === 'initiative') {
         setBlockMsg('Roll initiative before advancing.')
-      } else if (ACTOR_TURN_PHASES.has(phase)) {
-        setBlockMsg('All actors must act before advancing phase.')
       }
       return
     }
     setBlockMsg(null)
     advancePhase()
-  }, [canAdvance, advancePhase, phase, dronesInRange, allActorsGone])
+  }, [canAdvance, advancePhase, phase, dronesInRange])
+
+  const handleNextRound = useCallback(() => {
+    if (!canAdvanceRound) {
+      setBlockMsg(`Resolve ${dronesInRange.length} drone(s) in engagement range first.`)
+      return
+    }
+    setBlockMsg(null)
+    startNextRound()
+  }, [canAdvanceRound, startNextRound, dronesInRange])
 
   useEffect(() => {
     const onKey = (e) => {
@@ -122,8 +135,8 @@ export function HUD() {
         </button>
       )}
 
-      {/* Current actor badge + NEXT ACTOR button — shown during actor-turn phases */}
-      {ACTOR_TURN_PHASES.has(phase) && initiativeOrder.length > 0 && (
+      {/* Current actor badge + per-role action budget + END SHIP'S TURN — 'combat' stage */}
+      {phase === 'combat' && initiativeOrder.length > 0 && (
         !allActorsGone ? (
           <div className="flex flex-col gap-1">
             <div className="bg-slate-900/80 border border-slate-700 rounded px-3 py-1.5 backdrop-blur-sm">
@@ -134,17 +147,36 @@ export function HUD() {
               <p className="text-[10px] font-mono text-slate-500">
                 {currentActorIndex + 1} / {initiativeOrder.length}
               </p>
+              {currentActor && (
+                <p className="text-[9px] font-mono text-slate-400 mt-1 leading-snug">
+                  {Object.entries(currentActor.actionsRemaining ?? {})
+                    .map(([role, n]) => `${ROLE_ABBR[role] ?? role} ${n}`)
+                    .join(' · ')}
+                </p>
+              )}
             </div>
             <button
               onClick={advanceActor}
               className="pointer-events-auto bg-slate-800/80 border border-slate-600 hover:border-(--neon-cyan)/60 text-slate-300 hover:text-(--neon-cyan) font-mono text-xs tracking-widest rounded px-3 py-1.5 backdrop-blur-sm transition-colors"
             >
-              DONE — NEXT ACTOR ⟶
+              END SHIP'S TURN ⟶
             </button>
           </div>
         ) : (
-          <div className="bg-slate-900/80 border border-slate-700 rounded px-3 py-1 backdrop-blur-sm">
-            <p className="text-[10px] font-display text-emerald-400 tracking-widest">ALL ACTORS DONE</p>
+          <div className="flex flex-col gap-1">
+            <div className="bg-slate-900/80 border border-slate-700 rounded px-3 py-1 backdrop-blur-sm">
+              <p className="text-[10px] font-display text-emerald-400 tracking-widest">ALL SHIPS DONE</p>
+            </div>
+            <button
+              onClick={handleNextRound}
+              className={`pointer-events-auto border rounded px-3 py-1.5 backdrop-blur-sm transition-colors font-mono text-xs tracking-widest ${
+                canAdvanceRound
+                  ? 'bg-slate-800/80 border-slate-600 hover:border-(--neon-cyan)/60 text-slate-300 hover:text-(--neon-cyan)'
+                  : 'bg-slate-800/80 border-slate-700 text-slate-500 cursor-not-allowed'
+              }`}
+            >
+              NEXT ROUND ⟶
+            </button>
           </div>
         )
       )}
@@ -156,17 +188,20 @@ export function HUD() {
         </p>
       )}
 
-      {/* NEXT PHASE */}
-      <button
-        onClick={handleAdvance}
-        className={`pointer-events-auto bg-slate-800/80 border rounded px-3 py-1.5 backdrop-blur-sm transition-colors font-mono text-xs tracking-widest ${
-          canAdvance
-            ? 'border-slate-600 hover:border-(--neon-cyan)/60 text-slate-300 hover:text-(--neon-cyan)'
-            : 'border-slate-700 text-slate-500 cursor-not-allowed'
-        }`}
-      >
-        NEXT PHASE ⟶
-      </button>
+      {/* NEXT PHASE — only drives setup → initiative → combat; once in 'combat', round
+          advancement is the NEXT ROUND button in the ACTING NOW block above. */}
+      {phase !== 'combat' && (
+        <button
+          onClick={handleAdvance}
+          className={`pointer-events-auto bg-slate-800/80 border rounded px-3 py-1.5 backdrop-blur-sm transition-colors font-mono text-xs tracking-widest ${
+            canAdvance
+              ? 'border-slate-600 hover:border-(--neon-cyan)/60 text-slate-300 hover:text-(--neon-cyan)'
+              : 'border-slate-700 text-slate-500 cursor-not-allowed'
+          }`}
+        >
+          NEXT PHASE ⟶
+        </button>
+      )}
       {blockMsg && (
         <p className="font-mono text-xs text-amber-400/90 pl-1 pointer-events-none">🚨 {blockMsg}</p>
       )}

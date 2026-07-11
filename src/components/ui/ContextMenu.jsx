@@ -67,20 +67,17 @@ function ShipMenu({ x, y, menuRef, shipId, close }) {
     (d.currentBand === 'Close' || d.currentBand === 'Adjacent'),
   )
 
+  // There is no "Manoeuvre/Attack/Actions Step" in 2300AD B3 (that's a Traveller CRB
+  // import — see battleStore.js). A ship's turn in 'combat' is open-ended: any of
+  // Manoeuvre/Attack/Launch Drone/Crew Action can be opened repeatedly while it's this
+  // ship's turn; each modal gates/warns on its own role's actionsRemaining budget.
+  // // 2300AD B3 p.53
   const isCurrentActor = initiativeOrder[currentActorIndex] === shipId
-  const hasActed       = ship?.hasActedThisPhase ?? false
+  const canAct          = phase === 'combat' && isCurrentActor
 
-  const canAttack = phase === 'attack'  && isCurrentActor && !hasActed
-  const canAction = phase === 'actions' && isCurrentActor && !hasActed
-
-  const attackHint  = phase !== 'attack'  ? 'Solo nella fase Attack'
-                    : !isCurrentActor     ? 'Non è il turno di questa nave'
-                    : hasActed            ? 'Ha già agito in questa fase'
-                    : ''
-  const actionHint  = phase !== 'actions' ? 'Solo nella fase Actions'
-                    : !isCurrentActor     ? 'Non è il turno di questa nave'
-                    : hasActed            ? 'Ha già agito in questa fase'
-                    : ''
+  const turnHint = phase !== 'combat' ? 'Combat has not started yet'
+                 : !isCurrentActor    ? "Not this ship's turn"
+                 : ''
 
   return (
     <MenuShell x={x} y={y} menuRef={menuRef}>
@@ -91,12 +88,14 @@ function ShipMenu({ x, y, menuRef, shipId, close }) {
         </div>
       )}
       <MenuItem icon="📊" label="Ship sheet"         onClick={() => { openModal('ship-detail',     { shipId }); close() }} />
+      <MenuItem icon="🛰" label="Manoeuvre…"          onClick={() => { openModal('manoeuvre',       { shipId }); close() }}
+        disabled={!canAct} hint={turnHint} />
       <MenuItem icon="🎯" label="Attack…"            onClick={() => { openModal('attack',          { attackerId: shipId }); close() }}
-        disabled={!canAttack} hint={attackHint} />
+        disabled={!canAct} hint={turnHint} />
       <MenuItem icon="🚀" label="Launch drone…"      onClick={() => { openModal('drone-launch',    { attackerId: shipId }); close() }}
-        disabled={!canAttack} hint={attackHint} />
+        disabled={!canAct} hint={turnHint} />
       <MenuItem icon="⚡" label="Crew action…"       onClick={() => { openModal('action',          { shipId }); close() }}
-        disabled={!canAction} hint={actionHint} />
+        disabled={!canAct} hint={turnHint} />
       <MenuItem icon="👥" label="Assign crew…"       onClick={() => { openModal('crew-assignment', { shipId }); close() }} />
       {ownDronesInRange.length > 0 && (
         <>
@@ -104,7 +103,7 @@ function ShipMenu({ x, y, menuRef, shipId, close }) {
           {ownDronesInRange.map((d) => (
             <MenuItem key={d.id} icon="💥" label={`Resolve drone attack (${d.currentBand})…`}
               onClick={() => { openModal('drone-attack', { droneId: d.id }); close() }}
-              disabled={!canAttack} hint={attackHint} />
+              disabled={!canAct} hint={turnHint} />
           ))}
         </>
       )}

@@ -25,13 +25,19 @@ function HullBar({ current, max }) {
 
 export function ShipBentoCard({ ship }) {
   const { openModal, showContextMenu } = useUIStore()
-  const phase = useBattleStore((s) => s.phase)
+  const phase             = useBattleStore((s) => s.phase)
+  const initiativeOrder   = useBattleStore((s) => s.initiativeOrder)
+  const currentActorIndex = useBattleStore((s) => s.currentActorIndex)
 
   const shipColor        = ship.color ?? FACTION_COLOR[ship.faction] ?? '#94a3b8'
   const tokenRef          = useShipTokenIcon({ ...ship, color: shipColor }, 32)
   const activeCrits      = Object.entries(ship.criticalTracks ?? {}).filter(([, sev]) => sev > 0)
   const activeSurface    = Object.entries(ship.surfaceFixtureTracks ?? {}).filter(([, hits]) => hits > 0)
   const isDestroyed      = ship.isDestroyed
+  // No "Manoeuvre/Attack/Actions Step" in 2300AD B3 — a ship's turn in 'combat' is
+  // open-ended; each modal gates/warns on its own role's actionsRemaining budget. // B3 p.53
+  const isCurrentActor = initiativeOrder[currentActorIndex] === ship.id
+  const canAct          = phase === 'combat' && isCurrentActor && !isDestroyed
 
   function onContextMenu(e) {
     e.preventDefault()
@@ -155,7 +161,7 @@ export function ShipBentoCard({ ship }) {
       {/* Action buttons */}
       <div className="px-3 pb-2 flex gap-1.5">
         <button
-          disabled={phase !== 'attack' || isDestroyed}
+          disabled={!canAct}
           className="flex-1 py-1 text-[10px] font-display tracking-widest border border-red-900 text-red-400
             hover:bg-red-900/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded"
           onClick={(e) => { e.stopPropagation(); openModal('attack', { attackerId: ship.id }) }}
@@ -163,7 +169,7 @@ export function ShipBentoCard({ ship }) {
           ATK
         </button>
         <button
-          disabled={phase !== 'manoeuvre' || isDestroyed}
+          disabled={!canAct}
           className="flex-1 py-1 text-[10px] font-display tracking-widest border border-purple-900 text-purple-400
             hover:bg-purple-900/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded"
           onClick={(e) => { e.stopPropagation(); openModal('manoeuvre', { shipId: ship.id }) }}
@@ -171,7 +177,7 @@ export function ShipBentoCard({ ship }) {
           MNV
         </button>
         <button
-          disabled={phase !== 'actions' || isDestroyed}
+          disabled={!canAct}
           className="flex-1 py-1 text-[10px] font-display tracking-widest border border-emerald-900 text-emerald-400
             hover:bg-emerald-900/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded"
           onClick={(e) => { e.stopPropagation(); openModal('action', { shipId: ship.id }) }}
