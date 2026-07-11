@@ -5,7 +5,7 @@
  */
 
 import { test, expect } from '@playwright/test'
-import { clearAppState, addShipsToStore, gotoBattle, advanceToPhase } from './helpers.js'
+import { clearAppState, addShipsToStore, gotoBattle, startCombat } from './helpers.js'
 
 const SHIPS_WITH_DRONES = [
   { name: 'ISV-2 Trilon', faction: 'players', weapons: [{ weaponId: 'ritage1', count: 4, label: 'Drone bay' }] },
@@ -299,24 +299,24 @@ test.describe('Context menu — real right-click, drone items', () => {
     await addShipsToStore(page, SHIPS_WITH_DRONES)
   })
 
-  test('right-click own ship in Attack phase shows enabled "Launch drone…"', async ({ page }) => {
-    await advanceToPhase(page, 'attack')
+  test('right-click the current actor\'s ship in combat shows enabled "Launch drone…"', async ({ page }) => {
+    await startCombat(page) // ships[0] (ISV-2 Trilon) becomes the current actor by default
     await page.locator('.cursor-context-menu').filter({ hasText: 'ISV-2 Trilon' }).click({ button: 'right' })
     const item = page.getByText('Launch drone…')
     await expect(item).toBeVisible()
     await expect(item).toBeEnabled()
   })
 
-  test('right-click own ship outside Attack phase shows disabled "Launch drone…"', async ({ page }) => {
-    await advanceToPhase(page, 'manoeuvre')
-    await page.locator('.cursor-context-menu').filter({ hasText: 'ISV-2 Trilon' }).click({ button: 'right' })
+  test('right-click a ship that is not the current actor shows disabled "Launch drone…"', async ({ page }) => {
+    await startCombat(page) // ships[0] (ISV-2 Trilon) is the current actor — Kaefer Geist is not
+    await page.locator('.cursor-context-menu').filter({ hasText: 'Kaefer Geist' }).click({ button: 'right' })
     const item = page.getByText('Launch drone…')
     await expect(item).toBeVisible()
     await expect(item).toBeDisabled()
   })
 
   test('"Resolve drone attack…" only appears once this ship has a drone in range', async ({ page }) => {
-    await advanceToPhase(page, 'attack')
+    await startCombat(page)
     await page.locator('.cursor-context-menu').filter({ hasText: 'ISV-2 Trilon' }).click({ button: 'right' })
     await expect(page.getByText('Resolve drone attack…')).toHaveCount(0)
     // ContextMenu closes on outside mousedown (no Escape handler) — left-click the background
@@ -338,7 +338,7 @@ test.describe('Context menu — real right-click, drone items', () => {
   })
 
   test('clicking "Resolve drone attack…" opens the DroneAttackModal', async ({ page }) => {
-    await advanceToPhase(page, 'attack')
+    await startCombat(page)
     await page.evaluate(() => {
       const store = window.__ZUSTAND_BATTLE_STORE__
       const ships = store.getState().ships

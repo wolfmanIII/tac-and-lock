@@ -45,8 +45,9 @@ test.describe('Initiative modal', () => {
     await page.getByText('🎲 ROLL INITIATIVE →').click()
     await page.getByText('ROLL ALL').click()
     await page.getByText('CONFIRM ORDER').click()
-    // Modal closes, NEXT PHASE should now work
+    // Modal closes, NEXT PHASE should now work — advances to 'combat' (no more
+    // separate Manoeuvre/Attack/Actions stages // 2300AD B3 p.53)
     await page.getByText('NEXT PHASE ⟶').click()
-    await expect(page.getByText('MANOEUVRE')).toBeVisible()
+    await expect(page.getByText('COMBAT').first()).toBeVisible()
   })
 })

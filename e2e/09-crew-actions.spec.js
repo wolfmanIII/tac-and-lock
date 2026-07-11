@@ -33,7 +33,17 @@ async function setupShips(page) {
           sensors: { type: 'Basic Military', dm: 0 },
           computer: { model: 'TL-10', bandwidth: 20 },
           weapons: def.weapons, software: ['fire_control_1'],
-          crew: [], crewAssignments: {},
+          // A single crew member filling every role (skill 2), so every role's
+          // actionsRemaining budget is non-zero — 2300AD B3 p.53.
+          crew: [{
+            id: 'crew-full', name: 'Full Crew', role: null,
+            skills: { pilot: 2, tactics: 2, engineer: 2, gunner: 2, sensors: 2, countermeasures: 2, leadership: 2, mechanic: 2, gunCombat: 2, melee: 2, remoteOps: 2 },
+            characteristics: { STR: 7, DEX: 7, END: 7, INT: 7, EDU: 7, SOC: 7 },
+          }],
+          crewAssignments: {
+            pilot: 'crew-full', captain: 'crew-full', engineer: 'crew-full', sensor_operator: 'crew-full',
+            gunner_turret: 'crew-full', gunner_bay: 'crew-full', marine: 'crew-full', remote_pilot: 'crew-full',
+          },
         },
         def.faction, 'Close',
       )
@@ -519,5 +529,64 @@ test.describe('Re-route Power', () => {
     }, id0)
     await page.getByText('Re-route Power', { exact: true }).click()
     await expect(page.getByText('SKILL LEVEL — Engineer (power) (Average (8+))')).toBeVisible()
+  })
+})
+
+// === Issue Order — Captain grants +1 action, no check // 2300AD B3 p.53 =====
+// Distinct from Commands (a DM+1/+2 buff activating next round): Issue Order
+// spends one of the Captain's own actionsRemaining to grant +1 action, this
+// round, to another crew role.
+
+test.describe('Issue Order — grantExtraAction', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  test('ActionModal lists Issue Order with no check required', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId: id })
+    }, id0)
+    await page.getByText('Issue Order (grant +1 action)', { exact: true }).click()
+    await expect(page.getByText("Costs one of the Captain's own actions", { exact: false })).toBeVisible()
+  })
+
+  test('applying Issue Order spends 1 captain action and grants +1 to the chosen role', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    // Fixture crew has skill 2 in every role — pilot starts at 2 actionsRemaining.
+    const before = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id).actionsRemaining
+    , id0)
+    expect(before.captain).toBe(2)
+    expect(before.pilot).toBe(2)
+
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId: id })
+    }, id0)
+    await page.getByText('Issue Order (grant +1 action)', { exact: true }).click()
+    // Default recipient role is already selected — just apply.
+    await page.getByText('APPLY RESULT', { exact: true }).click()
+
+    const after = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id).actionsRemaining
+    , id0)
+    expect(after.captain).toBe(1)
+    expect(after.pilot).toBe(3)
+  })
+
+  test('Issue Order is unavailable once the Captain has 0 actions left', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      const s = window.__ZUSTAND_BATTLE_STORE__.getState()
+      s.spendCrewAction(id, 'captain')
+      s.spendCrewAction(id, 'captain')
+    }, id0)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId: id })
+    }, id0)
+    await page.getByText('Issue Order (grant +1 action)', { exact: true }).click()
+    await expect(page.getByText('(captain) has no actions left this round', { exact: false })).toBeVisible()
+    await expect(page.getByText('APPLY RESULT', { exact: true })).not.toBeVisible()
   })
 })

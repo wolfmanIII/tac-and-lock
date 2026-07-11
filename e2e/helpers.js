@@ -10,6 +10,34 @@ const DEFAULT_SHIPS = [
 ]
 
 /**
+ * A single crew member assigned to every role at once, all skills at the given
+ * level — gives every role a non-zero actionsRemaining budget (2300AD B3 p.53)
+ * without needing a full 8-person roster in every test fixture. Spread the
+ * result into a ship definition passed to addShip(): `{ ...fullCrew(), ... }`.
+ * @param {number} [skillLevel]
+ * @returns {{ crew: object[], crewAssignments: Record<string, string> }}
+ */
+export function fullCrew(skillLevel = 2) {
+  const id = 'crew-full'
+  const crew = [{
+    id,
+    name: 'Full Crew',
+    role: null,
+    skills: {
+      pilot: skillLevel, tactics: skillLevel, engineer: skillLevel, gunner: skillLevel,
+      sensors: skillLevel, countermeasures: skillLevel, leadership: skillLevel,
+      mechanic: skillLevel, gunCombat: skillLevel, melee: skillLevel, remoteOps: skillLevel,
+    },
+    characteristics: { STR: 7, DEX: 7, END: 7, INT: 7, EDU: 7, SOC: 7 },
+  }]
+  const crewAssignments = {
+    pilot: id, captain: id, engineer: id, sensor_operator: id,
+    gunner_turret: id, gunner_bay: id, marine: id, remote_pilot: id,
+  }
+  return { crew, crewAssignments }
+}
+
+/**
  * Clear IndexedDB and reset Zustand stores to a blank state.
  * Call in beforeEach to isolate tests from each other.
  * @param {import('@playwright/test').Page} page
@@ -57,7 +85,8 @@ export async function clearAppState(page) {
  * @param {Array<{ name: string, faction: string }>} [ships]
  */
 export async function addShipsToStore(page, ships = DEFAULT_SHIPS) {
-  await page.evaluate((shipDefs) => {
+  const { crew, crewAssignments } = fullCrew()
+  await page.evaluate(({ shipDefs, crew, crewAssignments }) => {
     const store = window.__ZUSTAND_BATTLE_STORE__
     for (const def of shipDefs) {
       store.getState().addShip(
@@ -72,14 +101,14 @@ export async function addShipsToStore(page, ships = DEFAULT_SHIPS) {
           computer:        { model: 'TL-10', bandwidth: 20 },
           weapons:         def.weapons ?? [],
           software:        ['fire_control_1'],
-          crew:            [],
-          crewAssignments: {},
+          crew,
+          crewAssignments,
         },
         def.faction,
         'Long',
       )
     }
-  }, ships)
+  }, { shipDefs: ships, crew, crewAssignments })
 }
 
 /**
@@ -104,27 +133,28 @@ export async function gotoBattle(page) {
 }
 
 /**
- * Exhaust all actor turns in the current phase by clicking "DONE — NEXT ACTOR ⟶"
- * until the button disappears (all actors have acted).
- * Required before clicking NEXT PHASE in Manoeuvre/Attack/Actions phases.
+ * End every ship's turn in 'combat' by clicking "END SHIP'S TURN ⟶" until the
+ * button disappears (all ships have had their turn this round). There is no
+ * "Manoeuvre/Attack/Actions Step" in 2300AD B3 — a ship's turn is open-ended,
+ * gated by per-role actionsRemaining, not a single hasActedThisPhase boolean.
+ * // 2300AD B3 p.53
  * @param {import('@playwright/test').Page} page
  */
 export async function drainActors(page) {
-  const btn = page.getByText('DONE — NEXT ACTOR ⟶')
+  const btn = page.getByText("END SHIP'S TURN ⟶")
   while (await btn.isVisible()) {
     await btn.click()
   }
 }
 
 /**
- * Advance to a given phase by clicking NEXT PHASE, optionally seeding
- * initiative order so the advance is not blocked.
+ * Advance to a given stage (setup → initiative → combat) by clicking NEXT PHASE,
+ * seeding initiative order so the advance from 'initiative' is not blocked.
  * @param {import('@playwright/test').Page} page
- * @param {'initiative'|'manoeuvre'|'attack'|'actions'} targetPhase
+ * @param {'initiative'|'combat'} targetPhase
  */
 export async function advanceToPhase(page, targetPhase) {
-  const ORDER = ['setup', 'initiative', 'manoeuvre', 'attack', 'actions']
-  const ACTOR_TURN_PHASES = new Set(['manoeuvre', 'attack', 'actions'])
+  const ORDER = ['setup', 'initiative', 'combat']
   const targetIdx = ORDER.indexOf(targetPhase)
 
   for (let i = 0; i < targetIdx; i++) {
@@ -137,12 +167,22 @@ export async function advanceToPhase(page, targetPhase) {
         store.getState().setInitiativeOrder(ships.map((s) => s.id))
       })
     }
-    // Drain actor turns before advancing from an actor-turn phase
-    if (ACTOR_TURN_PHASES.has(fromPhase)) {
-      await drainActors(page)
-    }
     await page.getByText('NEXT PHASE ⟶').click()
     // Use .first() — phase name may appear in multiple elements (label + button text)
     await expect(page.getByText(ORDER[i + 1].toUpperCase()).first()).toBeVisible()
   }
+}
+
+/** Convenience: seed initiative order and advance straight to the 'combat' stage. */
+export async function startCombat(page) {
+  await advanceToPhase(page, 'combat')
+}
+
+/**
+ * End the current round: drain every ship's turn, then click NEXT ROUND ⟶.
+ * @param {import('@playwright/test').Page} page
+ */
+export async function endRound(page) {
+  await drainActors(page)
+  await page.getByText('NEXT ROUND ⟶').click()
 }

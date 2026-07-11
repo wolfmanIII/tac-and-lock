@@ -34,8 +34,17 @@ async function openAttack(page) {
           computer:        { model: 'TL-10', bandwidth: 20 },
           weapons:         def.weapons,
           software:        ['fire_control_1'],
-          crew:            [],
-          crewAssignments: {},
+          // A single crew member filling every role (skill 2), so every role's
+          // actionsRemaining budget is non-zero — 2300AD B3 p.53.
+          crew: [{
+            id: 'crew-full', name: 'Full Crew', role: null,
+            skills: { pilot: 2, tactics: 2, engineer: 2, gunner: 2, sensors: 2, countermeasures: 2, leadership: 2, mechanic: 2, gunCombat: 2, melee: 2, remoteOps: 2 },
+            characteristics: { STR: 7, DEX: 7, END: 7, INT: 7, EDU: 7, SOC: 7 },
+          }],
+          crewAssignments: {
+            pilot: 'crew-full', captain: 'crew-full', engineer: 'crew-full', sensor_operator: 'crew-full',
+            gunner_turret: 'crew-full', gunner_bay: 'crew-full', marine: 'crew-full', remote_pilot: 'crew-full',
+          },
         },
         def.faction,
         'Close',  // Close range so the laser is in range
@@ -136,7 +145,15 @@ test.describe('AttackModal — evasion auto-read', () => {
             sensors: { type: 'Basic Military', dm: 0 },
             computer: { model: 'TL-10', bandwidth: 20 },
             weapons: def.weapons, software: ['fire_control_1'],
-            crew: [], crewAssignments: {},
+            crew: [{
+              id: 'crew-full', name: 'Full Crew', role: null,
+              skills: { pilot: 2, tactics: 2, engineer: 2, gunner: 2, sensors: 2, countermeasures: 2, leadership: 2, mechanic: 2, gunCombat: 2, melee: 2, remoteOps: 2 },
+              characteristics: { STR: 7, DEX: 7, END: 7, INT: 7, EDU: 7, SOC: 7 },
+            }],
+            crewAssignments: {
+              pilot: 'crew-full', captain: 'crew-full', engineer: 'crew-full', sensor_operator: 'crew-full',
+              gunner_turret: 'crew-full', gunner_bay: 'crew-full', marine: 'crew-full', remote_pilot: 'crew-full',
+            },
           },
           def.faction, 'Close',
         )
@@ -170,9 +187,9 @@ test.describe('AttackModal — evasion auto-read', () => {
     await expect(row).toContainText('-1')
   })
 
-  test('setup screen shows "auto da Manoeuvre Step" hint when target has evasionDm', async ({ page }) => {
+  test('setup screen shows "auto from Manoeuvre action" hint when target has evasionDm', async ({ page }) => {
     await openAttackWithTargetEvasion(page, -2)
-    await expect(page.getByText('auto da Manoeuvre Step')).toBeVisible()
+    await expect(page.getByText('auto from Manoeuvre action')).toBeVisible()
   })
 })
 
@@ -222,7 +239,15 @@ test.describe('AttackModal — Captain Tactics Assist', () => {
               sensors: { type: 'Basic Military', dm: 0 },
               computer: { model: 'TL-10', bandwidth: 20 },
               weapons: def.weapons, software: ['fire_control_1'],
-              crew: [], crewAssignments: {},
+              crew: [{
+              id: 'crew-full', name: 'Full Crew', role: null,
+              skills: { pilot: 2, tactics: 2, engineer: 2, gunner: 2, sensors: 2, countermeasures: 2, leadership: 2, mechanic: 2, gunCombat: 2, melee: 2, remoteOps: 2 },
+              characteristics: { STR: 7, DEX: 7, END: 7, INT: 7, EDU: 7, SOC: 7 },
+            }],
+            crewAssignments: {
+              pilot: 'crew-full', captain: 'crew-full', engineer: 'crew-full', sensor_operator: 'crew-full',
+              gunner_turret: 'crew-full', gunner_bay: 'crew-full', marine: 'crew-full', remote_pilot: 'crew-full',
+            },
             },
             def.faction, 'Close',
           )
@@ -280,7 +305,15 @@ test.describe('AttackModal — stationary/reaction-drive target bonus', () => {
             sensors: { type: 'Basic Military', dm: 0 },
             computer: { model: 'TL-10', bandwidth: 20 },
             weapons: def.weapons, software: ['fire_control_1'],
-            crew: [], crewAssignments: {},
+            crew: [{
+              id: 'crew-full', name: 'Full Crew', role: null,
+              skills: { pilot: 2, tactics: 2, engineer: 2, gunner: 2, sensors: 2, countermeasures: 2, leadership: 2, mechanic: 2, gunCombat: 2, melee: 2, remoteOps: 2 },
+              characteristics: { STR: 7, DEX: 7, END: 7, INT: 7, EDU: 7, SOC: 7 },
+            }],
+            crewAssignments: {
+              pilot: 'crew-full', captain: 'crew-full', engineer: 'crew-full', sensor_operator: 'crew-full',
+              gunner_turret: 'crew-full', gunner_bay: 'crew-full', marine: 'crew-full', remote_pilot: 'crew-full',
+            },
           },
           def.faction, 'Close',
         )
@@ -367,7 +400,15 @@ test.describe('AttackModal — planetary/atmospheric range modifiers', () => {
             sensors: { type: 'Basic Military', dm: 0 },
             computer: { model: 'TL-10', bandwidth: 20 },
             weapons: def.weapons, software: ['fire_control_1'],
-            crew: [], crewAssignments: {},
+            crew: [{
+              id: 'crew-full', name: 'Full Crew', role: null,
+              skills: { pilot: 2, tactics: 2, engineer: 2, gunner: 2, sensors: 2, countermeasures: 2, leadership: 2, mechanic: 2, gunCombat: 2, melee: 2, remoteOps: 2 },
+              characteristics: { STR: 7, DEX: 7, END: 7, INT: 7, EDU: 7, SOC: 7 },
+            }],
+            crewAssignments: {
+              pilot: 'crew-full', captain: 'crew-full', engineer: 'crew-full', sensor_operator: 'crew-full',
+              gunner_turret: 'crew-full', gunner_bay: 'crew-full', marine: 'crew-full', remote_pilot: 'crew-full',
+            },
           },
           def.faction, 'Close',
         )
@@ -449,7 +490,15 @@ test.describe('AttackModal — DM-8 penalty for weapons without fire control', (
             sensors: { type: 'Basic Military', dm: 0 },
             computer: { model: 'TL-10', bandwidth: 20 },
             weapons: def.weapons, software: [], // no fire control at all
-            crew: [], crewAssignments: {},
+            crew: [{
+              id: 'crew-full', name: 'Full Crew', role: null,
+              skills: { pilot: 2, tactics: 2, engineer: 2, gunner: 2, sensors: 2, countermeasures: 2, leadership: 2, mechanic: 2, gunCombat: 2, melee: 2, remoteOps: 2 },
+              characteristics: { STR: 7, DEX: 7, END: 7, INT: 7, EDU: 7, SOC: 7 },
+            }],
+            crewAssignments: {
+              pilot: 'crew-full', captain: 'crew-full', engineer: 'crew-full', sensor_operator: 'crew-full',
+              gunner_turret: 'crew-full', gunner_bay: 'crew-full', marine: 'crew-full', remote_pilot: 'crew-full',
+            },
           },
           def.faction, 'Close',
         )
@@ -489,7 +538,15 @@ test.describe('AttackModal — Defensive Screens', () => {
             sensors: { type: 'Basic Military', dm: 0 },
             computer: { model: 'TL-10', bandwidth: 20 },
             weapons: def.weapons, software: ['fire_control_1'],
-            crew: [], crewAssignments: {},
+            crew: [{
+              id: 'crew-full', name: 'Full Crew', role: null,
+              skills: { pilot: 2, tactics: 2, engineer: 2, gunner: 2, sensors: 2, countermeasures: 2, leadership: 2, mechanic: 2, gunCombat: 2, melee: 2, remoteOps: 2 },
+              characteristics: { STR: 7, DEX: 7, END: 7, INT: 7, EDU: 7, SOC: 7 },
+            }],
+            crewAssignments: {
+              pilot: 'crew-full', captain: 'crew-full', engineer: 'crew-full', sensor_operator: 'crew-full',
+              gunner_turret: 'crew-full', gunner_bay: 'crew-full', marine: 'crew-full', remote_pilot: 'crew-full',
+            },
           },
           def.faction, 'Close',
         )
@@ -575,5 +632,46 @@ test.describe('AttackModal — Defensive Screens', () => {
     await expect(page.getByText('Defensive Screens (Gunner Action')).toBeVisible()
     await expect(page.getByText('RECHARGE SCREENS', { exact: false })).not.toBeVisible()
     await expect(page.getByText('DEPLOY SCREENS')).not.toBeVisible()
+  })
+})
+
+// === Gunnery cap — one Fire Weapon per round, shared across a ship's Gunner
+// Actions (Fire Weapon / Screens / Point Defence) // 2300AD B3 p.53, p.55 ====
+
+test.describe('AttackModal — Gunnery action budget (one use per round)', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  test('after firing once, a second Firing Solution this round is blocked (Gunner has no actions left)', async ({ page }) => {
+    await openAttack(page) // fixture crew: gunner skill 2 → actionsRemaining.gunner_turret capped at 1
+    await page.getByText('BEGIN FIRING SOLUTION →').click()
+    await page.getByText('ROLL 2D6').click()
+    await page.getByText('NEXT → PILOT').click()
+    await page.getByText('ROLL 2D6').click()
+    await page.getByText('NEXT → GUNNER').click()
+    await page.getByText('enter manually').last().click()
+    await page.locator('input[type="number"]').nth(0).fill('6')
+    await page.locator('input[type="number"]').nth(1).fill('6')
+
+    const id0 = await page.evaluate(() => window.__ZUSTAND_BATTLE_STORE__.getState().ships[0].id)
+    const gunnerBudget = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id).actionsRemaining.gunner_turret
+    , id0)
+    expect(gunnerBudget).toBe(0)
+
+    // Close this modal instance (SKIP, without applying damage) before re-opening —
+    // otherwise the same mounted AttackModal keeps its Step 3 local state.
+    await page.getByText('SKIP', { exact: true }).click()
+
+    // Re-open the Firing Solution for the same ship this round — Step 3 is blocked.
+    await page.evaluate((id) => window.__ZUSTAND_UI_STORE__.getState().openModal('attack', { attackerId: id }), id0)
+    await page.getByText('BEGIN FIRING SOLUTION →').click()
+    await page.getByText('ROLL 2D6').click()
+    await page.getByText('NEXT → PILOT').click()
+    await page.getByText('ROLL 2D6').click()
+    await expect(page.getByText('NEXT → GUNNER')).toBeDisabled()
+    await expect(page.getByText('Gunner has no actions left this round', { exact: false })).toBeVisible()
   })
 })
