@@ -12,9 +12,18 @@ import { FACTIONS } from '../../data/factions.js'
 import { SOFTWARE, SOFTWARE_IDS } from '../../data/software.js'
 import { blankCrewMember } from '../../utils/crew.js'
 import { blankCriticalTracks, blankSurfaceFixtureTracks } from '../../data/defaultProfiles.js'
-import { REACTION_DRIVE_TYPES, SCREEN_RATINGS } from '../../utils/combat.js'
+import { REACTION_DRIVE_TYPES, SCREEN_RATINGS, TARGETING_SYSTEMS } from '../../utils/combat.js'
 
 // ── Helpers ───────────────────────────────────────────────────────────────
+
+// Short option labels for the per-weapon Targeting System selector // 2300AD B3 p.62
+const TARGETING_SYSTEM_SHORT_LABELS = {
+  none:             'None',
+  light_tta:        'Light TTA',
+  tta:              'TTA',
+  utes:             'UTES',
+  drone_controller: 'Drone Ctrl',
+}
 
 function blankCrew() {
   return {
@@ -168,7 +177,7 @@ export function ShipProfileForm({ profileId, onSave, onCancel }) {
   const setNested = (parent, key, value) => setForm((f) => ({ ...f, [parent]: { ...f[parent], [key]: value } }))
 
   // weapons
-  const addWeapon = () => setForm((f) => ({ ...f, weapons: [...f.weapons, { weaponId: WEAPON_IDS[0], count: 1, label: '' }] }))
+  const addWeapon = () => setForm((f) => ({ ...f, weapons: [...f.weapons, { weaponId: WEAPON_IDS[0], count: 1, label: '', targetingSystem: 'none' }] }))
   const updateWeapon = (i, key, value) => setForm((f) => ({ ...f, weapons: f.weapons.map((w, idx) => idx === i ? { ...w, [key]: value } : w) }))
   const removeWeapon = (i) => setForm((f) => ({ ...f, weapons: f.weapons.filter((_, idx) => idx !== i) }))
 
@@ -302,6 +311,11 @@ export function ShipProfileForm({ profileId, onSave, onCancel }) {
                   className="w-10 text-center bg-slate-800 border border-slate-600 text-slate-200 font-mono text-xs rounded px-1 py-1 focus:outline-none focus:border-(--neon-cyan)/60" />
                 <input value={w.label} onChange={(e) => updateWeapon(i, 'label', e.target.value)} placeholder="label"
                   className="w-28 bg-slate-800 border border-slate-600 text-slate-200 font-mono text-xs rounded px-2 py-1 focus:outline-none focus:border-(--neon-cyan)/60 placeholder:text-slate-500" />
+                <select value={w.targetingSystem ?? 'none'} onChange={(e) => updateWeapon(i, 'targetingSystem', e.target.value)}
+                  title="Targeting System (Light TTA/TTA/UTES) — separate, stackable DM from Fire Control software // B3 p.62"
+                  className="w-28 bg-slate-800 border border-slate-600 text-slate-200 font-mono text-xs rounded px-1 py-1 focus:outline-none focus:border-(--neon-cyan)/60">
+                  {TARGETING_SYSTEMS.map((t) => <option key={t.id} value={t.id}>{TARGETING_SYSTEM_SHORT_LABELS[t.id]}</option>)}
+                </select>
                 <button type="button" onClick={() => removeWeapon(i)} className="text-slate-400 hover:text-red-400 font-mono text-sm transition-colors px-1">✕</button>
               </div>
             ))}

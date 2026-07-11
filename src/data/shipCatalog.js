@@ -221,7 +221,7 @@ export const SHIP_CATALOG = [
     sensors:    { type: 'Advanced Military, Basic Military', dm: 4 },
     computer:   { model: 'Computer/30fib', bandwidth: 30 },
     weapons: [
-      { weaponId: 'ea1000', count: 2, label: 'Twin EA1000 w/UTES (Fixed retractable)' },
+      { weaponId: 'ea1000', count: 2, label: 'Twin EA1000 w/UTES (Fixed retractable)', targetingSystem: 'utes' },
     ],
     software:   ['operations', 'intellect', 'fire_control_1', 'auto_repair_1', 'stutterwarp_control'],
     faction:    'npc',
@@ -241,7 +241,7 @@ export const SHIP_CATALOG = [
     sensors:    { type: 'Basic Military, DSS, GADS', dm: 3 },
     computer:   { model: 'Computer/15fib', bandwidth: 15 },
     weapons: [
-      { weaponId: 'll98',             count: 1, label: 'LL98 w/UTES (Surface retractable)' },
+      { weaponId: 'll98',             count: 1, label: 'LL98 w/UTES (Surface retractable)', targetingSystem: 'utes' },
       { weaponId: 'particle_barbette', count: 1, label: 'Light Plasma Gun PGHP (Fixed)' },
     ],
     software:   ['operations', 'intellect', 'stutterwarp_control'],
@@ -362,7 +362,7 @@ export const SHIP_CATALOG = [
     sensors:    { type: 'Basic Military, DSS, GADS, Basic Survey', dm: 3 },
     computer:   { model: 'Computer/20', bandwidth: 20 },
     weapons: [
-      { weaponId: 'll98',              count: 2, label: 'Twin LL98 w/UTES (Surface retractable)' },
+      { weaponId: 'll98',              count: 2, label: 'Twin LL98 w/UTES (Surface retractable)', targetingSystem: 'utes' },
       { weaponId: 'autocannon_25mm',   count: 2, label: '25mm Rotary AC ×2 (Retractable)' },
       { weaponId: 'aero12',            count: 10, label: 'Aero-12 Missile ×10 (Internal bay)' },
       { weaponId: 'anti_missile_laser', count: 1, label: 'Quinn PDC (Retractable)' },
@@ -387,7 +387,7 @@ export const SHIP_CATALOG = [
     sensors:    { type: "Kaefer 'Steel Yard' (Basic Military + Basic Survey), DSS", dm: 3 },
     computer:   { model: 'Computer/15', bandwidth: 15 },
     weapons: [
-      { weaponId: 'grumbler',   count: 1, label: "Grumbler w/KUTS (Surface retractable)" },
+      { weaponId: 'grumbler',   count: 1, label: "Grumbler w/KUTS (Surface retractable)", targetingSystem: 'utes' },
       { weaponId: 'kingfisher', count: 10, label: 'Kingfisher Missile ×10 (Retractable)' },
       { weaponId: 'tri_beamer', count: 1, label: 'Tri-Beamer (Retractable)' },
     ],

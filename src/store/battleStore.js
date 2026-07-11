@@ -114,6 +114,13 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     // shot this round") — consumed after one qualifying shot (AttackModal/
     // DroneAttackModal applyResults), cleared at the start of every new round. // 2300AD B3 p.54
     improveCriticalThreshold:    null, // 5 or 4
+    // Operate UTES Array (issue #16): a Gunner develops a Firing Solution alone for one
+    // UTES-equipped weapon slot, skipping the Sensor Operator step — DM+1/+2 applies to
+    // "the following Gunner check" (Step 3, next round under this engine's Gunnery
+    // cap of 1 — 2300AD B3 p.53). Consumed after that one shot (AttackModal
+    // applyResults), cleared at the start of every new round if unused. // 2300AD B3 p.53
+    utesSolutionDm:          null, // 1 or 2
+    utesSolutionSlotIdx:     null, // index into ship.weapons[] this solution applies to
   }
 }
 
@@ -190,6 +197,10 @@ export const useBattleStore = create((set, get) => {
         // they don't carry over into the new round unless re-declared.
         commandBonus:             [],
         improveCriticalThreshold: null,
+        // An Operate UTES Array solution not consumed by firing that weapon expires
+        // at the round boundary, same as Improve Critical. // 2300AD B3 p.53
+        utesSolutionDm:           null,
+        utesSolutionSlotIdx:      null,
       }
     })
 
