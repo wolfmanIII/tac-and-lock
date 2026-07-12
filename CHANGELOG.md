@@ -1,13 +1,17 @@
 # Changelog
 
-Rules-fidelity fixes and features from closed GitHub issues, each verified against the
-2300AD B3 (Core Book 3: Vehicles and Spacecraft, p.52–62) source PDF, with Trav2022 CRB used
-only where B3 itself sanctions it (internal crit tables p.158–159, weapon traits p.75,
-Boarding Actions p.175). Entries are grouped by the date the issue was closed, most recent
-first.
+All notable changes to Tac & Lock are documented here.  
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).  
+Versioning follows [Semantic Versioning](https://semver.org/).
+___
 
 ## 2026-07-12
 
+- **[#27](https://github.com/wolfmanIII/tac-and-lock/issues/27)** — Removed a fabricated failure
+  clause on Overload Stutterwarp ("Boost Tac Speed"): B3 p.54 has no consequence for a failed
+  roll, only a success table (already correct). The code forced a Stutterwarp critical hit on any
+  failed roll and cited a "DM-2 roll on stutterwarp critical track" mechanic that doesn't exist in
+  B3 — that crit-on-fail rule belongs to a different, unimplemented action ("Boost Power Output").
 - **[#26](https://github.com/wolfmanIII/tac-and-lock/issues/26)** — Implemented the Firing
   Solution's Engineer assist at both Step 1 (Sensor Operator) and Step 2 (Pilot) — documented in
   CLAUDE.md but never built, only the Step 3 Captain Tactics assist existed. Step 1's assist adds
