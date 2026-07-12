@@ -570,7 +570,7 @@ attaccare.
 
 > Nota: "Boost Power Output" e "Boost Tac Speed" (righe sotto) sono documentate qui ma **non implementate** in `crewActions.js`/`ActionModal.jsx` — gap trovato durante il lavoro sulla #18, non ancora tracciato in una issue dedicata.
 
-- **Overload Stutterwarp** — Difficult (10+) Engineer (stutterwarp) **INT**: porta il motore oltre i limiti di sicurezza. Successo: TAC Speed +1 questo round. Fallimento: critical hit sul sistema Stutterwarp Drive. // B3 p.55
+- **Overload Stutterwarp** — Difficult (10+) Engineer (stutterwarp) **INT**: porta il motore oltre i limiti di sicurezza. Successo: Effect 1–4 → TAC Speed +1, Effect 5–6 → +2 questo round. Nessuna conseguenza in caso di fallimento. // B3 p.54
 - **Emergency Repair** ("Damage Control team") — Difficult (10+) **Mechanic** (1D minuti, INT): ripara un danno nella fase corrente. // B3 p.56–57
   - Modalità *Critical System*: riduce la severity di un critical hit track di 1.
   - Modalità *Hull*: ripristina **5 Hull Points**.
