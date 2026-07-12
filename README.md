@@ -1,5 +1,7 @@
 # TAC & LOCK — Space Combat Simulator
 
+**Version 1.3.0**
+
 > Virtual tabletop tool for **2300AD** space combat (Mongoose Publishing, 2021).  
 > GM-operated · browser-only · no installation required.
 
