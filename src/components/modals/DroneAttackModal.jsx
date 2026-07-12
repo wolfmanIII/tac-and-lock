@@ -11,6 +11,13 @@
  *
  * Point Defence (target's reaction) is also resolved here, inline, one drone at a time —
  * NOT an abstract salvo-wide roll. // 2300AD B3 p.55–56
+ *
+ * mode 'defend' (default) — the drone's owner resolves its own attack, as above, with
+ * the target's reactive Point Defence intercept as the first screen.
+ * mode 'engage' — the drone's TARGET fires proactively at it during their own turn,
+ * using the Point Defence weapon trait's own DM+2 (Close range only, single Gunner
+ * check, no Sensor/Pilot steps — B3 treats missiles/drones as too small and fast for a
+ * full target lock). // 2300AD B3 p.59, issue #24
  */
 
 import { useState, useMemo } from 'react'
@@ -20,16 +27,40 @@ import { WEAPONS }        from '../../data/weapons.js'
 import { SENSOR_TIME_LAG_DM } from '../../data/rangeBands.js'
 import { getAssignedSkill, getAssignedCharacteristic } from '../../utils/crew.js'
 import { getCharDM, roll2D6 } from '../../utils/dice.js'
-import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, computeEffectiveSignature, getPointDefenceDm, getEasyTargetAttackDm, getEasyTargetDamageMultiplier, getAtmosphericTargetDm, getOrtilleryDm, getFireControlDm, getScreenDm, getWeaponTraitAttackDm } from '../../utils/combat.js'
+import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, computeEffectiveSignature, getPointDefenceDm, getPointDefenceTraitAttackDm, getEasyTargetAttackDm, getEasyTargetDamageMultiplier, getAtmosphericTargetDm, getOrtilleryDm, getFireControlDm, getScreenDm, getWeaponTraitAttackDm } from '../../utils/combat.js'
 import { DiceInput } from '../forms/DiceInput.jsx'
 
 const STEP_PD     = 0
 const STEP_SENSOR = 1
 const STEP_PILOT  = 2
 const STEP_GUNNER = 3
+const STEP_ENGAGE = 4 // proactive Point Defence trait DM+2, Close range only — issue #24
 
 function fmtDm(n) {
   return n >= 0 ? `+${n}` : `${n}`
+}
+
+/** Picks which of the defending ship's own weapon mounts is intercepting/engaging. */
+function InterceptWeaponPicker({ weapons, value, onChange }) {
+  if (weapons.length === 0) {
+    return <p className="font-mono text-[10px] text-amber-400">No weapon mounts installed — cannot intercept.</p>
+  }
+  return (
+    <div className="space-y-1">
+      <p className="font-mono text-[10px] text-slate-500 tracking-widest uppercase">Intercepting weapon</p>
+      <select
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-xs rounded px-2 py-1.5 focus:border-(--neon-cyan)/60 outline-none"
+      >
+        {weapons.map((w, i) => (
+          <option key={i} value={i}>
+            {WEAPONS[w.weaponId]?.name ?? w.weaponId}{w.label ? ` — ${w.label}` : ''}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
 }
 
 function DmRow({ label, value }) {
@@ -86,7 +117,7 @@ function RollBlock({ dm, onRoll, onManual, result, target, disabled = false }) {
 }
 
 export function DroneAttackModal({ payload, onClose }) {
-  const { droneId } = payload ?? {}
+  const { droneId, mode = 'defend' } = payload ?? {}
   const ships       = useBattleStore((s) => s.ships)
   const drones      = useBattleStore((s) => s.drones)
   const applyDamage = useBattleStore((s) => s.applyDamage)
@@ -104,7 +135,16 @@ export function DroneAttackModal({ payload, onClose }) {
   const ownerBudget  = owner?.actionsRemaining ?? {}
   const targetBudget = target?.actionsRemaining ?? {}
 
-  const [step, setStep] = useState(STEP_PD)
+  // Which of the DEFENDING ship's own weapon mounts is intercepting/engaging — used by
+  // both the reactive Point Defence screen and the proactive engage mode. Previously
+  // the reactive check read the incoming drone's own weapon traits instead of the
+  // defender's, so a PDC's DM+4 never actually applied — see issue #24.
+  const targetWeapons     = target?.weapons ?? []
+  const [interceptWeaponIdx, setInterceptWeaponIdx] = useState(0)
+  const interceptWeaponSlot = targetWeapons[interceptWeaponIdx] ?? null
+  const interceptWeapon     = interceptWeaponSlot ? WEAPONS[interceptWeaponSlot.weaponId] : null
+
+  const [step, setStep] = useState(mode === 'engage' ? STEP_ENGAGE : STEP_PD)
   const [sensorMode, setSensorMode] = useState('handoff') // 'handoff' | 'self'
   const [pdResult,     setPdResult]     = useState(null)
   const [step1Result,   setStep1Result]   = useState(null)
@@ -125,16 +165,18 @@ export function DroneAttackModal({ payload, onClose }) {
   }
 
   // ── Point Defence — one-at-a-time intercept, target ship's own gunner // B3 p.55–56 ──
+  // DM+4/-2 depends on the DEFENDING ship's own intercepting weapon mount (e.g. a Quinn
+  // Type 17 PDC), not the incoming drone's warhead — issue #24 fix.
   const pdDms = useMemo(() => {
-    if (!target || !weapon) return { rows: [], total: 0 }
+    if (!target) return { rows: [], total: 0 }
     const gunnerSkill = getAssignedSkill('gunner_turret', target.crewAssignments, target.crew)
     const dexDm       = getCharDM(getAssignedCharacteristic('gunner_turret', target.crewAssignments, target.crew, 'DEX'))
-    const pdDm        = getPointDefenceDm(weapon.traits)
+    const pdDm        = getPointDefenceDm(interceptWeapon?.traits)
     // Fire Control applies to all attack rolls, including point defence // B3 p.62
     const fireControlDm = getFireControlDm(target.software)
     const total = gunnerSkill + dexDm + pdDm + fireControlDm
     return { rows: [['Gunner skill', gunnerSkill], ['DEX DM', dexDm], ['Point Defence', pdDm], ['Fire Control', fireControlDm]], total }
-  }, [target, weapon])
+  }, [target, interceptWeapon])
 
   function rollPd() {
     const dice = roll2D6()
@@ -148,6 +190,35 @@ export function DroneAttackModal({ payload, onClose }) {
   }
   function applyIntercept() {
     interceptDrone(droneId)
+    onClose()
+  }
+
+  // ── Proactive engage — Point Defence weapon trait's own DM+2, Close range only,
+  // single Gunner check (not the full chain — B3 treats drones/missiles as too small
+  // and fast for a normal target lock) // 2300AD B3 p.59, issue #24 ──
+  const [engageResult, setEngageResult] = useState(null)
+  const engageDms = useMemo(() => {
+    if (!target) return { rows: [], total: 0 }
+    const gunnerSkill = getAssignedSkill('gunner_turret', target.crewAssignments, target.crew)
+    const dexDm       = getCharDM(getAssignedCharacteristic('gunner_turret', target.crewAssignments, target.crew, 'DEX'))
+    const fireControlDm = getFireControlDm(target.software)
+    const pdTraitDm = getPointDefenceTraitAttackDm(interceptWeapon?.traits, drone?.currentBand)
+    const total = gunnerSkill + dexDm + fireControlDm + pdTraitDm
+    return { rows: [['Gunner skill', gunnerSkill], ['DEX DM', dexDm], ['Fire Control', fireControlDm], ['Point Defence trait', pdTraitDm]], total }
+  }, [target, interceptWeapon, drone])
+
+  function rollEngage() {
+    const dice = roll2D6()
+    const total = dice[0] + dice[1] + engageDms.total
+    setEngageResult({ dice, total, effect: total - 10, success: total >= 10 })
+    if (target) spendOnce(target.id, 'gunner_turret', 'engage')
+  }
+  function manualEngage({ dice, total }) {
+    setEngageResult({ dice, total, effect: total - 10, success: total >= 10 })
+    if (target) spendOnce(target.id, 'gunner_turret', 'engage')
+  }
+  function applyEngage() {
+    if (engageResult?.success) interceptDrone(droneId)
     onClose()
   }
 
@@ -323,6 +394,7 @@ export function DroneAttackModal({ payload, onClose }) {
           {targetBudget.gunner_turret <= 0 && (
             <p className="font-mono text-[10px] text-red-400">{target.profile?.name}'s Gunner has no actions left this round (Gunnery cap — B3 p.53).</p>
           )}
+          <InterceptWeaponPicker weapons={targetWeapons} value={interceptWeaponIdx} onChange={setInterceptWeaponIdx} />
           <DmBreakdown rows={pdDms.rows} total={pdDms.total} />
           <RollBlock dm={pdDms.total} onRoll={rollPd} onManual={manualPd} result={pdResult} target={10} disabled={targetBudget.gunner_turret <= 0} />
         </div>
@@ -339,6 +411,46 @@ export function DroneAttackModal({ payload, onClose }) {
           <button onClick={() => setStep(STEP_SENSOR)} className="flex-1 py-2 text-xs font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 hover:bg-(--neon-cyan)/10 rounded transition-colors">
             NO INTERCEPT → FIRING SOLUTION
           </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── STEP_ENGAGE: proactive Point Defence trait DM+2, Close range only // B3 p.59, issue #24 ──
+
+  if (step === STEP_ENGAGE) {
+    return (
+      <div className="p-5 space-y-3">
+        <p className="font-display text-xs text-slate-500 tracking-widest uppercase">FIRE AT INCOMING DRONE — {weapon.name}</p>
+        <p className="font-mono text-[10px] text-slate-500">
+          {target.profile?.name} → {weapon.name} ({owner.profile?.name}) · {drone.currentBand}
+        </p>
+
+        <div className="bg-sky-950/20 border border-sky-900/50 rounded p-3 space-y-2">
+          <p className="text-[10px] font-display text-sky-400 tracking-widest uppercase">
+            {target.profile?.name} — GUNNER (TURRET) DEX · Difficult (10+) // B3 p.59
+          </p>
+          {drone.currentBand !== 'Close' && (
+            <p className="font-mono text-[10px] text-red-400">Point Defence trait's DM+2 only applies at Close range — this drone is at {drone.currentBand}.</p>
+          )}
+          {targetBudget.gunner_turret <= 0 && (
+            <p className="font-mono text-[10px] text-red-400">{target.profile?.name}'s Gunner has no actions left this round (Gunnery cap — B3 p.53).</p>
+          )}
+          <InterceptWeaponPicker weapons={targetWeapons} value={interceptWeaponIdx} onChange={setInterceptWeaponIdx} />
+          <DmBreakdown rows={engageDms.rows} total={engageDms.total} />
+          <RollBlock dm={engageDms.total} onRoll={rollEngage} onManual={manualEngage} result={engageResult} target={10}
+            disabled={targetBudget.gunner_turret <= 0 || drone.currentBand !== 'Close'} />
+        </div>
+
+        <div className="flex gap-2 pt-1">
+          <button onClick={onClose} className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-600 hover:border-slate-500 rounded transition-colors">
+            CANCEL
+          </button>
+          {engageResult && (
+            <button onClick={applyEngage} className={`flex-1 py-2 text-xs font-display tracking-widest border rounded transition-colors ${engageResult.success ? 'text-emerald-400 border-emerald-700 hover:bg-emerald-900/20' : 'text-slate-400 border-slate-700 hover:bg-slate-800'}`}>
+              {engageResult.success ? 'DESTROYED — CLOSE' : 'MISS — CLOSE'}
+            </button>
+          )}
         </div>
       </div>
     )
