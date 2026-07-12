@@ -430,6 +430,66 @@ test.describe('Emergency Repair — skill, difficulty, and repair amount', () =>
   })
 })
 
+// === Overload Stutterwarp — Engineer // 2300AD B3 p.54 ======================
+// A failed roll has no consequence at all (B3's "Boost Tac Speed" table has no
+// failure entry) — a Stutterwarp critical hit on failure was invented and has
+// been removed. // issue #27
+
+test.describe('Overload Stutterwarp — no fabricated failure crit', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  test('a failed roll leaves TAC Speed and the Stutterwarp Drive critical track untouched, APPLY not offered', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    const before = await page.evaluate((id) => {
+      const s = window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((sh) => sh.id === id)
+      return { tacSpeed: s.currentTacSpeed, crit: s.criticalTracks.stutterwarpDrive }
+    }, id0)
+
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId: id })
+    }, id0)
+    await page.getByText('Overload Stutterwarp', { exact: true }).click()
+    await page.getByText('manual', { exact: true }).click()
+    const numberInputs = page.locator('input[type="number"]')
+    await numberInputs.nth(0).fill('1')
+    await numberInputs.nth(1).fill('1')
+    await expect(page.getByText('FAILURE', { exact: false })).toBeVisible()
+    await expect(page.getByText('APPLY RESULT', { exact: true })).not.toBeVisible()
+
+    const after = await page.evaluate((id) => {
+      const s = window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((sh) => sh.id === id)
+      return { tacSpeed: s.currentTacSpeed, crit: s.criticalTracks.stutterwarpDrive }
+    }, id0)
+    expect(after).toEqual(before)
+  })
+
+  test('a successful roll still grants the banded TAC Speed bonus', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    const before = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((sh) => sh.id === id).currentTacSpeed
+    , id0)
+
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId: id })
+    }, id0)
+    await page.getByText('Overload Stutterwarp', { exact: true }).click()
+    await page.getByText('manual', { exact: true }).click()
+    const numberInputs = page.locator('input[type="number"]')
+    await numberInputs.nth(0).fill('6')
+    await numberInputs.nth(1).fill('6')
+    await expect(page.getByText('SUCCESS — Effect', { exact: false })).toBeVisible()
+    await page.getByText('APPLY RESULT', { exact: true }).click()
+
+    const after = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((sh) => sh.id === id).currentTacSpeed
+    , id0)
+    expect(after).toBeGreaterThan(before)
+  })
+})
+
 // === Scan Target / Improve Critical — Sensor Operator // 2300AD B3 p.54 =====
 
 test.describe('Scan Target / Improve Critical', () => {
