@@ -9,11 +9,11 @@ import { clearAppState, gotoBattle } from './helpers.js'
 const ARMED_SHIPS = [
   {
     name: 'ISV-2 Trilon', faction: 'players',
-    weapons: [{ weaponId: 'll98', count: 1, label: 'Forward Laser' }],
+    weapons: [{ weaponId: 'll98', count: 1, label: 'Forward Laser', targetingSystem: 'light_tta' }],
   },
   {
     name: 'Kaefer Geist', faction: 'npc',
-    weapons: [{ weaponId: 'll88', count: 1, label: 'Main Laser' }],
+    weapons: [{ weaponId: 'll88', count: 1, label: 'Main Laser', targetingSystem: 'light_tta' }],
   },
 ]
 
@@ -470,15 +470,20 @@ test.describe('AttackModal — planetary/atmospheric range modifiers', () => {
   })
 })
 
-// === Fire Control DM-8 penalty when absent — 2300AD B3 p.62 ==================
+// === Fire Control DM-8 penalty when absent — 2300AD B3 p.62 (issue #25: hardware, not software) ==
 
-test.describe('AttackModal — DM-8 penalty for weapons without fire control', () => {
+test.describe('AttackModal — DM-8 penalty for weapons without a Targeting System', () => {
   test.beforeEach(async ({ page }) => {
     await clearAppState(page)
     await gotoBattle(page)
   })
 
-  test('Step 3 shows Fire Control -8 when attacker has no fire_control_N software', async ({ page }) => {
+  /** Inject armed ships with the given attacker weapon fields, open AttackModal for ships[0]. */
+  async function openAttackWith(page, attackerWeapon, attackerSoftware) {
+    const shipDefs = [
+      { name: 'ISV-2 Trilon', faction: 'players', weapons: [attackerWeapon], software: attackerSoftware },
+      { name: 'Kaefer Geist', faction: 'npc', weapons: [{ weaponId: 'll88', count: 1, label: 'Main Laser', targetingSystem: 'light_tta' }], software: ['fire_control_1'] },
+    ]
     await page.evaluate((shipDefs) => {
       const store = window.__ZUSTAND_BATTLE_STORE__
       for (const def of shipDefs) {
@@ -488,7 +493,7 @@ test.describe('AttackModal — DM-8 penalty for weapons without fire control', (
             tacSpeed: 4, signature: 2,
             sensors: { type: 'Basic Military', dm: 0 },
             computer: { model: 'TL-10', bandwidth: 20 },
-            weapons: def.weapons, software: [], // no fire control at all
+            weapons: def.weapons, software: def.software,
             crew: [{
               id: 'crew-full', name: 'Full Crew', role: null,
               skills: { pilot: 2, tactics: 2, engineer: 2, gunner: 2, sensors: 2, countermeasures: 2, leadership: 2, mechanic: 2, gunCombat: 2, melee: 2, remoteOps: 2 },
@@ -504,16 +509,32 @@ test.describe('AttackModal — DM-8 penalty for weapons without fire control', (
       }
       const ships = store.getState().ships
       window.__ZUSTAND_UI_STORE__.getState().openModal('attack', { attackerId: ships[0].id })
-    }, ARMED_SHIPS)
+    }, shipDefs)
     await expect(page.getByText('FIRING SOLUTION', { exact: true })).toBeVisible()
     await page.getByText('BEGIN FIRING SOLUTION →').click()
     await page.getByText('ROLL 2D6').click()
     await page.getByText('NEXT → PILOT').click()
     await page.getByText('ROLL 2D6').click()
     await page.getByText('NEXT → GUNNER').click()
+  }
 
-    const row = page.locator('div').filter({ hasText: 'Fire Control' }).last()
-    await expect(row).toContainText('-8')
+  test('Targeting System shows -8 when the weapon mount has none, even with Fire Control software installed', async ({ page }) => {
+    await openAttackWith(page,
+      { weaponId: 'll98', count: 1, label: 'Forward Laser', targetingSystem: 'none' },
+      ['fire_control_2'], // software present — should NOT prevent the hardware penalty
+    )
+    const targetingRow = page.locator('div').filter({ hasText: 'Targeting System' }).last()
+    await expect(targetingRow).toContainText('-8')
+    const fireControlRow = page.locator('div').filter({ hasText: 'Fire Control' }).last()
+    await expect(fireControlRow).toContainText('+2')
+  })
+
+  test('no Fire Control software, but a Targeting System installed → no -8 penalty', async ({ page }) => {
+    await openAttackWith(page,
+      { weaponId: 'll98', count: 1, label: 'Forward Laser', targetingSystem: 'light_tta' },
+      [], // no fire_control_N software at all
+    )
+    await expect(page.getByText('Targeting System', { exact: false })).not.toBeVisible()
   })
 })
 
@@ -596,8 +617,8 @@ test.describe('AttackModal — Defensive Screens', () => {
 
   test('a hit from a non-laser weapon does not deplete the screen', async ({ page }) => {
     const nonLaserShips = [
-      { name: 'ISV-2 Trilon', faction: 'players', weapons: [{ weaponId: 'allen_bmz50', count: 1, label: 'Particle Beam' }] },
-      { name: 'Kaefer Geist', faction: 'npc', weapons: [{ weaponId: 'll88', count: 1, label: 'Main Laser' }] },
+      { name: 'ISV-2 Trilon', faction: 'players', weapons: [{ weaponId: 'allen_bmz50', count: 1, label: 'Particle Beam', targetingSystem: 'light_tta' }] },
+      { name: 'Kaefer Geist', faction: 'npc', weapons: [{ weaponId: 'll88', count: 1, label: 'Main Laser', targetingSystem: 'light_tta' }] },
     ]
     const { id0, id1 } = await page.evaluate(({ shipDefs, screenFields }) => {
       const store = window.__ZUSTAND_BATTLE_STORE__
@@ -728,8 +749,8 @@ test.describe('AttackModal — Auto X fire mode', () => {
   })
 
   const AUTO_SHIPS = [
-    { name: 'Auto Gunship', faction: 'players', weapons: [{ weaponId: 'tri_beamer', count: 1, label: 'Tri-Beamer' }] },
-    { name: 'Kaefer Geist', faction: 'npc', weapons: [{ weaponId: 'll88', count: 1, label: 'Main Laser' }] },
+    { name: 'Auto Gunship', faction: 'players', weapons: [{ weaponId: 'tri_beamer', count: 1, label: 'Tri-Beamer', targetingSystem: 'light_tta' }] },
+    { name: 'Kaefer Geist', faction: 'npc', weapons: [{ weaponId: 'll88', count: 1, label: 'Main Laser', targetingSystem: 'light_tta' }] },
   ]
 
   async function openAutoAttack(page) {
@@ -884,10 +905,11 @@ test.describe('AttackModal — Targeting Systems and Operate UTES Array', () => 
     await expect(row).toContainText('+1')
   })
 
-  test('no Targeting System row for an unequipped weapon', async ({ page }) => {
+  test('Targeting System row shows -8 for an unequipped weapon // B3 p.62, issue #25', async ({ page }) => {
     await openTargetingAttack(page, 'none')
     await reachStep3(page)
-    await expect(page.getByText('Targeting System', { exact: false })).not.toBeVisible()
+    const row = page.locator('div').filter({ hasText: 'Targeting System' }).last()
+    await expect(row).toContainText('-8')
   })
 
   test('Operate UTES Array block only appears for a UTES-equipped weapon', async ({ page }) => {

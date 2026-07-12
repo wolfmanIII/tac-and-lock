@@ -8,8 +8,8 @@ import { test, expect } from '@playwright/test'
 import { clearAppState, addShipsToStore, gotoBattle, startCombat } from './helpers.js'
 
 const SHIPS_WITH_DRONES = [
-  { name: 'ISV-2 Trilon', faction: 'players', weapons: [{ weaponId: 'ritage1', count: 4, label: 'Drone bay' }] },
-  { name: 'Kaefer Geist', faction: 'npc',      weapons: [{ weaponId: 'anti_missile_laser', count: 1, label: 'Quinn PDC' }] },
+  { name: 'ISV-2 Trilon', faction: 'players', weapons: [{ weaponId: 'ritage1', count: 4, label: 'Drone bay', targetingSystem: 'light_tta' }] },
+  { name: 'Kaefer Geist', faction: 'npc',      weapons: [{ weaponId: 'anti_missile_laser', count: 1, label: 'Quinn PDC', targetingSystem: 'light_tta' }] },
 ]
 
 /** Open DroneLaunchModal for the first ship via store injection. */
@@ -261,7 +261,7 @@ test.describe('Drone attack — Point Defence and Firing Solution', () => {
     await expect(page.getByText('×2 damage', { exact: false })).toBeVisible()
   })
 
-  test('Point Defence shows Fire Control -8 when the defending ship has no fire control // B3 p.62', async ({ page }) => {
+  test('Point Defence: no Fire Control software → no penalty (that DM belongs to Targeting System hardware, issue #25)', async ({ page }) => {
     const droneId = await injectDrone(page, { band: 'Close' })
     await page.evaluate(() => {
       const store = window.__ZUSTAND_BATTLE_STORE__
@@ -272,7 +272,23 @@ test.describe('Drone attack — Point Defence and Firing Solution', () => {
       window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
     }, droneId)
     await expect(page.getByText(/— POINT DEFENCE ·/)).toBeVisible()
-    const row = page.locator('div').filter({ hasText: 'Fire Control' }).last()
+    await expect(page.getByText('Fire Control', { exact: false })).not.toBeVisible()
+  })
+
+  test('Point Defence shows Targeting System -8 when the intercepting weapon has none // B3 p.62, issue #25', async ({ page }) => {
+    const droneId = await injectDrone(page, { band: 'Close' })
+    await page.evaluate(() => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const target = store.getState().ships[1]
+      store.getState().updateShip(target.id, {
+        weapons: [{ weaponId: 'anti_missile_laser', count: 1, label: 'Quinn PDC', targetingSystem: 'none' }],
+      })
+    })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await expect(page.getByText(/— POINT DEFENCE ·/)).toBeVisible()
+    const row = page.locator('div').filter({ hasText: 'Targeting System' }).last()
     await expect(row).toContainText('-8')
   })
 
@@ -326,10 +342,10 @@ test.describe('Drone attack — Point Defence and Firing Solution', () => {
 
 const SHIPS_ENGAGE = [
   { name: 'ISV-2 Trilon', faction: 'players', weapons: [
-    { weaponId: 'll98', count: 1, label: 'Laser' },
-    { weaponId: 'anti_missile_laser', count: 1, label: 'Quinn PDC' },
+    { weaponId: 'll98', count: 1, label: 'Laser', targetingSystem: 'light_tta' },
+    { weaponId: 'anti_missile_laser', count: 1, label: 'Quinn PDC', targetingSystem: 'light_tta' },
   ] },
-  { name: 'Kaefer Geist', faction: 'npc', weapons: [{ weaponId: 'ritage1', count: 2, label: 'Drone bay' }] },
+  { name: 'Kaefer Geist', faction: 'npc', weapons: [{ weaponId: 'ritage1', count: 2, label: 'Drone bay', targetingSystem: 'light_tta' }] },
 ]
 
 /** Inject a drone incoming AT ships[0] (the current actor after startCombat), launched by ships[1]. */

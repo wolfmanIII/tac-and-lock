@@ -9,11 +9,11 @@ import { clearAppState, gotoBattle } from './helpers.js'
 const ARMED_SHIPS = [
   {
     name: 'ISV-2 Trilon', faction: 'players',
-    weapons: [{ weaponId: 'll98', count: 1, label: 'Fwd Laser' }],
+    weapons: [{ weaponId: 'll98', count: 1, label: 'Fwd Laser', targetingSystem: 'light_tta' }],
   },
   {
     name: 'Kaefer Geist', faction: 'npc',
-    weapons: [{ weaponId: 'll88', count: 1, label: 'Main Laser' }],
+    weapons: [{ weaponId: 'll88', count: 1, label: 'Main Laser', targetingSystem: 'light_tta' }],
   },
 ]
 
