@@ -46,8 +46,12 @@ export function getRangeDM(weaponId, rangeBand) {
 }
 
 /**
- * Fire Control software DM for a Gunner check, including point defence. // 2300AD B3 p.44, p.62
- * "A weapon without fire control suffers DM-8 on all attack rolls, including point defence."
+ * Fire Control SOFTWARE DM for a Gunner check. // 2300AD B3 p.44
+ * "Fire Control allows the computer to assist targeting. It adds DM+1 for each
+ * level of Fire Control." Purely additive (0/+1/+2/+3) — no penalty for its own
+ * absence. The DM-8 "no fire control" penalty B3 p.62 describes belongs to the
+ * physical Targeting System hardware instead — see getTargetingSystemDm — a
+ * separate system that happens to share the English name "Fire Control" (issue #25).
  * @param {string[]} software — ship's installed software list
  * @returns {number}
  */
@@ -55,7 +59,7 @@ export function getFireControlDm(software) {
   if (software?.includes('fire_control_3')) return 3
   if (software?.includes('fire_control_2')) return 2
   if (software?.includes('fire_control_1')) return 1
-  return -8
+  return 0
 }
 
 // === TARGETING SYSTEMS — 2300AD B3 p.62 ===
@@ -67,10 +71,13 @@ export function getFireControlDm(software) {
  * Drone Controller is not a weapon fire-control device ("not exactly a targeting
  * system" — B3), contributes DM+0, and its 2-drones-per-controller limit is a
  * separate, unmodeled resource cap — out of scope here (issue #16).
+ * 'none' carries B3 p.62's DM-8 penalty: "a weapon without fire control suffers
+ * DM-8 on all attack rolls, including point defence" — this sentence sits directly
+ * in the Targeting System section, not the software one (issue #25).
  * @type {Array<{ id: string, label: string, dm: number }>}
  */
 export const TARGETING_SYSTEMS = [
-  { id: 'none',             label: 'None',                                dm: 0 },
+  { id: 'none',             label: 'None (DM−8, no fire control array)',   dm: -8 },
   { id: 'light_tta',        label: 'Light TTA (TL11, up to 4 weapons)',    dm: 0 },
   { id: 'tta',              label: 'TTA (TL10, up to 10 weapons)',         dm: -1 },
   { id: 'utes',             label: 'UTES (TL12, 1 weapon, rare up to 4)',  dm: 1 },
@@ -79,7 +86,8 @@ export const TARGETING_SYSTEMS = [
 
 /**
  * Attack roll DM from a weapon mount's installed Targeting System hardware
- * (Light TTA/TTA/UTES). Stacks with `getFireControlDm` (software). // 2300AD B3 p.62
+ * (Light TTA/TTA/UTES), including the DM-8 penalty when none is installed.
+ * Stacks with `getFireControlDm` (software). // 2300AD B3 p.62
  * @param {{ targetingSystem?: string }} weaponSlot — a ship.weapons[] entry
  * @returns {number}
  */

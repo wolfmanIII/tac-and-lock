@@ -864,9 +864,12 @@ describe('getOrtilleryDm', () => {
 // === Fire Control — 2300AD B3 p.44, p.62 ===
 
 describe('getFireControlDm', () => {
-  it('no fire control software at all → DM-8 (including point defence) // B3 p.62', () => {
-    expect(getFireControlDm([])).toBe(-8)
-    expect(getFireControlDm(undefined)).toBe(-8)
+  // Software-only rating now — the DM-8 "no fire control" penalty belongs to the
+  // Targeting System hardware instead (getTargetingSystemDm) — B3 p.62's DM-8 sentence
+  // sits in the hardware section, not the p.44 software table. Issue #25.
+  it('no fire control software at all → 0 (no bonus, no penalty)', () => {
+    expect(getFireControlDm([])).toBe(0)
+    expect(getFireControlDm(undefined)).toBe(0)
   })
 
   it('fire_control_1 → +1', () => {
@@ -881,18 +884,18 @@ describe('getFireControlDm', () => {
     expect(getFireControlDm(['fire_control_3'])).toBe(3)
   })
 
-  it('other unrelated software present, no fire control → still DM-8', () => {
-    expect(getFireControlDm(['auto_repair_1', 'stutterwarp_control'])).toBe(-8)
+  it('other unrelated software present, no fire control → 0', () => {
+    expect(getFireControlDm(['auto_repair_1', 'stutterwarp_control'])).toBe(0)
   })
 })
 
 // === getTargetingSystemDm — per-weapon-mount hardware, stacks with Fire Control software // 2300AD B3 p.62 ===
 
 describe('getTargetingSystemDm', () => {
-  it('no targeting system / "none" → 0', () => {
-    expect(getTargetingSystemDm({})).toBe(0)
-    expect(getTargetingSystemDm({ targetingSystem: 'none' })).toBe(0)
-    expect(getTargetingSystemDm(null)).toBe(0)
+  it('no targeting system / "none" → DM-8 (B3 p.62: "a weapon without fire control suffers DM-8", issue #25)', () => {
+    expect(getTargetingSystemDm({})).toBe(-8)
+    expect(getTargetingSystemDm({ targetingSystem: 'none' })).toBe(-8)
+    expect(getTargetingSystemDm(null)).toBe(-8)
   })
 
   it('Light TTA → 0', () => {
