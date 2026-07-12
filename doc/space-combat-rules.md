@@ -568,7 +568,7 @@ attaccare.
 - **Re-route Power** — Average (8+) Engineer (power) **EDU**. **Puramente informativo/narrativo** (stesso pattern di Scan Target): B3 non fornisce alcuna tabella Effect per questa azione — il libro rimanda esplicitamente all'"Aerospace Engineer's Handbook" (supplemento non presente in `doc/`) per gli effetti dettagliati sui radiator. Nessuna mutazione di stato: il GM narra la ridistribuzione di potenza (es. ripristino temporaneo di un sistema offline da un Power Plant/Radiator critical). // B3 p.54
 - **Boost Power Output**: Difficult (10+) Engineer (power) **EDU**. Successo: Effect% aumento Power. Effect −5 o peggio: critical hit Power Plant.
 
-> Nota: "Boost Power Output" e "Boost Tac Speed" (righe sotto) sono documentate qui ma **non implementate** in `crewActions.js`/`ActionModal.jsx` — gap trovato durante il lavoro sulla #18, non ancora tracciato in una issue dedicata.
+> Nota: "Boost Power Output" è documentata qui ma **non implementata** in `crewActions.js`/`ActionModal.jsx` — gap trovato durante il lavoro sulla #18, non ancora tracciato in una issue dedicata. "Boost Tac Speed" (= `overload_stutterwarp`, riga sotto) invece **è implementata** — la nota qui sopra la includeva erroneamente, corretto durante la #27.
 
 - **Overload Stutterwarp** — Difficult (10+) Engineer (stutterwarp) **INT**: porta il motore oltre i limiti di sicurezza. Successo: Effect 1–4 → TAC Speed +1, Effect 5–6 → +2 questo round. Nessuna conseguenza in caso di fallimento. // B3 p.54
 - **Emergency Repair** ("Damage Control team") — Difficult (10+) **Mechanic** (1D minuti, INT): ripara un danno nella fase corrente. // B3 p.56–57

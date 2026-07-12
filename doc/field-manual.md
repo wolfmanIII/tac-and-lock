@@ -294,7 +294,7 @@ Select the action type, choose applicable target/options, roll (if required), th
 | Action | Check | Effect |
 | ------ | ----- | ------ |
 | **Overload Stutterwarp** | Difficult (10+) Engineer(stutterwarp) INT | Success: Effect 1–4 → TAC Speed +1, Effect 5–6 → +2 this round. No failure consequence. |
-| **Emergency Repair** | Average (8+) Engineer INT/EDU | *System mode*: reduce one critical hit severity by 1. *Hull mode*: restore 1 Hull Point. |
+| **Emergency Repair** | Difficult (10+) Mechanic INT/EDU | *System mode*: reduce one critical hit severity by 1. *Hull mode*: restore 5 Hull Points. |
 
 ### Sensor Operator
 
