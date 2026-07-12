@@ -290,6 +290,150 @@ test.describe('Drone attack — Point Defence and Firing Solution', () => {
     const row = page.locator('div').filter({ hasText: 'Weapon trait' }).last()
     await expect(row).toContainText('-2')
   })
+
+  test('intercepting weapon picker: Point Defence DM depends on the DEFENDER\'s own weapon, not the drone\'s // issue #24 fix', async ({ page }) => {
+    // Target ship has two weapon slots: a non-PDC laser (index 0) and the Quinn PDC (index 1).
+    // Before the fix, the DM was read from the incoming drone's own weapon (never a PDC),
+    // so it always showed -2 regardless of what the defender had installed.
+    await page.evaluate(() => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const target = store.getState().ships[1]
+      store.getState().updateShip(target.id, {
+        weapons: [
+          { weaponId: 'll98', count: 1, label: 'Laser' },
+          { weaponId: 'anti_missile_laser', count: 1, label: 'Quinn PDC' },
+        ],
+      })
+    })
+    const droneId = await injectDrone(page, { band: 'Close' })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await expect(page.getByText(/— POINT DEFENCE ·/)).toBeVisible()
+
+    // Default selection (index 0, laser) → DM-2
+    let row = page.locator('div').filter({ hasText: 'Point Defence' }).last()
+    await expect(row).toContainText('-2')
+
+    // Switch to the Quinn PDC (index 1) → DM+4
+    await page.locator('select').filter({ hasText: 'Laser' }).selectOption('1')
+    row = page.locator('div').filter({ hasText: 'Point Defence' }).last()
+    await expect(row).toContainText('+4')
+  })
+})
+
+// === Proactive "engage" action — Point Defence weapon trait DM+2 (issue #24) ===
+
+const SHIPS_ENGAGE = [
+  { name: 'ISV-2 Trilon', faction: 'players', weapons: [
+    { weaponId: 'll98', count: 1, label: 'Laser' },
+    { weaponId: 'anti_missile_laser', count: 1, label: 'Quinn PDC' },
+  ] },
+  { name: 'Kaefer Geist', faction: 'npc', weapons: [{ weaponId: 'ritage1', count: 2, label: 'Drone bay' }] },
+]
+
+/** Inject a drone incoming AT ships[0] (the current actor after startCombat), launched by ships[1]. */
+async function injectIncomingDrone(page, { band = 'Close', id = 'incoming-001' } = {}) {
+  return page.evaluate(({ band, id }) => {
+    const store = window.__ZUSTAND_BATTLE_STORE__
+    const ships = store.getState().ships
+    store.setState((s) => ({
+      drones: [...s.drones, {
+        id, ownerId: ships[1].id, targetId: ships[0].id, weaponId: 'ritage1',
+        currentBand: band, roundsElapsed: 0, enduranceRounds: 60,
+        destroyed: false, detonated: false, sensorLockSource: null, launchedRound: 1,
+      }],
+    }))
+    return id
+  }, { band, id })
+}
+
+test.describe('Drone attack — proactive engage (Point Defence weapon trait, issue #24)', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+    await addShipsToStore(page, SHIPS_ENGAGE)
+    await startCombat(page) // ISV-2 Trilon (ships[0]) becomes the current actor
+  })
+
+  test('context menu shows "Fire at incoming drone (Close)…" for a Close-range drone targeting this ship', async ({ page }) => {
+    await injectIncomingDrone(page, { band: 'Close' })
+    await page.locator('.cursor-context-menu').filter({ hasText: 'ISV-2 Trilon' }).click({ button: 'right' })
+    await expect(page.getByText('Fire at incoming drone (Close)…')).toBeVisible()
+  })
+
+  test('not shown for the same drone at a non-Close range', async ({ page }) => {
+    await injectIncomingDrone(page, { band: 'Adjacent' })
+    await page.locator('.cursor-context-menu').filter({ hasText: 'ISV-2 Trilon' }).click({ button: 'right' })
+    await expect(page.getByText('Fire at incoming drone (Close)…')).toHaveCount(0)
+  })
+
+  test('not shown for a drone incoming at a different ship', async ({ page }) => {
+    await page.evaluate(() => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const ships = store.getState().ships
+      store.setState((s) => ({
+        drones: [...s.drones, {
+          id: 'other-target', ownerId: ships[0].id, targetId: ships[1].id, weaponId: 'ritage1',
+          currentBand: 'Close', roundsElapsed: 0, enduranceRounds: 60,
+          destroyed: false, detonated: false, sensorLockSource: null, launchedRound: 1,
+        }],
+      }))
+    })
+    await page.locator('.cursor-context-menu').filter({ hasText: 'ISV-2 Trilon' }).click({ button: 'right' })
+    await expect(page.getByText('Fire at incoming drone (Close)…')).toHaveCount(0)
+  })
+
+  test('DM+2 row appears only when the selected weapon has the Point Defence trait', async ({ page }) => {
+    await injectIncomingDrone(page, { band: 'Close' })
+    await page.locator('.cursor-context-menu').filter({ hasText: 'ISV-2 Trilon' }).click({ button: 'right' })
+    await page.getByText('Fire at incoming drone (Close)…').click()
+    await expect(page.getByText('FIRE AT INCOMING DRONE')).toBeVisible()
+
+    // Default (index 0, laser, no Point Defence trait) → no DM row
+    await expect(page.getByText('Point Defence trait')).not.toBeVisible()
+
+    // Switch to the Quinn PDC (index 1) → DM+2 row appears
+    await page.locator('select').filter({ hasText: 'Laser' }).selectOption('1')
+    const row = page.locator('div').filter({ hasText: 'Point Defence trait' }).last()
+    await expect(row).toContainText('+2')
+  })
+
+  test('a successful engage destroys the drone and spends the Gunner action', async ({ page }) => {
+    const droneId = await injectIncomingDrone(page, { band: 'Close' })
+    await page.locator('.cursor-context-menu').filter({ hasText: 'ISV-2 Trilon' }).click({ button: 'right' })
+    await page.getByText('Fire at incoming drone (Close)…').click()
+    await page.locator('select').filter({ hasText: 'Laser' }).selectOption('1')
+    await page.getByText('enter manually').click()
+    await page.locator('input[type="number"]').nth(0).fill('6')
+    await page.locator('input[type="number"]').nth(1).fill('6')
+    await expect(page.getByText('DESTROYED — CLOSE')).toBeVisible()
+    await page.getByText('DESTROYED — CLOSE').click()
+
+    const state = await page.evaluate((id) => {
+      const s = window.__ZUSTAND_BATTLE_STORE__.getState()
+      return {
+        destroyed: s.drones.find((d) => d.id === id)?.destroyed,
+        gunnerBudget: s.ships[0].actionsRemaining.gunner_turret,
+      }
+    }, droneId)
+    expect(state.destroyed).toBe(true)
+    expect(state.gunnerBudget).toBe(0)
+  })
+
+  test('unavailable once the Gunner has no actions left this round', async ({ page }) => {
+    await page.evaluate(() => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const ship = store.getState().ships[0]
+      store.getState().updateShip(ship.id, {
+        actionsRemaining: { ...ship.actionsRemaining, gunner_turret: 0 },
+      })
+    })
+    await injectIncomingDrone(page, { band: 'Close' })
+    await page.locator('.cursor-context-menu').filter({ hasText: 'ISV-2 Trilon' }).click({ button: 'right' })
+    await page.getByText('Fire at incoming drone (Close)…').click()
+    await expect(page.getByText('has no actions left this round')).toBeVisible()
+  })
 })
 
 test.describe('Context menu — real right-click, drone items', () => {

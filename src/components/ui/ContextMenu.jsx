@@ -67,6 +67,13 @@ function ShipMenu({ x, y, menuRef, shipId, close }) {
     (d.currentBand === 'Close' || d.currentBand === 'Adjacent'),
   )
 
+  // Enemy drones/missiles incoming at THIS ship, close enough for a proactive Point
+  // Defence trait engagement (DM+2, Close range only — B3 p.59, issue #24). Distinct
+  // from the reactive intercept, which happens inline when the drone itself attacks.
+  const incomingDronesInRange = drones.filter((d) =>
+    d.targetId === shipId && !d.destroyed && !d.detonated && d.currentBand === 'Close',
+  )
+
   // There is no "Manoeuvre/Attack/Actions Step" in 2300AD B3 (that's a Traveller CRB
   // import — see battleStore.js). A ship's turn in 'combat' is open-ended: any of
   // Manoeuvre/Attack/Launch Drone/Crew Action can be opened repeatedly while it's this
@@ -103,6 +110,16 @@ function ShipMenu({ x, y, menuRef, shipId, close }) {
           {ownDronesInRange.map((d) => (
             <MenuItem key={d.id} icon="💥" label={`Resolve drone attack (${d.currentBand})…`}
               onClick={() => { openModal('drone-attack', { droneId: d.id }); close() }}
+              disabled={!canAct} hint={turnHint} />
+          ))}
+        </>
+      )}
+      {incomingDronesInRange.length > 0 && (
+        <>
+          <MenuDivider />
+          {incomingDronesInRange.map((d) => (
+            <MenuItem key={d.id} icon="🎯" label="Fire at incoming drone (Close)…"
+              onClick={() => { openModal('drone-attack', { droneId: d.id, mode: 'engage' }); close() }}
               disabled={!canAct} hint={turnHint} />
           ))}
         </>
