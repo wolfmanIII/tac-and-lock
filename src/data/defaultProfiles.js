@@ -184,7 +184,7 @@ export const DEFAULT_PROFILES = [
     computer: { model: 'Computer/30fib', bandwidth: 30 },
     weapons: [
       { weaponId: 'ea1000',      count: 2, label: 'Twin EA1000 w/UTES (Fixed)', targetingSystem: 'utes' },
-      { weaponId: 'missile_rack', count: 2, label: 'Combat Drones Ritage-2 x2' },
+      { weaponId: 'missile_rack', count: 2, label: 'Combat Drones Ritage-2 x2', targetingSystem: 'light_tta' },
     ],
     software: ['operations', 'fire_control_2', 'auto_repair_1', 'stutterwarp_control'],
     criticalTracks: blankCriticalTracks(),
@@ -211,7 +211,7 @@ export const DEFAULT_PROFILES = [
     computer: { model: 'Computer/15fib', bandwidth: 15 },
     weapons: [
       { weaponId: 'll98',             count: 1, label: 'LL98 Laser w/UTES (Surface)', targetingSystem: 'utes' },
-      { weaponId: 'particle_barbette', count: 1, label: 'Light Plasma Gun PGHP (Fixed)' },
+      { weaponId: 'particle_barbette', count: 1, label: 'Light Plasma Gun PGHP (Fixed)', targetingSystem: 'light_tta' },
     ],
     software: ['operations', 'fire_control_2', 'stutterwarp_control'],
     criticalTracks: blankCriticalTracks(),
@@ -238,9 +238,9 @@ export const DEFAULT_PROFILES = [
     computer: { model: 'Computer/20', bandwidth: 20 },
     weapons: [
       { weaponId: 'll98',             count: 2, label: 'Twin LL98 w/UTES (Surface)', targetingSystem: 'utes' },
-      { weaponId: 'autocannon_25mm',  count: 2, label: '25mm Rotary AC x2 (Retractable)' },
-      { weaponId: 'aero12',           count: 10, label: 'Aero-12 Missile x10 (Internal)' },
-      { weaponId: 'anti_missile_laser', count: 1, label: 'Anti-Missile Laser (Retractable)' },
+      { weaponId: 'autocannon_25mm',  count: 2, label: '25mm Rotary AC x2 (Retractable)', targetingSystem: 'light_tta' },
+      { weaponId: 'aero12',           count: 10, label: 'Aero-12 Missile x10 (Internal)', targetingSystem: 'light_tta' },
+      { weaponId: 'anti_missile_laser', count: 1, label: 'Anti-Missile Laser (Retractable)', targetingSystem: 'light_tta' },
     ],
     software: ['operations', 'fire_control_2', 'auto_repair_1', 'stutterwarp_control'],
     criticalTracks: blankCriticalTracks(),
@@ -269,8 +269,8 @@ export const DEFAULT_PROFILES = [
     computer: { model: 'Computer/15', bandwidth: 15 },
     weapons: [
       { weaponId: 'grumbler',    count: 1, label: "Grumbler Laser w/KUTS (Surface)", targetingSystem: 'utes' },
-      { weaponId: 'kingfisher',  count: 10, label: 'Kingfisher Missile x10 (Retractable)' },
-      { weaponId: 'tri_beamer',  count: 1, label: 'Tri-Beamer (Retractable)' },
+      { weaponId: 'kingfisher',  count: 10, label: 'Kingfisher Missile x10 (Retractable)', targetingSystem: 'light_tta' },
+      { weaponId: 'tri_beamer',  count: 1, label: 'Tri-Beamer (Retractable)', targetingSystem: 'light_tta' },
     ],
     software: ['operations', 'fire_control_1', 'stutterwarp_control'],
     criticalTracks: blankCriticalTracks(),
