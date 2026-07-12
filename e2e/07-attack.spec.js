@@ -84,7 +84,7 @@ test.describe('AttackModal — Firing Solution', () => {
   test('ROLL 2D6 on Step 1 shows SUCCESS or FAILURE result', async ({ page }) => {
     await openAttack(page)
     await page.getByText('BEGIN FIRING SOLUTION →').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     // Either SUCCESS or FAILURE must appear
     const outcome = page.getByText(/SUCCESS|FAILURE/)
     await expect(outcome.first()).toBeVisible()
@@ -93,7 +93,7 @@ test.describe('AttackModal — Firing Solution', () => {
   test('after Step 1 roll, NEXT → PILOT button is enabled', async ({ page }) => {
     await openAttack(page)
     await page.getByText('BEGIN FIRING SOLUTION →').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     const nextBtn = page.getByText('NEXT → PILOT')
     await expect(nextBtn).toBeVisible()
     await expect(nextBtn).not.toBeDisabled()
@@ -102,7 +102,7 @@ test.describe('AttackModal — Firing Solution', () => {
   test('Step 2 shows PILOT and DEX in breakdown', async ({ page }) => {
     await openAttack(page)
     await page.getByText('BEGIN FIRING SOLUTION →').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → PILOT').click()
     await expect(page.getByText('STEP 2 — PILOT')).toBeVisible()
     // 'Pilot skill' DM row is hidden when value = 0 (no crew assigned);
@@ -114,10 +114,10 @@ test.describe('AttackModal — Firing Solution', () => {
     await openAttack(page)
     await page.getByText('BEGIN FIRING SOLUTION →').click()
     // Step 1
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → PILOT').click()
     // Step 2
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → GUNNER').click()
     await expect(page.getByText('STEP 3 — GUNNER')).toBeVisible()
     await expect(page.getByText('Fire Control').first()).toBeVisible()
@@ -178,9 +178,9 @@ test.describe('AttackModal — evasion auto-read', () => {
   test('Step 3 (Gunner) shows the same evasion DM without manual re-entry', async ({ page }) => {
     await openAttackWithTargetEvasion(page, -1)
     await page.getByText('BEGIN FIRING SOLUTION →').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → PILOT').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → GUNNER').click()
     await expect(page.getByText('STEP 3 — GUNNER')).toBeVisible()
     const row = page.locator('div').filter({ hasText: 'Evasion penalty' }).last()
@@ -205,9 +205,9 @@ test.describe('AttackModal — Captain Tactics Assist', () => {
   async function reachStep3(page) {
     await openAttack(page)
     await page.getByText('BEGIN FIRING SOLUTION →').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → PILOT').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → GUNNER').click()
     await expect(page.getByText('STEP 3 — GUNNER')).toBeVisible()
   }
@@ -269,9 +269,9 @@ test.describe('AttackModal — Captain Tactics Assist', () => {
     }, id0)
     await expect(page.getByText('FIRING SOLUTION', { exact: true })).toBeVisible()
     await page.getByText('BEGIN FIRING SOLUTION →').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → PILOT').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → GUNNER').click()
 
     await expect(page.getByText('Command (Captain)')).toBeVisible()
@@ -280,6 +280,87 @@ test.describe('AttackModal — Captain Tactics Assist', () => {
     await page.locator('input[type="number"]').nth(1).fill('6')
     await expect(page.getByText('Tactics assist')).toBeVisible()
     await expect(page.getByText('Command (Captain)')).toBeVisible()
+  })
+})
+
+// === Engineer assist — Step 1 (Sensor) and Step 2 (Pilot) — issue #26 =======
+// // 2300AD B3 p.56 — Routine (8+) Engineer (power) INT, distinct from the Captain
+// Tactics assist (Step 3) and from the standalone "Boost Tac Speed" crew action.
+
+test.describe('AttackModal — Engineer assist (Step 1 Sensor, Step 2 Pilot)', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  test('Step 1 shows an Engineer assist roll block; success adds a raw-Effect row', async ({ page }) => {
+    await openAttack(page)
+    await page.getByText('BEGIN FIRING SOLUTION →').click()
+    await expect(page.getByText('Engineer assist (optional)')).toBeVisible()
+    await expect(page.getByText('Engineer (power)')).toBeVisible()
+
+    await page.getByText('enter manually').first().click()
+    await page.locator('input[type="number"]').nth(0).fill('6')
+    await page.locator('input[type="number"]').nth(1).fill('6')
+    await expect(page.getByText('Engineer assist', { exact: true })).toBeVisible()
+  })
+
+  test('Step 2 shows its own Engineer assist roll block; success adds the banded TAC Speed row', async ({ page }) => {
+    await openAttack(page)
+    await page.getByText('BEGIN FIRING SOLUTION →').click()
+    await page.getByText('ROLL 2D6').last().click() // Step 1 main roll, no assist
+    await page.getByText('NEXT → PILOT').click()
+
+    await expect(page.getByText('Engineer assist (optional)')).toBeVisible()
+    await page.getByText('enter manually').first().click()
+    await page.locator('input[type="number"]').nth(0).fill('6')
+    await page.locator('input[type="number"]').nth(1).fill('6') // total 12+dm → Effect ≥ 5 → +2
+    await expect(page.getByText('Engineer assist (TAC Speed)')).toBeVisible()
+    const row = page.locator('div').filter({ hasText: 'Engineer assist (TAC Speed)' }).last()
+    await expect(row).toContainText('+2')
+  })
+
+  test('an Engineer with 2 actions/round can assist both Step 1 and Step 2 in the same Firing Solution', async ({ page }) => {
+    await openAttack(page)
+    const shipId = await page.evaluate(() => window.__ZUSTAND_BATTLE_STORE__.getState().ships[0].id)
+
+    await page.getByText('BEGIN FIRING SOLUTION →').click()
+    await page.getByText('enter manually').first().click()
+    await page.locator('input[type="number"]').nth(0).fill('6')
+    await page.locator('input[type="number"]').nth(1).fill('6')
+    await expect(page.getByText('Engineer assist', { exact: true })).toBeVisible()
+    await page.getByText('ROLL 2D6').last().click() // main Step 1 roll
+    await page.getByText('NEXT → PILOT').click()
+
+    await expect(page.getByText('Engineer assist (optional)')).toBeVisible()
+    await page.getByText('enter manually').first().click()
+    await page.locator('input[type="number"]').nth(0).fill('6')
+    await page.locator('input[type="number"]').nth(1).fill('6')
+    await expect(page.getByText('Engineer assist (TAC Speed)')).toBeVisible()
+
+    const engineerBudget = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id).actionsRemaining.engineer
+    , shipId)
+    expect(engineerBudget).toBe(0) // skill 2 → 2 actions, both spent
+  })
+
+  test('an Engineer with only 1 action/round can assist only one of the two steps', async ({ page }) => {
+    await openAttack(page)
+    await page.evaluate(() => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const ship = store.getState().ships[0]
+      store.getState().updateShip(ship.id, {
+        actionsRemaining: { ...ship.actionsRemaining, engineer: 1 },
+      })
+    })
+    await page.getByText('BEGIN FIRING SOLUTION →').click()
+    await page.getByText('enter manually').first().click()
+    await page.locator('input[type="number"]').nth(0).fill('6')
+    await page.locator('input[type="number"]').nth(1).fill('6')
+    await page.getByText('ROLL 2D6').last().click()
+    await page.getByText('NEXT → PILOT').click()
+
+    await expect(page.getByText('Engineer has no actions left this round')).toBeVisible()
   })
 })
 
@@ -326,9 +407,9 @@ test.describe('AttackModal — stationary/reaction-drive target bonus', () => {
 
   async function reachStep3(page) {
     await page.getByText('BEGIN FIRING SOLUTION →').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → PILOT').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → GUNNER').click()
     await expect(page.getByText('STEP 3 — GUNNER')).toBeVisible()
   }
@@ -421,9 +502,9 @@ test.describe('AttackModal — planetary/atmospheric range modifiers', () => {
 
   async function reachStep3(page) {
     await page.getByText('BEGIN FIRING SOLUTION →').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → PILOT').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → GUNNER').click()
     await expect(page.getByText('STEP 3 — GUNNER')).toBeVisible()
   }
@@ -512,9 +593,9 @@ test.describe('AttackModal — DM-8 penalty for weapons without a Targeting Syst
     }, shipDefs)
     await expect(page.getByText('FIRING SOLUTION', { exact: true })).toBeVisible()
     await page.getByText('BEGIN FIRING SOLUTION →').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → PILOT').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → GUNNER').click()
   }
 
@@ -579,9 +660,9 @@ test.describe('AttackModal — Defensive Screens', () => {
 
   async function reachStep3(page) {
     await page.getByText('BEGIN FIRING SOLUTION →').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → PILOT').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → GUNNER').click()
     await expect(page.getByText('STEP 3 — GUNNER')).toBeVisible()
   }
@@ -711,9 +792,9 @@ test.describe('AttackModal — Gunnery action budget (one use per round)', () =>
   test('after firing once, a second Firing Solution this round is blocked (Gunner has no actions left)', async ({ page }) => {
     await openAttack(page) // fixture crew: gunner skill 2 → actionsRemaining.gunner_turret capped at 1
     await page.getByText('BEGIN FIRING SOLUTION →').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → PILOT').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → GUNNER').click()
     await page.getByText('enter manually').last().click()
     await page.locator('input[type="number"]').nth(0).fill('6')
@@ -732,9 +813,9 @@ test.describe('AttackModal — Gunnery action budget (one use per round)', () =>
     // Re-open the Firing Solution for the same ship this round — Step 3 is blocked.
     await page.evaluate((id) => window.__ZUSTAND_UI_STORE__.getState().openModal('attack', { attackerId: id }), id0)
     await page.getByText('BEGIN FIRING SOLUTION →').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → PILOT').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await expect(page.getByText('NEXT → GUNNER')).toBeDisabled()
     await expect(page.getByText('Gunner has no actions left this round', { exact: false })).toBeVisible()
   })
@@ -785,9 +866,9 @@ test.describe('AttackModal — Auto X fire mode', () => {
 
   async function reachStep3(page) {
     await page.getByText('BEGIN FIRING SOLUTION →').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → PILOT').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → GUNNER').click()
     await expect(page.getByText('STEP 3 — GUNNER')).toBeVisible()
   }
@@ -884,9 +965,9 @@ test.describe('AttackModal — Targeting Systems and Operate UTES Array', () => 
 
   async function reachStep3(page) {
     await page.getByText('BEGIN FIRING SOLUTION →').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → PILOT').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → GUNNER').click()
     await expect(page.getByText('STEP 3 — GUNNER')).toBeVisible()
   }
@@ -961,7 +1042,7 @@ test.describe('AttackModal — Targeting Systems and Operate UTES Array', () => 
     }, id0)
     await page.evaluate((id) => window.__ZUSTAND_UI_STORE__.getState().openModal('attack', { attackerId: id }), id0)
     await page.getByText('BEGIN FIRING SOLUTION (SKIP SENSOR STEP) →').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → GUNNER').click()
     const row = page.locator('div').filter({ hasText: 'UTES solution (prev. round)' }).last()
     await expect(row).toContainText('+2')

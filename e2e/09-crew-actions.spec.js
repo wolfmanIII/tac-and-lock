@@ -60,9 +60,9 @@ async function reachStep3(page, attackerId) {
   }, attackerId)
   await expect(page.getByText('FIRING SOLUTION', { exact: true })).toBeVisible()
   await page.getByText('BEGIN FIRING SOLUTION →').click()
-  await page.getByText('ROLL 2D6').click()
+  await page.getByText('ROLL 2D6').last().click()
   await page.getByText('NEXT → PILOT').click()
-  await page.getByText('ROLL 2D6').click()
+  await page.getByText('ROLL 2D6').last().click()
   await page.getByText('NEXT → GUNNER').click()
   await expect(page.getByText('STEP 3 — GUNNER')).toBeVisible()
 }
