@@ -138,13 +138,13 @@ L'attacco è una **catena di check**. Ogni Effect positivo si trasferisce come D
 **Step 1 — Sensor Operator**: Very Difficult (12+) Electronics (sensors) **INT**
 
 - DM: +Signature del bersaglio; +Sensor Time-lag (tabella sotto); qualità sensori (Basic Military +0, Improved +1, Advanced +2)
-- Assist Engineer (opzionale): Routine (8+) Engineer (power) **INT**
+- Assist Engineer (opzionale, issue #26): Routine (8+) Engineer (power) **INT** — successo → Effect grezzo (min 0) come DM a questo check, RollBlock inline in `AttackModal.jsx` prima del tiro principale. Nessuna tabella a bande data da B3 per questo assist specifico — stesso pattern del Captain assist allo Step 3
 - **Operate UTES Array** (Gunner Action, B3 p.53, issue #16): se il weapon mount selezionato ha `targetingSystem === 'utes'`, il gunner può sviluppare la Firing Solution da solo per quello slot, bypassando del tutto lo Step 1 (Sensor Operator, nessuna sua azione spesa). Very Difficult (12+) Gunner **EDU**. Successo: Effect 1–4 → DM+1, Effect 5–6 → DM+2 al **prossimo** Gunner check per quello stesso weapon slot. Poiché Gunnery è sempre cap 1 azione/round in questa VTT (§4/issue #19), sviluppare e sparare richiedono sempre **2 round separati** — il ramo B3 "se il gunner ha più di un'azione, stesso round" non è mai raggiungibile qui. Stato: `ship.utesSolutionDm` (1 o 2) + `ship.utesSolutionSlotIdx`, consumato dopo il primo tiro Gunner per quel weapon slot, azzerato a inizio round successivo se non usato.
 
 **Step 2 — Pilot**: Difficult (10+) Pilot **DEX**
 
 - DM: +TAC Speed della nave
-- Assist Engineer (opzionale): Routine (8+) Engineer (power) **INT** (può aumentare temporaneamente il TAC Speed)
+- Assist Engineer (opzionale, issue #26): Routine (8+) Engineer (power) **INT** — successo → DM a bande sul TAC Speed di *questo solo check* (Effect 1–4 → +1, Effect 5–6 → +2; B3 rimanda alla tabella di "Boost Tac Speed" p.54 per i numeri, ma è un check **distinto** — Engineer (power) Routine 8+, non Engineer (stutterwarp) Difficult 10+ dell'azione crew standalone `overload_stutterwarp`). Non scrive su `ship.currentTacSpeed` (bonus effimero, solo per questo tiro) — se l'Engineer ha già usato `overload_stutterwarp` prima nello stesso round, quel bonus persistente si somma comunque qui gratis, perché questo step legge già `attacker.currentTacSpeed`
 
 **Step 3 — Gunner**: Difficult (10+) Gunner **INT** — target 10+
 

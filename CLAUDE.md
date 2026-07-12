@@ -120,10 +120,10 @@ L'attacco in 2300AD è una catena di check interdipendenti. Ogni Effect positivo
 
 1. **Sensor Operator** — Very Difficult (12+) Electronics (sensors) INT
    - DM positivi: +Signature del bersaglio; qualità sensori (Basic Military +0, Improved +1, Advanced +2); Sensor Time-lag (tabella sopra, negativo a distanza)
-   - Engineer assist opzionale: Routine (8+) Engineer (power) INT
+   - Engineer assist opzionale: Routine (8+) Engineer (power) INT — successo → Effect grezzo (min 0) come DM a questo check, stesso pattern del Captain assist allo Step 3 (B3 non dà una tabella a bande per questo assist, issue #26)
 2. **Pilot** — Difficult (10+) Pilot DEX
    - DM positivi: +TAC Speed della nave
-   - Engineer assist opzionale: Routine (8+) Engineer (power) INT (può aumentare temporaneamente TAC Speed)
+   - Engineer assist opzionale: Routine (8+) Engineer (power) INT — successo → DM a bande sul TAC Speed di *questo solo check* (Effect 1–4 → +1, Effect 5–6 → +2, B3 rimanda esplicitamente alla tabella di "Boost Tac Speed" p.54 — ma è un check **diverso**: Engineer (power) Routine 8+, non Engineer (stutterwarp) Difficult 10+ dell'azione crew standalone `overload_stutterwarp`; quell'azione, se già usata questo round, si somma comunque qui gratis via `attacker.currentTacSpeed`, issue #26)
 3. **Gunner** — Difficult (10+) Gunner INT — bersaglio **10+**
    - DM: +Fire Control software rating (DM+1/livello)
    - Captain assist opzionale: Difficult (10+) Tactics (naval) INT
