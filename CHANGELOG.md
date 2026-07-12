@@ -6,8 +6,40 @@ only where B3 itself sanctions it (internal crit tables p.158–159, weapon trai
 Boarding Actions p.175). Entries are grouped by the date the issue was closed, most recent
 first.
 
+## 2026-07-12
+
+- **[#26](https://github.com/wolfmanIII/tac-and-lock/issues/26)** — Implemented the Firing
+  Solution's Engineer assist at both Step 1 (Sensor Operator) and Step 2 (Pilot) — documented in
+  CLAUDE.md but never built, only the Step 3 Captain Tactics assist existed. Step 1's assist adds
+  its raw Effect as a DM (B3 gives no banded table for it, same treatment as the Captain assist);
+  Step 2's adds a banded TAC Speed bonus (Effect 1–4→+1, Effect 5–6→+2) for that one Pilot check
+  only — a genuinely distinct check (Engineer (power), Routine 8+) from the standalone "Boost Tac
+  Speed" crew action (Engineer (stutterwarp), Difficult 10+), though it stacks for free with it.
+- **[#25](https://github.com/wolfmanIII/tac-and-lock/issues/25)** — The DM−8 "no fire control"
+  attack penalty was keyed to the wrong system: B3 p.62 places it in the Targeting System hardware
+  table (TTA/UTES/etc.), not the separate Fire Control software table (p.44). `getFireControlDm`
+  is now software-only (0/+1/+2/+3); the −8 lives in `TARGETING_SYSTEMS`'s `'none'` entry instead,
+  and now also applies to both Point Defence variants (reactive and proactive, B3 explicitly says
+  "including point defence"). Since most canonical weapon slots had no Targeting System assigned,
+  backfilled them with Light TTA (DM 0) so default ship data stays usable.
+- **[#24](https://github.com/wolfmanIII/tac-and-lock/issues/24)** — Added the "Point Defence"
+  weapon trait's own DM+2 (Close range only) as a new proactive Gunner action — a single check
+  against an already-tracked incoming drone/missile during the ship's own turn, distinct from the
+  existing reactive intercept. Also fixed a bug found while building this: the reactive
+  intercept's DM+4/−2 was computed from the incoming drone's own weapon traits instead of the
+  defending ship's intercepting weapon, so a Quinn Type 17 PDC's bonus never actually applied —
+  both variants now use a proper weapon-slot picker on the defender's own mounts.
+
 ## 2026-07-11
 
+- **[#23](https://github.com/wolfmanIII/tac-and-lock/issues/23)** — Rebuilt the Internal Critical
+  Hit tables to match the actual CRB source (verified against the PDF twice) instead of an
+  independently-invented system: only 3 of 11 locations previously coincided with the real table,
+  "Cargo" was missing, "Computer" was a fabricated location, and the Reaction Drive / Stutterwarp
+  Drive substitutions were swapped (Reaction Drive needs its own binary inoperable/destroyed
+  mechanic, not a severity ladder). Also implemented the real severity formula — Effect − 5, or
+  previous severity + 1 if higher — replacing a flat +1-per-hit that ignored the triggering
+  attack's Effect entirely.
 - **[#21](https://github.com/wolfmanIII/tac-and-lock/issues/21)** — Radiation trait no longer
   bypasses armour entirely. `resolveArmour` forced armour to 0 for any weapon carrying
   `Radiation` (an invented "AP∞" reading); B3 defines Radiation as rads-only (Effect × 10), no
