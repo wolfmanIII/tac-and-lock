@@ -26,6 +26,8 @@ import {
   getEasyTargetDamageMultiplier,
   getAtmosphericTargetDm,
   getOrtilleryDm,
+  getPointDefenceDm,
+  getPointDefenceTraitAttackDm,
   ATMOSPHERIC_CONDITIONS,
   getFireControlDm,
   getTargetingSystemDm,
@@ -466,6 +468,45 @@ describe('getWeaponTraitAttackDm', () => {
   it('Allen BMZ-50 has Slow → DM−2 on attack', () => {
     // Allen BMZ-50: traits = ['AP4', 'EM', 'Inefficient', 'Slow'] // 2300AD B3 p.60
     expect(getWeaponTraitAttackDm(['AP4', 'EM', 'Inefficient', 'Slow'])).toBe(-2)
+  })
+})
+
+// === getPointDefenceDm — reactive intercept action — 2300AD B3 p.55–56 ===
+
+describe('getPointDefenceDm', () => {
+  it('PDC (Point Defence trait) → DM+4', () => {
+    expect(getPointDefenceDm(['Point Defence', 'Rapid Fire'])).toBe(4)
+  })
+
+  it('non-PDC weapon → DM−2', () => {
+    expect(getPointDefenceDm(['Accurate'])).toBe(-2)
+  })
+
+  it('no traits → DM−2 (default, generic mount)', () => {
+    expect(getPointDefenceDm([])).toBe(-2)
+    expect(getPointDefenceDm()).toBe(-2)
+  })
+})
+
+// === getPointDefenceTraitAttackDm — proactive engage action — 2300AD B3 p.59 (issue #24) ===
+
+describe('getPointDefenceTraitAttackDm', () => {
+  it('Point Defence trait at Close range → DM+2', () => {
+    expect(getPointDefenceTraitAttackDm(['Point Defence', 'Rapid Fire'], 'Close')).toBe(2)
+  })
+
+  it('Point Defence trait at any other range → 0 (B3: "only be used at Close range")', () => {
+    expect(getPointDefenceTraitAttackDm(['Point Defence'], 'Adjacent')).toBe(0)
+    expect(getPointDefenceTraitAttackDm(['Point Defence'], 'Short')).toBe(0)
+    expect(getPointDefenceTraitAttackDm(['Point Defence'], 'Medium')).toBe(0)
+  })
+
+  it('no Point Defence trait at Close range → 0', () => {
+    expect(getPointDefenceTraitAttackDm(['Accurate'], 'Close')).toBe(0)
+  })
+
+  it('no traits, no range → 0', () => {
+    expect(getPointDefenceTraitAttackDm()).toBe(0)
   })
 })
 

@@ -170,15 +170,31 @@ export function getOrtilleryDm(traits = [], target) {
 
 /**
  * Point Defence reaction DM — the dedicated intercept action, distinct from the
- * "Point Defence" weapon trait's DM+2 (which applies to normal attacks vs
- * missiles/drones/fighters, not this reaction). // 2300AD B3 p.55, reinforced p.56
- * "Point defence requires a Difficult (10+) Gunner check (DEX), with DM-2 for missiles
- * and drones under 10 tons. If a PDC is used, it receives DM+4 instead of DM-2."
+ * "Point Defence" weapon trait's DM+2 (see getPointDefenceTraitAttackDm, which applies
+ * to normal/proactive attacks vs missiles/drones/fighters, not this reaction). // 2300AD
+ * B3 p.55, reinforced p.56 "Point defence requires a Difficult (10+) Gunner check (DEX),
+ * with DM-2 for missiles and drones under 10 tons. If a PDC is used, it receives DM+4
+ * instead of DM-2." NOTE: traits must be the INTERCEPTING SHIP'S OWN weapon (the mount
+ * it's using to intercept, e.g. a Quinn Type 17 PDC) — not the incoming drone/missile's
+ * weapon, which never carries this trait and would always fall through to -2.
  * @param {string[]} traits — traits of the weapon used to intercept
  * @returns {number}
  */
 export function getPointDefenceDm(traits = []) {
   return traits.includes('Point Defence') ? 4 : -2
+}
+
+/**
+ * "Point Defence" weapon trait's own DM+2 — a proactive, single-check Gunner action
+ * against an in-range missile/drone/fighter, distinct from the reactive Point Defence
+ * intercept above. // 2300AD B3 p.59: "Point Defence: DM+2 against missiles, drones and
+ * fighters. It can only be used at Close range."
+ * @param {string[]} traits — traits of the weapon firing
+ * @param {string} rangeBand — the target drone/missile's current range band
+ * @returns {number}
+ */
+export function getPointDefenceTraitAttackDm(traits = [], rangeBand) {
+  return traits.includes('Point Defence') && rangeBand === 'Close' ? 2 : 0
 }
 
 export function computeAttackDMs({
