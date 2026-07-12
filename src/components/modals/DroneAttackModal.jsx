@@ -27,7 +27,7 @@ import { WEAPONS }        from '../../data/weapons.js'
 import { SENSOR_TIME_LAG_DM } from '../../data/rangeBands.js'
 import { getAssignedSkill, getAssignedCharacteristic } from '../../utils/crew.js'
 import { getCharDM, roll2D6 } from '../../utils/dice.js'
-import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, computeEffectiveSignature, getPointDefenceDm, getPointDefenceTraitAttackDm, getEasyTargetAttackDm, getEasyTargetDamageMultiplier, getAtmosphericTargetDm, getOrtilleryDm, getFireControlDm, getScreenDm, getWeaponTraitAttackDm } from '../../utils/combat.js'
+import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, computeEffectiveSignature, getPointDefenceDm, getPointDefenceTraitAttackDm, getEasyTargetAttackDm, getEasyTargetDamageMultiplier, getAtmosphericTargetDm, getOrtilleryDm, getFireControlDm, getTargetingSystemDm, getScreenDm, getWeaponTraitAttackDm } from '../../utils/combat.js'
 import { DiceInput } from '../forms/DiceInput.jsx'
 
 const STEP_PD     = 0
@@ -172,11 +172,14 @@ export function DroneAttackModal({ payload, onClose }) {
     const gunnerSkill = getAssignedSkill('gunner_turret', target.crewAssignments, target.crew)
     const dexDm       = getCharDM(getAssignedCharacteristic('gunner_turret', target.crewAssignments, target.crew, 'DEX'))
     const pdDm        = getPointDefenceDm(interceptWeapon?.traits)
-    // Fire Control applies to all attack rolls, including point defence // B3 p.62
+    // Fire Control software (+1/+2/+3, or 0) applies to all attack rolls, including
+    // point defence // B3 p.44. The DM-8 "no fire control" penalty is a separate,
+    // per-mount Targeting System hardware check — B3 p.62, issue #25.
     const fireControlDm = getFireControlDm(target.software)
-    const total = gunnerSkill + dexDm + pdDm + fireControlDm
-    return { rows: [['Gunner skill', gunnerSkill], ['DEX DM', dexDm], ['Point Defence', pdDm], ['Fire Control', fireControlDm]], total }
-  }, [target, interceptWeapon])
+    const targetingSystemDm = getTargetingSystemDm(interceptWeaponSlot)
+    const total = gunnerSkill + dexDm + pdDm + fireControlDm + targetingSystemDm
+    return { rows: [['Gunner skill', gunnerSkill], ['DEX DM', dexDm], ['Point Defence', pdDm], ['Fire Control', fireControlDm], ['Targeting System', targetingSystemDm]], total }
+  }, [target, interceptWeapon, interceptWeaponSlot])
 
   function rollPd() {
     const dice = roll2D6()
@@ -202,10 +205,11 @@ export function DroneAttackModal({ payload, onClose }) {
     const gunnerSkill = getAssignedSkill('gunner_turret', target.crewAssignments, target.crew)
     const dexDm       = getCharDM(getAssignedCharacteristic('gunner_turret', target.crewAssignments, target.crew, 'DEX'))
     const fireControlDm = getFireControlDm(target.software)
+    const targetingSystemDm = getTargetingSystemDm(interceptWeaponSlot)
     const pdTraitDm = getPointDefenceTraitAttackDm(interceptWeapon?.traits, drone?.currentBand)
-    const total = gunnerSkill + dexDm + fireControlDm + pdTraitDm
-    return { rows: [['Gunner skill', gunnerSkill], ['DEX DM', dexDm], ['Fire Control', fireControlDm], ['Point Defence trait', pdTraitDm]], total }
-  }, [target, interceptWeapon, drone])
+    const total = gunnerSkill + dexDm + fireControlDm + targetingSystemDm + pdTraitDm
+    return { rows: [['Gunner skill', gunnerSkill], ['DEX DM', dexDm], ['Fire Control', fireControlDm], ['Targeting System', targetingSystemDm], ['Point Defence trait', pdTraitDm]], total }
+  }, [target, interceptWeapon, interceptWeaponSlot, drone])
 
   function rollEngage() {
     const dice = roll2D6()
