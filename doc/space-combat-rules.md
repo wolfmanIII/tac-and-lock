@@ -511,14 +511,39 @@ indipendentemente da quanto alto sia l'Effect (`computeCriticalSeverity` lo spec
 
 > **Nota B3**: NON è "TAC Speed rimanente × Pilot skill" come nel CRB. È un check attivo opposto.
 
-### Point Defence — Gunner (turret/PDC)
+### Point Defence — Gunner (turret/PDC) — due varianti, stesso check singolo
 
-**Difficult (10+) Gunner (DEX)** — B3 p.55, rinforzato p.56
+B3 tratta Point Defence sempre come **un singolo check Gunner** (mai la Firing Solution completa
+a 3 step: droni/missili sono "troppo piccoli e veloci" per un target lock normale), ma descrive
+**due situazioni distinte**:
+
+#### Reazione (intercettazione) — B3 p.55, rinforzato p.56
+
+**Difficult (10+) Gunner (DEX)**
 
 - DM−2 per missili e droni sotto 10 tonnellate (arma non PDC)
-- PDC (es. Quinn Type 17): DM+4 invece di DM−2 (confermato indipendentemente su p.55 e p.56 — non va confuso con il trait arma "Point Defence" DM+2, che si applica invece a un attacco normale contro missili/droni/caccia, non a questa reazione)
+- PDC (es. Quinn Type 17): DM+4 invece di DM−2 (confermato indipendentemente su p.55 e p.56)
 - Colpisce **un drone/missile alla volta** — non un intero salvo con un tiro (B3 non descrive un concetto di "salvo"; vedi §13). Una PDC può tentare fino a TL−4 intercettazioni distinte per round (p.56)
 - Solo una volta per round per gunner; arma usata non può attaccare nello stesso round
+- **Il DM dipende dall'arma della nave DIFENDENTE che intercetta** (es. il proprio Quinn Type 17
+  PDC), non dall'arma del drone in arrivo — bug corretto issue #24: `DroneAttackModal.jsx` ora ha
+  un selettore (`InterceptWeaponPicker`, stato `interceptWeaponIdx`) sulle armi della nave
+  bersaglio, usato per calcolare `getPointDefenceDm`.
+
+#### Proattiva (engage) — trait arma "Point Defence", B3 p.59
+
+**DM+2, solo Close range** — non è una reazione: è un'azione Gunner **proattiva**, disponibile
+durante il proprio turno contro un drone/missile nemico già a Close range, prima ancora che
+attacchi. Distinta dalla reazione sopra (fonte, trigger e formula DM diversi — non va confusa con
+essa). Implementata come `mode: 'engage'` in `DroneAttackModal.jsx` (screen STEP_ENGAGE),
+raggiungibile dal menu contestuale "Fire at incoming drone (Close)…" solo per droni a Close range
+che puntano quella nave. `getPointDefenceTraitAttackDm(traits, rangeBand)`: DM+2 se l'arma
+selezionata ha il trait "Point Defence" e il drone è a Close range, altrimenti 0. Condivide lo
+stesso singolo uso Gunner/round delle altre azioni Gunner (Fire Weapon, Deploy/Recharge Screens,
+intercettazione reattiva, Operate UTES Array).
+
+Successo in entrambe le varianti: `interceptDrone(droneId)` — il drone è distrutto prima di poter
+attaccare.
 
 ---
 
@@ -558,10 +583,15 @@ indipendentemente da quanto alto sia l'Effect (`computeCriticalSeverity` lo spec
 
 **Reaction — Difficult (10+) Gunner (DEX)** // B3 p.55–56
 
-- Si dichiara nel `DroneAttackModal`, prima o al posto della risoluzione dell'attacco, contro **un drone/missile specifico alla volta** — non un intero salvo con un tiro (B3 non ha un concetto di "salvo"; ogni drone/missile è un'unità pilotata individualmente, vedi §13).
+- Si dichiara nel `DroneAttackModal` (`mode: 'defend'`, default), prima o al posto della risoluzione dell'attacco, contro **un drone/missile specifico alla volta** — non un intero salvo con un tiro (B3 non ha un concetto di "salvo"; ogni drone/missile è un'unità pilotata individualmente, vedi §13).
 - Successo: `interceptDrone(droneId)` distrugge quel drone.
-- PDC (Quinn Type 17): DM+4; armi non-PDC vs missili/droni < 10 ton: DM−2 (`getPointDefenceDm`, `utils/combat.js`).
+- PDC (Quinn Type 17): DM+4; armi non-PDC vs missili/droni < 10 ton: DM−2 (`getPointDefenceDm`, `utils/combat.js`) — calcolato sull'arma della nave **difendente** selezionata via `InterceptWeaponPicker`, non sull'arma del drone in arrivo (fix issue #24).
 - Un gunner può fare point defence **una volta per round**; l'arma usata non può attaccare nello stesso round. Una PDC può tentare fino a TL−4 intercettazioni distinte per round (GM-tracked, non enforced automaticamente).
+
+**Variante proattiva ("engage")** — trait arma "Point Defence" B3 p.59, non una reazione: DM+2
+solo Close range, azione Gunner durante il proprio turno contro un drone già in range, prima che
+attacchi. `mode: 'engage'` in `DroneAttackModal.jsx`, menu contestuale "Fire at incoming drone
+(Close)…", `getPointDefenceTraitAttackDm(traits, rangeBand)` — issue #24.
 
 > Nota: "Deploy Sand"/sandcaster non è una regola 2300AD B3 — ricerca a testo pieno del manuale (114 pagine) non trova alcuna occorrenza di "sand". Era un'importazione integrale dal Traveller CRB, che la gerarchia regole del progetto autorizza solo per le tabelle di crit interno e i weapon traits, non per meccaniche intere. Rimosso.
 
