@@ -148,11 +148,15 @@ export function AttackModal({ payload, onClose }) {
   const budget   = attacker?.actionsRemaining ?? {}
   // Tracks which roles have already spent an action this Firing Solution session,
   // so re-rolling via ← BACK doesn't double-spend. // 2300AD B3 p.53
+  // `key` defaults to `role` for every existing single-use-per-role call site, but the
+  // two Engineer assists (Step 1 sensor, Step 2 pilot — issue #26) both draw from the
+  // same 'engineer' role and need distinct dedup keys so a second legitimate use isn't
+  // silently blocked by the first.
   const [spentRoles, setSpentRoles] = useState(new Set())
-  function spendOnce(role) {
-    if (spentRoles.has(role)) return
+  function spendOnce(role, key = role) {
+    if (spentRoles.has(key)) return
     spendCrewAction(attacker.id, role)
-    setSpentRoles((prev) => new Set(prev).add(role))
+    setSpentRoles((prev) => new Set(prev).add(key))
   }
 
   const [step,          setStep]          = useState(STEP_SETUP)
@@ -172,6 +176,10 @@ export function AttackModal({ payload, onClose }) {
   const [applied,       setApplied]       = useState(false)
   // Captain Tactics assist — optional, specific to this single Gunner check // 2300AD B3 p.54, p.56
   const [captainAssistResult, setCaptainAssistResult] = useState(null)
+  // Engineer assist — optional, Routine (8+) Engineer (power) INT, one at Step 1 (Sensor)
+  // and one at Step 2 (Pilot), each specific to that single check // 2300AD B3 p.56, issue #26
+  const [sensorAssistResult, setSensorAssistResult] = useState(null)
+  const [pilotAssistResult,  setPilotAssistResult]  = useState(null)
 
   const target  = ships.find((s) => s.id === targetId)
   const bandKey = attacker && target ? pairKey(attacker.id, target.id) : null
@@ -191,6 +199,25 @@ export function AttackModal({ payload, onClose }) {
 
   // ── DM calculations ────────────────────────────────────────────────────────
 
+  // Engineer assist — Routine (8+) Engineer (power) INT, same skill/role regardless of
+  // which step it assists // 2300AD B3 p.56, issue #26
+  const engineerAssistDms = useMemo(() => {
+    if (!attacker) return { skill: 0, intDm: 0, total: 0 }
+    const skill = getAssignedSkill('engineer', attacker.crewAssignments, attacker.crew)
+    const intDm = getCharDM(getAssignedCharacteristic('engineer', attacker.crewAssignments, attacker.crew))
+    return { skill, intDm, total: skill + intDm }
+  }, [attacker])
+
+  // Step 1: no Effect band given in B3 for this assist — same raw-Effect pattern as the
+  // Step 3 Captain Tactics assist below.
+  const sensorAssistDm = sensorAssistResult?.success ? Math.max(0, sensorAssistResult.effect) : 0
+  // Step 2: B3 explicitly cross-references the "Boost Tac Speed" Effect bands (p.54) —
+  // Effect 1-4 → +1, Effect 5-6 → +2 — for how much this assist raises TAC Speed, just
+  // for this one Pilot check (not a persistent ship.currentTacSpeed change).
+  const pilotAssistDm = pilotAssistResult?.success
+    ? (pilotAssistResult.effect >= 5 ? 2 : pilotAssistResult.effect >= 1 ? 1 : 0)
+    : 0
+
   const step1Dms = useMemo(() => {
     if (!attacker || !target) return { rows: [], total: 0 }
     const sensorSkill = getAssignedSkill('sensor_operator', attacker.crewAssignments, attacker.crew)
@@ -200,7 +227,7 @@ export function AttackModal({ payload, onClose }) {
     const sensorQDm = attacker.sensors?.dm ?? 0
     const timeLagDm = SENSOR_TIME_LAG_DM[band] ?? 0
     // Evade penalizes both Electronics(sensors) and Gunner checks // 2300AD B3 p.54
-    const total = sensorSkill + intDm + sig.effective + sensorQDm + timeLagDm + evasionDm
+    const total = sensorSkill + intDm + sig.effective + sensorQDm + timeLagDm + evasionDm + sensorAssistDm
     const sigLabel = sig.delta !== 0
       ? `Target Signature (${sig.base}${sig.delta > 0 ? '+' : ''}${sig.delta})`
       : 'Target Signature'
@@ -212,10 +239,11 @@ export function AttackModal({ payload, onClose }) {
         ['Sensor quality',     sensorQDm],
         [`Time-lag (${band})`, timeLagDm],
         ['Target evasion',     evasionDm],
+        ...(sensorAssistDm !== 0 ? [['Engineer assist', sensorAssistDm]] : []),
       ],
       total,
     }
-  }, [attacker, target, band, evasionDm])
+  }, [attacker, target, band, evasionDm, sensorAssistDm])
 
   const step1CarryEffect = step1Result ? Math.max(0, step1Result.effect) : 0
 
@@ -225,17 +253,18 @@ export function AttackModal({ payload, onClose }) {
     const dexChar    = getAssignedCharacteristic('pilot', attacker.crewAssignments, attacker.crew, 'DEX')
     const dexDm      = getCharDM(dexChar)
     const tacSpeed   = attacker.currentTacSpeed ?? attacker.tacSpeed ?? 1
-    const total = pilotSkill + dexDm + tacSpeed + step1CarryEffect
+    const total = pilotSkill + dexDm + tacSpeed + step1CarryEffect + pilotAssistDm
     return {
       rows: [
         ['Pilot skill',       pilotSkill],
         ['DEX DM',            dexDm],
         ['TAC Speed',         tacSpeed],
         ['Carry (Step 1)',    step1CarryEffect],
+        ...(pilotAssistDm !== 0 ? [['Engineer assist (TAC Speed)', pilotAssistDm]] : []),
       ],
       total,
     }
-  }, [attacker, step1CarryEffect])
+  }, [attacker, step1CarryEffect, pilotAssistDm])
 
   const step2CarryEffect = step2Result ? Math.max(0, step2Result.effect) : 0
 
@@ -372,6 +401,34 @@ export function AttackModal({ payload, onClose }) {
   function manualCaptainAssist({ dice, total }) {
     setCaptainAssistResult({ dice, base: dice[0] + dice[1], total, effect: total - 10, success: total >= 10 })
     spendOnce('captain')
+  }
+
+  function rollSensorAssist() {
+    const dice   = roll2D6()
+    const base   = dice[0] + dice[1]
+    const total  = base + engineerAssistDms.total
+    const effect = total - 8  // Routine
+    setSensorAssistResult({ dice, base, total, effect, success: total >= 8 })
+    spendOnce('engineer', 'engineer_sensor')
+  }
+
+  function manualSensorAssist({ dice, total }) {
+    setSensorAssistResult({ dice, base: dice[0] + dice[1], total, effect: total - 8, success: total >= 8 })
+    spendOnce('engineer', 'engineer_sensor')
+  }
+
+  function rollPilotAssist() {
+    const dice   = roll2D6()
+    const base   = dice[0] + dice[1]
+    const total  = base + engineerAssistDms.total
+    const effect = total - 8  // Routine
+    setPilotAssistResult({ dice, base, total, effect, success: total >= 8 })
+    spendOnce('engineer', 'engineer_pilot')
+  }
+
+  function manualPilotAssist({ dice, total }) {
+    setPilotAssistResult({ dice, base: dice[0] + dice[1], total, effect: total - 8, success: total >= 8 })
+    spendOnce('engineer', 'engineer_pilot')
   }
 
   // Auto X fire mode — Single/Burst/Full Auto // 2300AD B3 p.59, Trav2022 CRB p.75
@@ -666,6 +723,24 @@ export function AttackModal({ payload, onClose }) {
           </p>
         </div>
 
+        {/* Engineer assist — optional, before the main Sensor roll // 2300AD B3 p.56, issue #26 */}
+        {!step1Result && (
+          <div className="bg-slate-800/40 border border-slate-700 rounded px-3 py-2 space-y-2">
+            <p className="font-mono text-[10px] text-slate-500 tracking-widest uppercase">
+              Engineer assist (optional) · Routine (8+) · Engineer (power) · INT
+              {budget.engineer <= 0 && <span className="text-red-400 normal-case"> — Engineer has no actions left this round</span>}
+            </p>
+            <RollBlock
+              dm={engineerAssistDms.total}
+              onRoll={rollSensorAssist}
+              onManual={manualSensorAssist}
+              result={sensorAssistResult}
+              target={8}
+              disabled={budget.engineer <= 0}
+            />
+          </div>
+        )}
+
         <DmBreakdown rows={step1Dms.rows} total={step1Dms.total} />
 
         <RollBlock
@@ -717,6 +792,24 @@ export function AttackModal({ payload, onClose }) {
           </div>
         )}
 
+        {/* Engineer assist — optional, before the main Pilot roll // 2300AD B3 p.56, issue #26 */}
+        {!step2Result && (
+          <div className="bg-slate-800/40 border border-slate-700 rounded px-3 py-2 space-y-2">
+            <p className="font-mono text-[10px] text-slate-500 tracking-widest uppercase">
+              Engineer assist (optional) · Routine (8+) · Engineer (power) · INT
+              {budget.engineer <= 0 && <span className="text-red-400 normal-case"> — Engineer has no actions left this round</span>}
+            </p>
+            <RollBlock
+              dm={engineerAssistDms.total}
+              onRoll={rollPilotAssist}
+              onManual={manualPilotAssist}
+              result={pilotAssistResult}
+              target={8}
+              disabled={budget.engineer <= 0}
+            />
+          </div>
+        )}
+
         <DmBreakdown rows={step2Dms.rows} total={step2Dms.total} />
 
         <RollBlock
@@ -728,7 +821,7 @@ export function AttackModal({ payload, onClose }) {
         />
 
         <div className="flex gap-2 pt-1">
-          <button onClick={() => { setStep(STEP_SENSOR); setStep2Result(null) }}
+          <button onClick={() => { setStep(STEP_SENSOR); setStep2Result(null); setPilotAssistResult(null) }}
             className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-600 hover:border-slate-500 rounded transition-colors">
             ← BACK
           </button>
