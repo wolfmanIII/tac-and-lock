@@ -148,7 +148,7 @@ L'attacco è una **catena di check**. Ogni Effect positivo si trasferisce come D
 
 **Step 3 — Gunner**: Difficult (10+) Gunner **INT** — target 10+
 
-- DM: +Fire Control software rating (**DM−8 se nessun Fire Control installato**, incluso il point defence — B3 p.62); +Targeting System hardware del weapon mount selezionato (Light TTA/TTA/UTES — separato e stackabile dal Fire Control software, tabella sotto, B3 p.62); +Effect accumulato dagli step 1–2; +weapon trait (Accurate +1, Slow −2)
+- DM: +Fire Control software rating (0/+1/+2/+3, mai una penalità); +Targeting System hardware del weapon mount selezionato (Light TTA/TTA/UTES — separato e stackabile dal Fire Control software, tabella sotto, B3 p.62 — **DM−8 se il mount non ha nessun Targeting System assegnato**, incluso il point defence: la frase "a weapon without fire control suffers DM-8" segue direttamente la tabella Targeting Systems in B3 p.62, non quella software — issue #25); +Effect accumulato dagli step 1–2; +weapon trait (Accurate +1, Slow −2)
 - DM aggiuntivi automatici: −`ewEffect` (propria nave è sotto EW jam); +evasione bersaglio (applicata anche allo Step 1, non solo qui — B3 p.54); +`commandBonus` se il Capitano ha dato un Command a `gunner_turret` questo round (§12); +`utesSolutionDm` se una Operate UTES Array precedente è ancora attiva per questo weapon slot (sopra); +2/×2 danno se il bersaglio è stazionario o in reaction drive (§ sotto); DM da condizione planetaria/atmosferica del bersaglio (§ sotto); +4 (Ortillery) se l'arma ha quel trait e il bersaglio è su superficie planetaria; −Rating Defensive Screens del bersaglio, solo armi laser (§ sotto)
 - Assist Captain (opzionale, distinto dal Command): Difficult (10+) Tactics (naval) **INT** — roll inline nello Step 3, il suo Effect si somma solo a quel singolo tiro
 
@@ -160,12 +160,15 @@ Fonte DM separata e stackabile dal Fire Control software (§4) — hardware di p
 
 | Targeting System | TL | Armi controllate | Fire Control DM |
 | --- | --- | --- | --- |
+| **None** | — | — | **−8** |
 | Light TTA | 11 | 4 | 0 |
 | TTA | 10 | 10 | −1 |
 | UTES | 12 | 1 (raro fino a 4) | +1 |
 | Drone Controller | 10 | 2 | 0 |
 
-Campo `targetingSystem` per weapon slot (`ship.weapons[i].targetingSystem`), editabile in `ShipProfileForm.jsx`. Applicato solo alle armi turret/bay attaccate via `AttackModal.jsx` (incluso Grape Shot, "guided by a TTA or UTES mount" — B3 p.59) — non ai droni/missili tracciati individualmente (`DroneAttackModal.jsx`), che non hanno un'attribuzione stabile al weapon slot di lancio. Drone Controller è selezionabile per completezza profilo ma contribuisce DM+0 e nessun limite droni ("not exactly a targeting system" — B3; il limite di 2 droni/controller è un sistema di risorse separato, non modellato).
+Campo `targetingSystem` per weapon slot (`ship.weapons[i].targetingSystem`), editabile in `ShipProfileForm.jsx`. Applicato alle armi turret/bay attaccate via `AttackModal.jsx` (incluso Grape Shot, "guided by a TTA or UTES mount" — B3 p.59) e, dopo issue #25, anche a entrambe le varianti di Point Defence in `DroneAttackModal.jsx` (reattiva e proattiva) tramite un selettore d'arma della nave difendente (`interceptWeaponSlot`, issue #24) — **non** all'attacco proprio del drone/missile stesso (`step3Dms`, `owner.software`), che non ha un'attribuzione stabile a un weapon slot di lancio. Drone Controller è selezionabile per completezza profilo ma contribuisce DM+0 e nessun limite droni ("not exactly a targeting system" — B3; il limite di 2 droni/controller è un sistema di risorse separato, non modellato).
+
+> Solo una minoranza degli slot arma nei profili canonici (`defaultProfiles.js`, `shipCatalog.js`) aveva già un Targeting System assegnato (issue #16, entry "w/UTES"/"w/KUTS"). Con l'introduzione del DM−8 per `'none'` (issue #25), tutti gli slot rimanenti hanno ricevuto `targetingSystem: 'light_tta'` di default (B3: "most ships use Target Tracking Arrays") — altrimenti la maggior parte delle navi canoniche attaccherebbe a DM−8 finché il GM non configura manualmente ogni arma.
 
 ### DM di distanza per l'attacco — 2300AD B3 p.57
 
