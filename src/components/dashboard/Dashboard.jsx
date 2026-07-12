@@ -6,7 +6,7 @@
  * Pattern ported from thrust-and-drift Dashboard.
  */
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useProfilesStore } from '../../store/profilesStore.js'
 import { useBattleStore }   from '../../store/battleStore.js'
 import { useUIStore }       from '../../store/uiStore.js'
@@ -152,6 +152,7 @@ function ProfilesPanel({ editingId, onEdit, onNew, onCatalog, catalogOpen, onAdd
               </p>
             </div>
             <div className={`flex gap-1 shrink-0 ${editingId === p.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+              <ActionIcon label="▶" title="Add to Battle" onClick={() => onAddToBattle(p)} dim="hover:text-emerald-400" />
               <ActionIcon label="✎" title="Edit"      onClick={() => onEdit(p.id)} dim="text-(--neon-cyan)" />
               <ActionIcon label="⧉" title="Duplicate" onClick={() => duplicateProfile(p.id)} />
               <ActionIcon label="⊗" title="Delete"    onClick={() => { if (confirm(`Delete "${p.name}"?`)) deleteProfile(p.id) }} dim="hover:text-red-400" />
