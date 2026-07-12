@@ -78,7 +78,7 @@ export const CREW_ACTIONS = {
       skill: 'Engineer (stutterwarp)',
       difficulty: 10,
       difficultyLabel: 'Difficult (10+)',
-      description: 'Push the tactical stutterwarp past safe limits. Difficult (10+). Success: Effect 1–4 → +1 TAC Speed, Effect 5–6 → +2 this round. Failure: DM-2 roll on stutterwarp critical track.',
+      description: 'Push the tactical stutterwarp past safe limits. Difficult (10+). Success: Effect 1–4 → +1 TAC Speed, Effect 5–6 → +2 this round. // 2300AD B3 p.54',
       requiresTarget: false,
     },
     {

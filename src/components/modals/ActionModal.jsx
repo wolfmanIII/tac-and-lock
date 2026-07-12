@@ -16,7 +16,7 @@ const ACTION_ROLE = Object.fromEntries(
 )
 
 /** Actions that show APPLY on failure too (have a failure-path store effect). */
-const HAS_FAILURE_EFFECT = new Set(['overload_stutterwarp', 'electronic_warfare'])
+const HAS_FAILURE_EFFECT = new Set(['electronic_warfare'])
 
 /** Boarding result table — diff = attacker_total − defender_total. // B3 p.55 */
 function getBoardingResult(diff) {
@@ -42,7 +42,6 @@ export function ActionModal({ payload, onClose }) {
   const reduceCritical       = useBattleStore((s) => s.reduceCriticalSeverity)
   const repairHull           = useBattleStore((s) => s.repairHull)
   const applyEW              = useBattleStore((s) => s.applyEW)
-  const addCriticalHit       = useBattleStore((s) => s.addCriticalHit)
   const updateShip           = useBattleStore((s) => s.updateShip)
   const applyCommand         = useBattleStore((s) => s.applyCommand)
   const removeHazard         = useBattleStore((s) => s.removeHazard)
@@ -153,13 +152,11 @@ export function ActionModal({ payload, onClose }) {
         if (success && selectedHazardId) removeHazard(shipId, selectedHazardId)
         break
 
-      case 'overload_stutterwarp': // B3 p.55 — Effect 1-4 → +1 TAC Speed, Effect 5-6 → +2
+      case 'overload_stutterwarp': // B3 p.54 — Effect 1-4 → +1 TAC Speed, Effect 5-6 → +2, no failure consequence
         if (success) {
           if (ship) updateShip(shipId, {
             currentTacSpeed: ship.currentTacSpeed + (effect >= 5 ? 2 : 1),
           })
-        } else {
-          addCriticalHit(shipId, 'stutterwarp')
         }
         break
 
