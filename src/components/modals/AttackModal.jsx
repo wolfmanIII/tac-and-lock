@@ -23,7 +23,6 @@ const STEP_SETUP  = 0
 const STEP_SENSOR = 1
 const STEP_PILOT  = 2
 const STEP_GUNNER = 3
-const STEP_DAMAGE = 4
 
 const STEP_LABELS = {
   [STEP_SENSOR]: 'STEP 1 — SENSOR OPERATOR',
@@ -135,7 +134,6 @@ export function AttackModal({ payload, onClose }) {
   const ships          = useBattleStore((s) => s.ships)
   const rangeBands     = useBattleStore((s) => s.rangeBands)
   const applyDamage    = useBattleStore((s) => s.applyDamage)
-  const addCritical    = useBattleStore((s) => s.addCriticalHit)
   const depleteScreens  = useBattleStore((s) => s.depleteScreens)
   const deployScreens   = useBattleStore((s) => s.deployScreens)
   const rechargeScreens = useBattleStore((s) => s.rechargeScreens)

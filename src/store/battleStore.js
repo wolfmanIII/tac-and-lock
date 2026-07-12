@@ -823,7 +823,7 @@ export const useBattleStore = create((set, get) => {
      * @param {string} shipId
      * @param {string} flag
      */
-    toggleShipFlag: wh((shipId, flag) => !!get().ships.find((s) => s.id === shipId), (shipId, flag) => {
+    toggleShipFlag: wh((shipId, _flag) => !!get().ships.find((s) => s.id === shipId), (shipId, flag) => {
       set((s) => ({
         ships: s.ships.map((sh) => sh.id !== shipId ? sh : { ...sh, [flag]: !sh[flag] }),
       }))
