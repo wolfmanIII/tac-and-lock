@@ -59,7 +59,7 @@ B3 p.53 descrive invece un'economia di azioni **per membro d'equipaggio**, senza
 - Al proprio turno, una nave non ha più "fasi": il GM può aprire liberamente Manoeuvre/Attack/Launch Drone/Crew Action per quella nave, quante volte vuole, finché ogni ruolo equipaggio ha azioni disponibili.
 - Ogni **ruolo** (non la nave nel suo complesso) ha un budget di azioni/round = il proprio skill level nello skill primario del ruolo (`ship.actionsRemaining[role]`, calcolato da `buildActionBudget()` in `utils/crew.js`). **Gunnery è hard-capped a 1** (Fire Weapon / Deploy-Recharge Screens / Point Defence condividono lo stesso singolo uso).
 - Il turno di una nave termina quando il GM clicca **END SHIP'S TURN** (bottone in HUD, non più legato a un singolo "hasActedThisPhase" — la nave può finire il turno anche con azioni residue).
-- Il Capitano può anche **Issue Order** (B3 p.53, intro): spende una propria azione per dare **+1 azione** (non un DM) a un altro ruolo questo round — distinto da **Commands** (B3 p.54, DM+1/+2, si attiva al round successivo).
+- Il Capitano può anche **Issue Order** (B3 p.53, intro): spende una propria azione per dare **+1 azione** (non un DM) a un altro ruolo questo round — distinto da **Commands** (B3 p.54, DM+1/+2, attivo immediatamente questo round, cap sui comandi/round = livello Leadership del Capitano — non il suo budget azioni Tactics naval).
 
 ### Fascie di Distanza — 2300AD B3 p.52
 

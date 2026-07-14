@@ -52,7 +52,7 @@ export const CREW_ACTIONS = {
       skill: 'Leadership',
       difficulty: 0, // no check required — a pure action-economy transfer // 2300AD B3 p.53
       difficultyLabel: 'No check',
-      description: 'The captain spends one of their own actions to grant another crew role +1 action this round. Distinct from Commands (a DM+1/+2 buff activating next round) — this is an immediate action-economy transfer, no roll. // 2300AD B3 p.53',
+      description: 'The captain spends one of their own actions to grant another crew role +1 action this round. Distinct from Commands (a DM+1/+2 buff, capped by Leadership level, applied immediately this round) — this is an immediate action-economy transfer, no roll. // 2300AD B3 p.53',
       requiresTarget: false,
       targetsCrewRole: true,
     },

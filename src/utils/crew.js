@@ -104,6 +104,19 @@ export function getAssignedSkill(role, assignments, crewList) {
 }
 
 /**
+ * Level of the crew member assigned as Captain in the Leadership skill — distinct from
+ * getCrewSkill's Tactics (naval) (used for the Captain's general per-round action budget).
+ * Commands are capped at one per round per Leadership level. // 2300AD B3 p.54
+ * @param {Record<string, string | null>} crewAssignments
+ * @param {CrewMember[]} crewList
+ * @returns {number}
+ */
+export function getCaptainLeadershipSkill(crewAssignments, crewList) {
+  const captain = (crewList ?? []).find((c) => c.id === crewAssignments?.captain)
+  return captain?.skills?.leadership ?? 0
+}
+
+/**
  * Effective skill: max of assigned crew skill and 0 (untrained penalty applies if < 0 in Traveller).
  * @param {string} role
  * @param {Record<string, string | null>} assignments

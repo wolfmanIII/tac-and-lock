@@ -26,21 +26,21 @@ test.describe('Token shape picker — AddShipModal', () => {
   test('defaults to the profile category shape and switches with profile selection', async ({ page }) => {
     // BSS Cavendish — category 'scout' — default shape is Scout
     await page.getByRole('button', { name: /BSS Cavendish/ }).click()
-    await expect(page.getByRole('button', { name: 'Scout', exact: true })).toHaveClass(/neon-cyan/)
+    await expect(page.getByRole('button', { name: 'Scout', exact: true })).toHaveClass(/bronze-400/)
 
     // Martel GAS-77 — category 'military' — default shape is Frigate
     await page.getByRole('button', { name: /Martel GAS-77/ }).click()
-    await expect(page.getByRole('button', { name: 'Frigate', exact: true })).toHaveClass(/neon-cyan/)
-    await expect(page.getByRole('button', { name: 'Scout', exact: true })).not.toHaveClass(/neon-cyan/)
+    await expect(page.getByRole('button', { name: 'Frigate', exact: true })).toHaveClass(/bronze-400/)
+    await expect(page.getByRole('button', { name: 'Scout', exact: true })).not.toHaveClass(/bronze-400/)
   })
 
   test('manual shape selection overrides the category default', async ({ page }) => {
     await page.getByRole('button', { name: /BSS Cavendish/ }).click()
-    await expect(page.getByRole('button', { name: 'Scout', exact: true })).toHaveClass(/neon-cyan/)
+    await expect(page.getByRole('button', { name: 'Scout', exact: true })).toHaveClass(/bronze-400/)
 
     await page.getByRole('button', { name: 'Alien', exact: true }).click()
-    await expect(page.getByRole('button', { name: 'Alien', exact: true })).toHaveClass(/neon-cyan/)
-    await expect(page.getByRole('button', { name: 'Scout', exact: true })).not.toHaveClass(/neon-cyan/)
+    await expect(page.getByRole('button', { name: 'Alien', exact: true })).toHaveClass(/bronze-400/)
+    await expect(page.getByRole('button', { name: 'Scout', exact: true })).not.toHaveClass(/bronze-400/)
   })
 
   test('switching profile resets a manual override back to the new category default', async ({ page }) => {
@@ -48,8 +48,8 @@ test.describe('Token shape picker — AddShipModal', () => {
     await page.getByRole('button', { name: 'Alien', exact: true }).click()
 
     await page.getByRole('button', { name: /Martel GAS-77/ }).click()
-    await expect(page.getByRole('button', { name: 'Frigate', exact: true })).toHaveClass(/neon-cyan/)
-    await expect(page.getByRole('button', { name: 'Alien', exact: true })).not.toHaveClass(/neon-cyan/)
+    await expect(page.getByRole('button', { name: 'Frigate', exact: true })).toHaveClass(/bronze-400/)
+    await expect(page.getByRole('button', { name: 'Alien', exact: true })).not.toHaveClass(/bronze-400/)
   })
 
   test('confirming adds the ship with the chosen token shape', async ({ page }) => {

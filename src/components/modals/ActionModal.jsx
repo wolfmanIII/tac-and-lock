@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useBattleStore } from '../../store/battleStore.js'
 import { CREW_ACTIONS } from '../../data/crewActions.js'
-import { CREW_SKILLS } from '../../utils/crew.js'
+import { CREW_SKILLS, getCaptainLeadershipSkill } from '../../utils/crew.js'
 import { roll2D6, formatCheckResult } from '../../utils/dice.js'
 import { DiceInput } from '../forms/DiceInput.jsx'
 
@@ -81,11 +81,14 @@ export function ActionModal({ payload, onClose }) {
     ? commandRole
     : availableCommandRoles[0]
 
-  // "One command per combat round per level of Leadership skill" is the Captain's shared
-  // action budget (actionsRemaining.captain, built from the assigned Captain's real
-  // Leadership skill) — the same pool the Tactics assist and Issue Order draw from, not a
-  // separately-tracked cap. // 2300AD B3 p.53–54
-  const commandsRemaining = selectedAction === 'commands' ? (budget.captain ?? 0) : null
+  // "One command per combat round per level of Leadership skill" (B3 p.54) is a separate cap
+  // from the Captain's general per-round action budget (actionsRemaining.captain, Tactics
+  // (naval)-based — still gates every captain action via roleBudget/canApply below, since
+  // issuing a Command also spends one of those actions). Both constraints apply at once.
+  const leadershipSkill = getCaptainLeadershipSkill(ship?.crewAssignments, ship?.crew)
+  const commandsRemaining = selectedAction === 'commands'
+    ? Math.max(0, leadershipSkill - issuedCommands.length)
+    : null
 
   // Boarding result derived from attacker roll + defender manual total
   const boardingResult = useMemo(() => {
@@ -330,7 +333,7 @@ export function ActionModal({ payload, onClose }) {
               <div className="flex items-center justify-between mb-1">
                 <p className="text-[10px] font-display text-gunmetal-500 tracking-widest">ORDER RECIPIENT (crew role)</p>
                 <p className="text-[10px] font-mono text-gunmetal-500">
-                  {commandsRemaining} captain action(s) left this round
+                  {commandsRemaining} of {leadershipSkill} command(s) left this round
                 </p>
               </div>
               {availableCommandRoles.length === 0 ? (

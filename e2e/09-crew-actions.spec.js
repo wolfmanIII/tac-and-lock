@@ -70,7 +70,7 @@ async function reachStep3(page, attackerId) {
 // === Commands ================================================================
 // "Leading Fire" (Tactics naval, battle-wide DM to all attacks) was not a
 // canonical B3 rule — replaced by Commands (Leadership, per-ship, targets one
-// crew role, activates next round). // 2300AD B3 p.54
+// crew role, active immediately this round). // 2300AD B3 p.54
 
 test.describe('Commands — applyCommand', () => {
   test.beforeEach(async ({ page }) => {
@@ -155,6 +155,114 @@ test.describe('Commands — applyCommand', () => {
     }, { id0, id1 })
     await reachStep3(page, id0)
     await expect(page.getByText('Command (Captain)')).toBeVisible()
+  })
+})
+
+// === Commands cap — Leadership, not Tactics (naval) =========================
+// issue #28: the per-round Commands cap must track the Captain's Leadership skill,
+// independently from the Captain's general Tactics (naval)-based action budget
+// (which still gates every captain action, including spending one per Command).
+
+/**
+ * Inject a single ship whose Captain has distinct Tactics (naval) and Leadership
+ * skill levels — setupShips()'s single-crew-skill-2-for-everything fixture can't
+ * exercise the two-constraint distinction issue #28 is about.
+ * @param {import('@playwright/test').Page} page
+ * @param {{ tactics: number, leadership: number }} skills
+ * @returns {Promise<string>} the ship's id
+ */
+async function setupShipWithCaptainSkills(page, { tactics, leadership }) {
+  return page.evaluate(({ tactics, leadership }) => {
+    const store = window.__ZUSTAND_BATTLE_STORE__
+    store.getState().addShip(
+      {
+        name: 'Captain Test Ship', class: 'Test', hullPoints: 20, armour: 3,
+        tacSpeed: 4, signature: 2,
+        sensors: { type: 'Basic Military', dm: 0 },
+        computer: { model: 'TL-10', bandwidth: 20 },
+        weapons: [], software: ['fire_control_1'],
+        crew: [{
+          id: 'crew-full', name: 'Full Crew', role: null,
+          skills: { pilot: 2, tactics, engineer: 2, gunner: 2, sensors: 2, countermeasures: 2, leadership, mechanic: 2, gunCombat: 2, melee: 2, remoteOps: 2 },
+          characteristics: { STR: 7, DEX: 7, END: 7, INT: 7, EDU: 7, SOC: 7 },
+        }],
+        crewAssignments: {
+          pilot: 'crew-full', captain: 'crew-full', engineer: 'crew-full', sensor_operator: 'crew-full',
+          gunner_turret: 'crew-full', gunner_bay: 'crew-full', marine: 'crew-full', remote_pilot: 'crew-full',
+        },
+      },
+      'players', 'Close',
+    )
+    return store.getState().ships[0].id
+  }, { tactics, leadership })
+}
+
+/** Roll a guaranteed-success Commands check via manual dice input (6+6). */
+async function issueOneCommand(page) {
+  await page.getByText('manual', { exact: true }).click()
+  const numberInputs = page.locator('input[type="number"]')
+  await numberInputs.nth(0).fill('6')
+  await numberInputs.nth(1).fill('6')
+  await expect(page.getByText('SUCCESS — Effect', { exact: false })).toBeVisible()
+  await page.getByText('APPLY RESULT', { exact: true }).click()
+}
+
+test.describe('Commands cap — Leadership, not Tactics (naval)', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  test('Tactics 4 / Leadership 1 — only 1 Command allowed, despite 4 captain actions available', async ({ page }) => {
+    const id = await setupShipWithCaptainSkills(page, { tactics: 4, leadership: 1 })
+    await page.evaluate((shipId) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId })
+    }, id)
+    await page.getByText('Commands', { exact: true }).click()
+    await expect(page.getByText('1 of 1 command(s) left this round')).toBeVisible()
+
+    await issueOneCommand(page)
+    // commandsRemaining (leadership 1 - issued 1 = 0) closes the modal (line 217 logic).
+
+    const ship = await page.evaluate((shipId) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === shipId),
+    id)
+    expect(ship.commandBonus).toHaveLength(1)
+    expect(ship.actionsRemaining.captain).toBe(3) // 4 Tactics actions - 1 spent — plenty left
+
+    // Reopening confirms the Leadership cap (not the leftover Tactics budget) blocks further Commands.
+    await page.evaluate((shipId) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId })
+    }, id)
+    await page.getByText('Commands', { exact: true }).click()
+    await expect(page.getByText('0 of 1 command(s) left this round')).toBeVisible()
+    await page.getByText('manual', { exact: true }).click()
+    const numberInputs = page.locator('input[type="number"]')
+    await numberInputs.nth(0).fill('6')
+    await numberInputs.nth(1).fill('6')
+    await expect(page.getByText('APPLY RESULT', { exact: true })).not.toBeVisible()
+  })
+
+  test('Tactics 1 / Leadership 3 — only 1 Command allowed, despite Leadership allowing 3', async ({ page }) => {
+    const id = await setupShipWithCaptainSkills(page, { tactics: 1, leadership: 3 })
+    await page.evaluate((shipId) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId })
+    }, id)
+    await page.getByText('Commands', { exact: true }).click()
+    await expect(page.getByText('3 of 3 command(s) left this round')).toBeVisible()
+
+    await issueOneCommand(page)
+    // commandsRemaining (leadership 3 - issued 1 = 2) would normally keep the modal open,
+    // but the Captain's Tactics-based action budget is now exhausted.
+    const ship = await page.evaluate((shipId) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === shipId),
+    id)
+    expect(ship.commandBonus).toHaveLength(1)
+    expect(ship.actionsRemaining.captain).toBe(0) // 1 Tactics action, fully spent
+
+    await page.getByText('Commands', { exact: true }).click()
+    await expect(page.getByText('has no actions left this round', { exact: false })).toBeVisible()
+    await expect(page.getByText('APPLY RESULT', { exact: true })).not.toBeVisible()
   })
 })
 
