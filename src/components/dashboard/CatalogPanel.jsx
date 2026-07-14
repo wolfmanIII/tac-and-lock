@@ -12,8 +12,8 @@ import { useProfilesStore } from '../../store/profilesStore.js'
 function StatBadge({ label, value }) {
   return (
     <span className="inline-flex items-baseline gap-0.5">
-      <span className="font-mono text-slate-500 text-xs">{label}</span>
-      <span className="font-mono text-slate-300 text-xs font-bold">{value}</span>
+      <span className="font-mono text-gunmetal-500 text-xs">{label}</span>
+      <span className="font-mono text-gunmetal-300 text-xs font-bold">{value}</span>
     </span>
   )
 }
@@ -25,23 +25,23 @@ function ShipRow({ entry, added, onAdd }) {
     : '—'
 
   return (
-    <div className="group flex items-start gap-3 px-4 py-3 border-b border-slate-800/60 hover:bg-slate-800/30 transition-colors">
+    <div className="group flex items-start gap-3 px-4 py-3 border-b border-gunmetal-800/60 hover:bg-gunmetal-800/30 transition-colors">
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2 flex-wrap">
-          <span className="font-mono font-bold text-xs text-slate-200 truncate">{entry.name}</span>
-          <span className="font-mono text-xs text-slate-500">p.{entry.sourcePage}</span>
+          <span className="font-mono font-bold text-xs text-gunmetal-200 truncate">{entry.name}</span>
+          <span className="font-mono text-xs text-gunmetal-500">p.{entry.sourcePage}</span>
         </div>
         <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
           <StatBadge label="T" value={`${entry.tonnage}t`} />
           <StatBadge label="HP" value={entry.hullPoints} />
           {entry.tacSpeed > 0
             ? <StatBadge label="TAC" value={entry.tacSpeed} />
-            : <span className="font-mono text-slate-600 text-xs">no stutterwarp</span>
+            : <span className="font-mono text-gunmetal-600 text-xs">no stutterwarp</span>
           }
           {entry.armour > 0 && <StatBadge label="ARM" value={entry.armour} />}
           <StatBadge label="SIG" value={entry.signature} />
         </div>
-        <p className="font-mono text-xs text-slate-500 mt-0.5 truncate">{weaponSummary}</p>
+        <p className="font-mono text-xs text-gunmetal-500 mt-0.5 truncate">{weaponSummary}</p>
       </div>
       <div className="shrink-0 pt-0.5">
         {added ? (
@@ -49,7 +49,7 @@ function ShipRow({ entry, added, onAdd }) {
         ) : (
           <button
             onClick={() => onAdd(entry)}
-            className="px-2 py-1 border border-slate-700 text-slate-400 font-mono text-xs rounded hover:border-(--neon-cyan)/50 hover:text-(--neon-cyan) transition-colors whitespace-nowrap"
+            className="px-2 py-1 border border-gunmetal-700 text-gunmetal-400 font-mono text-xs rounded hover:border-bronze-400/50 hover:text-bronze-400 transition-colors whitespace-nowrap"
           >
             + Profile
           </button>
@@ -96,11 +96,11 @@ export function CatalogPanel() {
   return (
     <div className="flex flex-col h-full">
 
-      <div className="px-4 py-3 border-b border-slate-800 shrink-0">
-        <h2 className="font-display text-xs text-(--neon-cyan) tracking-widest">
-          SHIP CATALOG <span className="text-slate-400">({filtered.length}/{SHIP_CATALOG.length})</span>
+      <div className="px-4 py-3 border-b border-gunmetal-800 shrink-0">
+        <h2 className="font-display text-xs text-bronze-400 tracking-widest">
+          SHIP CATALOG <span className="text-gunmetal-400">({filtered.length}/{SHIP_CATALOG.length})</span>
         </h2>
-        <p className="font-mono text-[10px] text-slate-500 mt-0.5">2300AD B3 pp.63–110</p>
+        <p className="font-mono text-[10px] text-gunmetal-500 mt-0.5">2300AD B3 pp.63–110</p>
       </div>
 
       <div className="px-4 pt-2 pb-0 shrink-0">
@@ -111,8 +111,8 @@ export function CatalogPanel() {
               onClick={() => setActiveCategory(id)}
               className={`px-2 py-0.5 font-mono text-xs rounded transition-colors ${
                 activeCategory === id
-                  ? 'bg-(--neon-cyan)/15 border border-(--neon-cyan)/40 text-(--neon-cyan)'
-                  : 'border border-slate-800 text-slate-400 hover:border-slate-700'
+                  ? 'bg-bronze-400/15 border border-bronze-400/40 text-bronze-400'
+                  : 'border border-gunmetal-800 text-gunmetal-400 hover:border-gunmetal-700'
               }`}
             >
               {label}
@@ -127,13 +127,13 @@ export function CatalogPanel() {
           placeholder="Search ship…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-slate-800 border border-slate-700 text-slate-200 font-mono text-xs rounded px-3 py-1.5 focus:outline-none focus:border-(--neon-cyan)/60 placeholder:text-slate-500"
+          className="w-full bg-gunmetal-800 border border-gunmetal-700 text-gunmetal-200 font-mono text-xs rounded px-3 py-1.5 focus:outline-none focus:border-bronze-400/60 placeholder:text-gunmetal-500"
         />
       </div>
 
       <div className="flex-1 overflow-y-auto">
         {filtered.length === 0 && (
-          <p className="text-slate-500 font-mono text-xs italic px-4 py-3">No ships found.</p>
+          <p className="text-gunmetal-500 font-mono text-xs italic px-4 py-3">No ships found.</p>
         )}
         {filtered.map((e) => (
           <ShipRow
@@ -145,8 +145,8 @@ export function CatalogPanel() {
         ))}
       </div>
 
-      <div className="px-4 py-2 border-t border-slate-800 shrink-0">
-        <p className="font-mono text-xs text-slate-500">Source: 2300AD B3 pp.63–110. Profiles can be edited after adding.</p>
+      <div className="px-4 py-2 border-t border-gunmetal-800 shrink-0">
+        <p className="font-mono text-xs text-gunmetal-500">Source: 2300AD B3 pp.63–110. Profiles can be edited after adding.</p>
       </div>
 
     </div>

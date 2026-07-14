@@ -42,7 +42,7 @@ export function Tooltip({ label, content, children, position = 'top' }) {
       {coords && createPortal(
         <span
           ref={tooltipRef}
-          className="pointer-events-none fixed z-[9999] whitespace-nowrap px-2 py-1 rounded bg-slate-800 border border-slate-600 text-slate-200 font-mono text-xs"
+          className="pointer-events-none fixed z-[9999] whitespace-nowrap px-2 py-1 rounded bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-xs"
           style={{
             left: isClamped ? clampedLeft : coords.x,
             top:  isTop ? coords.y - 6 : coords.y + 6,
@@ -54,7 +54,7 @@ export function Tooltip({ label, content, children, position = 'top' }) {
           {text}
           <span
             className={`absolute left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent
-              ${isTop ? 'top-full border-t-4 border-t-slate-600' : 'bottom-full border-b-4 border-b-slate-600'}`}
+              ${isTop ? 'top-full border-t-4 border-t-gunmetal-600' : 'bottom-full border-b-4 border-b-gunmetal-600'}`}
           />
         </span>,
         document.body,

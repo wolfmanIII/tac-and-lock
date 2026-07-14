@@ -47,11 +47,11 @@ function InterceptWeaponPicker({ weapons, value, onChange }) {
   }
   return (
     <div className="space-y-1">
-      <p className="font-mono text-[10px] text-slate-500 tracking-widest uppercase">Intercepting weapon</p>
+      <p className="font-mono text-[10px] text-gunmetal-500 tracking-widest uppercase">Intercepting weapon</p>
       <select
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-xs rounded px-2 py-1.5 focus:border-(--neon-cyan)/60 outline-none"
+        className="w-full bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-xs rounded px-2 py-1.5 focus:border-bronze-400/60 outline-none"
       >
         {weapons.map((w, i) => (
           <option key={i} value={i}>
@@ -67,7 +67,7 @@ function DmRow({ label, value }) {
   if (value === 0) return null
   return (
     <div className="flex items-center justify-between text-xs font-mono">
-      <span className="text-slate-400">{label}</span>
+      <span className="text-gunmetal-400">{label}</span>
       <span className={value > 0 ? 'text-emerald-400' : 'text-red-400'}>{fmtDm(value)}</span>
     </div>
   )
@@ -75,11 +75,11 @@ function DmRow({ label, value }) {
 
 function DmBreakdown({ rows, total }) {
   return (
-    <div className="bg-slate-800/60 border border-slate-700 rounded px-3 py-2 space-y-1">
+    <div className="bg-gunmetal-800/60 border border-gunmetal-700 rounded px-3 py-2 space-y-1">
       {rows.map(([label, value]) => <DmRow key={label} label={label} value={value} />)}
-      <div className="border-t border-slate-700 pt-1 mt-1 flex items-center justify-between text-xs font-mono">
-        <span className="text-slate-300 tracking-widest">TOTAL DM</span>
-        <span className={`font-bold ${total >= 0 ? 'text-sky-300' : 'text-red-400'}`}>{fmtDm(total)}</span>
+      <div className="border-t border-gunmetal-700 pt-1 mt-1 flex items-center justify-between text-xs font-mono">
+        <span className="text-gunmetal-300 tracking-widest">TOTAL DM</span>
+        <span className={`font-bold ${total >= 0 ? 'text-bronze-300' : 'text-red-400'}`}>{fmtDm(total)}</span>
       </div>
     </div>
   )
@@ -90,10 +90,10 @@ function RollBlock({ dm, onRoll, onManual, result, target, disabled = false }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-3">
-        <button className="px-3 py-1.5 text-xs font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 hover:bg-(--neon-cyan)/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed" onClick={onRoll} disabled={disabled}>
+        <button className="px-3 py-1.5 text-xs font-display tracking-widest text-bronze-400 border border-bronze-400/40 hover:bg-bronze-400/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed" onClick={onRoll} disabled={disabled}>
           ROLL 2D6
         </button>
-        <button className="text-xs font-mono text-slate-500 hover:text-slate-400 transition-colors underline" onClick={() => setShowManual((v) => !v)} disabled={disabled}>
+        <button className="text-xs font-mono text-gunmetal-500 hover:text-gunmetal-400 transition-colors underline" onClick={() => setShowManual((v) => !v)} disabled={disabled}>
           {showManual ? 'hide' : 'enter manually'}
         </button>
       </div>
@@ -104,11 +104,11 @@ function RollBlock({ dm, onRoll, onManual, result, target, disabled = false }) {
             <span className="font-display tracking-widest text-sm">
               {result.total >= target ? <span className="text-emerald-400">SUCCESS</span> : <span className="text-red-400">FAILURE</span>}
             </span>
-            <span className="text-slate-400">{result.dice[0]}+{result.dice[1]}{dm !== 0 ? ` ${fmtDm(dm)}` : ''} = {result.total}</span>
+            <span className="text-gunmetal-400">{result.dice[0]}+{result.dice[1]}{dm !== 0 ? ` ${fmtDm(dm)}` : ''} = {result.total}</span>
           </div>
-          <div className="text-slate-400">
+          <div className="text-gunmetal-400">
             Effect: <span className={result.effect >= 0 ? 'text-emerald-400' : 'text-red-400'}>{fmtDm(result.effect)}</span>
-            {result.effect > 0 && <span className="ml-2 text-sky-400">→ carries as DM to next step</span>}
+            {result.effect > 0 && <span className="ml-2 text-bronze-400">→ carries as DM to next step</span>}
           </div>
         </div>
       )}
@@ -375,8 +375,8 @@ export function DroneAttackModal({ payload, onClose }) {
   if (!drone || !owner || !target || !weapon) {
     return (
       <div className="p-6">
-        <p className="text-slate-400 font-mono text-sm">Drone not found.</p>
-        <button onClick={onClose} className="mt-4 px-4 py-2 text-xs font-display text-slate-300 border border-slate-600 rounded">CLOSE</button>
+        <p className="text-gunmetal-400 font-mono text-sm">Drone not found.</p>
+        <button onClick={onClose} className="mt-4 px-4 py-2 text-xs font-display text-gunmetal-300 border border-gunmetal-600 rounded">CLOSE</button>
       </div>
     )
   }
@@ -386,13 +386,13 @@ export function DroneAttackModal({ payload, onClose }) {
   if (step === STEP_PD) {
     return (
       <div className="p-5 space-y-3">
-        <p className="font-display text-xs text-slate-500 tracking-widest uppercase">DRONE ATTACK — {weapon.name}</p>
-        <p className="font-mono text-[10px] text-slate-500">
+        <p className="font-display text-xs text-gunmetal-500 tracking-widest uppercase">DRONE ATTACK — {weapon.name}</p>
+        <p className="font-mono text-[10px] text-gunmetal-500">
           {owner.profile?.name} → {target.profile?.name} · {drone.currentBand} · Round {drone.roundsElapsed}
         </p>
 
-        <div className="bg-sky-950/20 border border-sky-900/50 rounded p-3 space-y-2">
-          <p className="text-[10px] font-display text-sky-400 tracking-widest uppercase">
+        <div className="bg-bronze-950/20 border border-bronze-900/50 rounded p-3 space-y-2">
+          <p className="text-[10px] font-display text-bronze-400 tracking-widest uppercase">
             {target.profile?.name} — POINT DEFENCE · Gunner (turret) DEX · Difficult (10+) // B3 p.55–56
           </p>
           {targetBudget.gunner_turret <= 0 && (
@@ -404,7 +404,7 @@ export function DroneAttackModal({ payload, onClose }) {
         </div>
 
         <div className="flex gap-2 pt-1">
-          <button onClick={onClose} className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-600 hover:border-slate-500 rounded transition-colors">
+          <button onClick={onClose} className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-600 hover:border-gunmetal-500 rounded transition-colors">
             CANCEL
           </button>
           {pdResult?.success && (
@@ -412,7 +412,7 @@ export function DroneAttackModal({ payload, onClose }) {
               INTERCEPTED — DESTROY DRONE
             </button>
           )}
-          <button onClick={() => setStep(STEP_SENSOR)} className="flex-1 py-2 text-xs font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 hover:bg-(--neon-cyan)/10 rounded transition-colors">
+          <button onClick={() => setStep(STEP_SENSOR)} className="flex-1 py-2 text-xs font-display tracking-widest text-bronze-400 border border-bronze-400/40 hover:bg-bronze-400/10 rounded transition-colors">
             NO INTERCEPT → FIRING SOLUTION
           </button>
         </div>
@@ -425,13 +425,13 @@ export function DroneAttackModal({ payload, onClose }) {
   if (step === STEP_ENGAGE) {
     return (
       <div className="p-5 space-y-3">
-        <p className="font-display text-xs text-slate-500 tracking-widest uppercase">FIRE AT INCOMING DRONE — {weapon.name}</p>
-        <p className="font-mono text-[10px] text-slate-500">
+        <p className="font-display text-xs text-gunmetal-500 tracking-widest uppercase">FIRE AT INCOMING DRONE — {weapon.name}</p>
+        <p className="font-mono text-[10px] text-gunmetal-500">
           {target.profile?.name} → {weapon.name} ({owner.profile?.name}) · {drone.currentBand}
         </p>
 
-        <div className="bg-sky-950/20 border border-sky-900/50 rounded p-3 space-y-2">
-          <p className="text-[10px] font-display text-sky-400 tracking-widest uppercase">
+        <div className="bg-bronze-950/20 border border-bronze-900/50 rounded p-3 space-y-2">
+          <p className="text-[10px] font-display text-bronze-400 tracking-widest uppercase">
             {target.profile?.name} — GUNNER (TURRET) DEX · Difficult (10+) // B3 p.59
           </p>
           {drone.currentBand !== 'Close' && (
@@ -447,11 +447,11 @@ export function DroneAttackModal({ payload, onClose }) {
         </div>
 
         <div className="flex gap-2 pt-1">
-          <button onClick={onClose} className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-600 hover:border-slate-500 rounded transition-colors">
+          <button onClick={onClose} className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-600 hover:border-gunmetal-500 rounded transition-colors">
             CANCEL
           </button>
           {engageResult && (
-            <button onClick={applyEngage} className={`flex-1 py-2 text-xs font-display tracking-widest border rounded transition-colors ${engageResult.success ? 'text-emerald-400 border-emerald-700 hover:bg-emerald-900/20' : 'text-slate-400 border-slate-700 hover:bg-slate-800'}`}>
+            <button onClick={applyEngage} className={`flex-1 py-2 text-xs font-display tracking-widest border rounded transition-colors ${engageResult.success ? 'text-emerald-400 border-emerald-700 hover:bg-emerald-900/20' : 'text-gunmetal-400 border-gunmetal-700 hover:bg-gunmetal-800'}`}>
               {engageResult.success ? 'DESTROYED — CLOSE' : 'MISS — CLOSE'}
             </button>
           )}
@@ -465,14 +465,14 @@ export function DroneAttackModal({ payload, onClose }) {
   if (step === STEP_SENSOR) {
     return (
       <div className="p-5 space-y-3">
-        <p className="font-display text-xs text-slate-500 tracking-widest uppercase">STEP 1 — SENSOR / FIRING SOLUTION</p>
-        <p className="font-mono text-[10px] text-slate-500">Very Difficult (12+) // 2300AD B3 p.55</p>
+        <p className="font-display text-xs text-gunmetal-500 tracking-widest uppercase">STEP 1 — SENSOR / FIRING SOLUTION</p>
+        <p className="font-mono text-[10px] text-gunmetal-500">Very Difficult (12+) // 2300AD B3 p.55</p>
 
         <div className="flex gap-2">
-          <button onClick={() => setSensorMode('handoff')} className={`flex-1 py-1.5 text-xs font-mono border rounded ${sensorMode === 'handoff' ? 'border-emerald-500 text-emerald-300 bg-emerald-900/30' : 'border-slate-700 text-slate-400'}`}>
+          <button onClick={() => setSensorMode('handoff')} className={`flex-1 py-1.5 text-xs font-mono border rounded ${sensorMode === 'handoff' ? 'border-emerald-500 text-emerald-300 bg-emerald-900/30' : 'border-gunmetal-700 text-gunmetal-400'}`}>
             Sensor Hand-off
           </button>
-          <button onClick={() => setSensorMode('self')} className={`flex-1 py-1.5 text-xs font-mono border rounded ${sensorMode === 'self' ? 'border-emerald-500 text-emerald-300 bg-emerald-900/30' : 'border-slate-700 text-slate-400'}`}>
+          <button onClick={() => setSensorMode('self')} className={`flex-1 py-1.5 text-xs font-mono border rounded ${sensorMode === 'self' ? 'border-emerald-500 text-emerald-300 bg-emerald-900/30' : 'border-gunmetal-700 text-gunmetal-400'}`}>
             Self-Generated (DM−2)
           </button>
         </div>
@@ -487,8 +487,8 @@ export function DroneAttackModal({ payload, onClose }) {
           disabled={(sensorMode === 'handoff' ? ownerBudget.sensor_operator : ownerBudget.remote_pilot) <= 0} />
 
         <div className="flex gap-2 pt-1">
-          <button onClick={() => setStep(STEP_PD)} className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-600 hover:border-slate-500 rounded transition-colors">← BACK</button>
-          <button onClick={() => setStep(STEP_PILOT)} disabled={!step1Result || ownerBudget.remote_pilot <= 0} className="flex-1 py-2 text-xs font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 hover:bg-(--neon-cyan)/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+          <button onClick={() => setStep(STEP_PD)} className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-600 hover:border-gunmetal-500 rounded transition-colors">← BACK</button>
+          <button onClick={() => setStep(STEP_PILOT)} disabled={!step1Result || ownerBudget.remote_pilot <= 0} className="flex-1 py-2 text-xs font-display tracking-widest text-bronze-400 border border-bronze-400/40 hover:bg-bronze-400/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
             NEXT → PILOT
           </button>
         </div>
@@ -504,14 +504,14 @@ export function DroneAttackModal({ payload, onClose }) {
   if (step === STEP_PILOT) {
     return (
       <div className="p-5 space-y-3">
-        <p className="font-display text-xs text-slate-500 tracking-widest uppercase">STEP 2 — POSITION VESSEL (Remote Pilot)</p>
-        <p className="font-mono text-[10px] text-slate-500">Difficult (10+) · Electronics (remote ops) · DEX // 2300AD B3 p.55–56</p>
+        <p className="font-display text-xs text-gunmetal-500 tracking-widest uppercase">STEP 2 — POSITION VESSEL (Remote Pilot)</p>
+        <p className="font-mono text-[10px] text-gunmetal-500">Difficult (10+) · Electronics (remote ops) · DEX // 2300AD B3 p.55–56</p>
 
         {step1CarryEffect > 0 && (
-          <div className="flex items-center gap-2 px-2.5 py-1.5 bg-sky-950/50 border border-sky-800/60 rounded text-xs font-mono">
-            <span className="text-sky-400">Step 1 Effect {fmtDm(step1Result.effect)}</span>
-            <span className="text-slate-500">→ carry</span>
-            <span className="text-sky-300">DM{fmtDm(step1CarryEffect)}</span>
+          <div className="flex items-center gap-2 px-2.5 py-1.5 bg-bronze-950/50 border border-bronze-800/60 rounded text-xs font-mono">
+            <span className="text-bronze-400">Step 1 Effect {fmtDm(step1Result.effect)}</span>
+            <span className="text-gunmetal-500">→ carry</span>
+            <span className="text-bronze-300">DM{fmtDm(step1CarryEffect)}</span>
           </div>
         )}
 
@@ -522,8 +522,8 @@ export function DroneAttackModal({ payload, onClose }) {
         <RollBlock dm={step2Dms.total} onRoll={rollStep2} onManual={manualStep2} result={step2Result} target={10} disabled={ownerBudget.remote_pilot <= 0} />
 
         <div className="flex gap-2 pt-1">
-          <button onClick={() => { setStep(STEP_SENSOR); setStep2Result(null) }} className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-600 hover:border-slate-500 rounded transition-colors">← BACK</button>
-          <button onClick={() => setStep(STEP_GUNNER)} disabled={!step2Result || ownerBudget.remote_pilot <= 0} className="flex-1 py-2 text-xs font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 hover:bg-(--neon-cyan)/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+          <button onClick={() => { setStep(STEP_SENSOR); setStep2Result(null) }} className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-600 hover:border-gunmetal-500 rounded transition-colors">← BACK</button>
+          <button onClick={() => setStep(STEP_GUNNER)} disabled={!step2Result || ownerBudget.remote_pilot <= 0} className="flex-1 py-2 text-xs font-display tracking-widest text-bronze-400 border border-bronze-400/40 hover:bg-bronze-400/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
             NEXT → GUNNER
           </button>
         </div>
@@ -542,8 +542,8 @@ export function DroneAttackModal({ payload, onClose }) {
 
   return (
     <div className="p-5 space-y-3">
-      <p className="font-display text-xs text-slate-500 tracking-widest uppercase">STEP 3 — GUNNER · {weapon.name}</p>
-      <p className="font-mono text-[10px] text-slate-500">Difficult (10+) // 2300AD B3 p.56</p>
+      <p className="font-display text-xs text-gunmetal-500 tracking-widest uppercase">STEP 3 — GUNNER · {weapon.name}</p>
+      <p className="font-mono text-[10px] text-gunmetal-500">Difficult (10+) // 2300AD B3 p.56</p>
 
       {weapon.detonationMode && !step3Result && (
         <label className="flex items-center gap-2 text-xs font-mono text-amber-400">
@@ -553,17 +553,17 @@ export function DroneAttackModal({ payload, onClose }) {
       )}
 
       {step2CarryEffect > 0 && (
-        <div className="flex items-center gap-2 px-2.5 py-1.5 bg-sky-950/50 border border-sky-800/60 rounded text-xs font-mono">
-          <span className="text-sky-400">Step 2 Effect {fmtDm(step2Result.effect)}</span>
-          <span className="text-slate-500">→ carry</span>
-          <span className="text-sky-300">DM{fmtDm(step2CarryEffect)}</span>
+        <div className="flex items-center gap-2 px-2.5 py-1.5 bg-bronze-950/50 border border-bronze-800/60 rounded text-xs font-mono">
+          <span className="text-bronze-400">Step 2 Effect {fmtDm(step2Result.effect)}</span>
+          <span className="text-gunmetal-500">→ carry</span>
+          <span className="text-bronze-300">DM{fmtDm(step2CarryEffect)}</span>
         </div>
       )}
 
       {critThreshold < 6 && (
         <div className="flex items-center gap-2 px-2.5 py-1.5 bg-red-950/40 border border-red-800/60 rounded text-xs font-mono">
           <span className="text-red-400">Improve Critical active</span>
-          <span className="text-slate-400">— this shot crits at Effect {critThreshold}+ instead of 6+ // B3 p.54</span>
+          <span className="text-gunmetal-400">— this shot crits at Effect {critThreshold}+ instead of 6+ // B3 p.54</span>
         </div>
       )}
 
@@ -576,10 +576,10 @@ export function DroneAttackModal({ payload, onClose }) {
       {hit && damageResult && (
         <div className="bg-red-950/40 border border-red-900/60 rounded px-3 py-2 space-y-1.5">
           <p className="font-display text-xs text-red-400 tracking-widest uppercase">Damage</p>
-          <p className="font-mono text-xs text-slate-300">
+          <p className="font-mono text-xs text-gunmetal-300">
             {weapon.name}: {damageResult.rolls.join('+')}{damageResult.bonus !== 0 ? ` ${fmtDm(damageResult.bonus)}` : ''} = {damageResult.gross}
           </p>
-          <p className="font-mono text-xs text-slate-400">
+          <p className="font-mono text-xs text-gunmetal-400">
             ARM {damageResult.armour} → Net: <span className="text-red-400 font-bold">{damageResult.net}</span>
           </p>
           {getEasyTargetDamageMultiplier(target) > 1 && (
@@ -595,9 +595,9 @@ export function DroneAttackModal({ payload, onClose }) {
       )}
 
       <div className="flex gap-2 pt-1">
-        <button onClick={() => { setStep(STEP_PILOT); setStep3Result(null); setDamageResult(null) }} className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-600 hover:border-slate-500 rounded transition-colors">← BACK</button>
+        <button onClick={() => { setStep(STEP_PILOT); setStep3Result(null); setDamageResult(null) }} className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-600 hover:border-gunmetal-500 rounded transition-colors">← BACK</button>
         {step3Result && !hit && (
-          <button onClick={applyMiss} className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-700 hover:bg-slate-800 rounded transition-colors">MISS — CLOSE</button>
+          <button onClick={applyMiss} className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-700 hover:bg-gunmetal-800 rounded transition-colors">MISS — CLOSE</button>
         )}
         {hit && damageResult && (
           <button onClick={applyResults} className="flex-1 py-2 text-xs font-display tracking-widest text-red-400 border border-red-700 hover:bg-red-900/20 rounded transition-colors">

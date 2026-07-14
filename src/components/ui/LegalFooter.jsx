@@ -6,15 +6,15 @@ export default function LegalFooter() {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 z-50 h-7 flex items-center px-3 bg-slate-950/95 border-t border-slate-800">
-        <p className="text-xs text-slate-400 font-mono leading-none">
+      <div className="fixed bottom-0 left-0 right-0 z-50 h-7 flex items-center px-3 bg-gunmetal-950/95 border-t border-gunmetal-800">
+        <p className="text-xs text-gunmetal-400 font-mono leading-none">
           The Traveller game in all forms is owned by{' '}
-          <a href="https://www.mongoosepublishing.com/" target="_blank" rel="noreferrer" className="underline hover:text-slate-200 transition-colors">
+          <a href="https://www.mongoosepublishing.com/" target="_blank" rel="noreferrer" className="underline hover:text-gunmetal-200 transition-colors">
             Mongoose Publishing
           </a>
           . Copyright 1977–2025 Mongoose Publishing. Non-commercial use only.
           {' '}
-          <button onClick={() => setShowAbout(true)} className="underline hover:text-slate-200 transition-colors">
+          <button onClick={() => setShowAbout(true)} className="underline hover:text-gunmetal-200 transition-colors">
             About
           </button>
         </p>
@@ -22,9 +22,9 @@ export default function LegalFooter() {
 
       {showAbout && (
         <Modal title="ABOUT — TAC & LOCK" onClose={() => setShowAbout(false)} width="max-w-lg" variant="dialog">
-          <div className="p-4 space-y-4 font-mono text-xs text-slate-300 leading-relaxed">
+          <div className="p-4 space-y-4 font-mono text-xs text-gunmetal-300 leading-relaxed">
             <p>
-              <span className="text-(--neon-cyan) font-bold">TAC &amp; LOCK</span> is a free, non-commercial
+              <span className="text-bronze-400 font-bold">TAC &amp; LOCK</span> is a free, non-commercial
               browser tool for playing 2300AD space combat (Mongoose Publishing, 2021) at the table.
               Rules implemented: 2300AD Core Book 3 p.52–62 (primary); Trav2022 CRB p.158–159 (internal crits), p.75 (weapon traits).
             </p>

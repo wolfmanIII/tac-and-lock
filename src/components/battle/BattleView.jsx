@@ -22,9 +22,9 @@ const FACTION_LABELS = {
 }
 
 const FACTION_HEADER_CLASS = {
-  players: 'text-(--neon-cyan) border-(--neon-cyan)/30',
+  players: 'text-bronze-400 border-bronze-400/30',
   npc:     'text-red-400 border-red-400/30',
-  neutral: 'text-slate-400 border-slate-600',
+  neutral: 'text-gunmetal-400 border-gunmetal-600',
 }
 
 const BAND_LABEL = { VeryLong: 'Very Long' }
@@ -34,9 +34,9 @@ const BAND_VALUE_COLOR = {
   Close:    'text-orange-400',
   Short:    'text-amber-400',
   Medium:   'text-yellow-300',
-  Long:     'text-slate-300',
-  VeryLong: 'text-slate-400',
-  Distant:  'text-slate-500',
+  Long:     'text-gunmetal-300',
+  VeryLong: 'text-gunmetal-400',
+  Distant:  'text-gunmetal-500',
 }
 
 // ── RangeBandRow ──────────────────────────────────────────────────────────────
@@ -50,14 +50,14 @@ function RangeBandRow({ ship1, ship2, band, onSet, onMnv }) {
   return (
     <div className="flex items-center gap-2 py-1">
       <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: ship1.color ?? FACTION_COLOR[ship1.faction] ?? '#94a3b8' }} />
-      <span className="font-mono text-xs text-slate-300 truncate max-w-24">{ship1.profile?.name ?? ship1.id}</span>
-      <span className="text-slate-500 mx-0.5">↔</span>
+      <span className="font-mono text-xs text-gunmetal-300 truncate max-w-24">{ship1.profile?.name ?? ship1.id}</span>
+      <span className="text-gunmetal-500 mx-0.5">↔</span>
       <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: ship2.color ?? FACTION_COLOR[ship2.faction] ?? '#94a3b8' }} />
-      <span className="font-mono text-xs text-slate-300 truncate max-w-24">{ship2.profile?.name ?? ship2.id}</span>
+      <span className="font-mono text-xs text-gunmetal-300 truncate max-w-24">{ship2.profile?.name ?? ship2.id}</span>
 
       <button
         onClick={onMnv}
-        className={`ml-auto font-display text-xs tracking-widest shrink-0 w-20 text-right hover:underline ${BAND_VALUE_COLOR[band] ?? 'text-slate-300'}`}
+        className={`ml-auto font-display text-xs tracking-widest shrink-0 w-20 text-right hover:underline ${BAND_VALUE_COLOR[band] ?? 'text-gunmetal-300'}`}
         title="Open Manoeuvre modal"
       >
         {BAND_LABEL[band] ?? band}
@@ -68,15 +68,15 @@ function RangeBandRow({ ship1, ship2, band, onSet, onMnv }) {
           disabled={idx <= 0}
           onClick={() => onSet(RANGE_BAND_ORDER[idx - 1])}
           title="Closer (GM override)"
-          className="w-5 h-5 flex items-center justify-center border border-slate-700 text-slate-400 rounded text-xs
-            hover:border-slate-500 hover:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="w-5 h-5 flex items-center justify-center border border-gunmetal-700 text-gunmetal-400 rounded text-xs
+            hover:border-gunmetal-500 hover:text-gunmetal-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >▼</button>
         <button
           disabled={idx >= RANGE_BAND_ORDER.length - 1}
           onClick={() => onSet(RANGE_BAND_ORDER[idx + 1])}
           title="Further (GM override)"
-          className="w-5 h-5 flex items-center justify-center border border-slate-700 text-slate-400 rounded text-xs
-            hover:border-slate-500 hover:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="w-5 h-5 flex items-center justify-center border border-gunmetal-700 text-gunmetal-400 rounded text-xs
+            hover:border-gunmetal-500 hover:text-gunmetal-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >▲</button>
       </div>
     </div>
@@ -143,8 +143,8 @@ export default function BattleView() {
               <line x1="50" y1="12" x2="50" y2="26" stroke="#0891b2" strokeWidth="0.8" />
               <line x1="50" y1="74" x2="50" y2="88" stroke="#0891b2" strokeWidth="0.8" />
             </svg>
-            <p className="font-display text-xs text-slate-500 tracking-widest">NO VESSELS</p>
-            <p className="font-mono text-xs text-slate-600 mt-1">Add ships from the dashboard to begin.</p>
+            <p className="font-display text-xs text-gunmetal-500 tracking-widest">NO VESSELS</p>
+            <p className="font-mono text-xs text-gunmetal-600 mt-1">Add ships from the dashboard to begin.</p>
           </div>
         </div>
       )}
@@ -157,10 +157,10 @@ export default function BattleView() {
         {/* DISTANCES — range band matrix */}
         {trackedPairs.length > 0 && (
           <div>
-            <h2 className="font-display text-xs tracking-widest mb-3 pb-1.5 border-b text-slate-400 border-slate-700">
+            <h2 className="font-display text-xs tracking-widest mb-3 pb-1.5 border-b text-gunmetal-400 border-gunmetal-700">
               DISTANCES
             </h2>
-            <div className="divide-y divide-slate-800">
+            <div className="divide-y divide-gunmetal-800">
               {trackedPairs.map(({ s1, s2, band, key }) => (
                 <RangeBandRow
                   key={key}
@@ -180,7 +180,7 @@ export default function BattleView() {
           <div key={faction}>
             <h2 className={`font-display text-xs tracking-widest mb-3 pb-1.5 border-b ${FACTION_HEADER_CLASS[faction] ?? FACTION_HEADER_CLASS.neutral}`}>
               {FACTION_LABELS[faction] ?? faction.toUpperCase()}
-              <span className="ml-2 text-slate-400">({factionShips.length})</span>
+              <span className="ml-2 text-gunmetal-400">({factionShips.length})</span>
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {factionShips.map((ship) => (

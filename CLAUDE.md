@@ -471,17 +471,23 @@ Il progetto è il sibling diretto di `~/projects/react/thrust-and-drift`. Riusar
 
 thrust-and-drift ha **6 fasce** (no "Close"). 2300AD ne ha **7** — aggiunge "Close" (≤150.000 km, TAC Speed cost 1) tra Adjacent e Short. Le distanze km sono scala light-second, non CRB.
 
-### Tema visuale (riusare da thrust-and-drift)
+### Tema visuale (sorgente: manuali ufficiali 2300AD, issue #44)
+
+> La palette **non** è più quella riusata da thrust-and-drift (slate/zinc + neon-cyan, generico dark-sci-fi). È stata ricampionata dai PDF ufficiali (`doc/Ebook - 2300AD core book 1/2/3.pdf` — copertine + pagine interne 5/52/57) via render `pdftoppm` + sampling PIL, poi sintetizzata in due rampe scure (le pagine dei manuali sono chiare, ma questo resta un HUD da tavolo per sessioni lunghe — vedi issue #44 per il ragionamento completo). Nessun cyan/neon nell'identità reale del libro: acciaio gunmetal, bronzo/oro metallico, pergamena, inchiostro nero-caldo.
 
 ```css
 /* Fonts */
 font-display: 'Orbitron' (headers/labels)
 font-mono: 'Share Tech Mono' (body/values)
 
-/* Palette @theme */
---neon-cyan: #7dd3fc;   /* sky-300 — accento primario */
-/* base: slate-950 bg, slate-200 text */
+/* Palette @theme — src/index.css */
+--color-gunmetal-{50..950}   /* rampa steel/carbone caldo, sostituisce slate. 800 ≈ pannello copertina, 200 ≈ pergamena pagine interne */
+--color-bronze-{200..950}    /* rampa oro/ottone, sostituisce sky + il vecchio --neon-cyan. 400 = #d9a94f, campionato dal logotipo di copertina */
+--color-steel: #91a3ad;      /* accento metallico freddo, campionato dal bevel del logo — uso manuale sporadico, non parte del replace meccanico */
+/* base: gunmetal-950 bg, gunmetal-200 text */
 ```
+
+I colori semantici (`red`/`amber`/`emerald`/`violet` per danno/successo/warning/EW) restano le classi Tailwind di default — non fanno parte dell'identità grafica del libro, sono scelte funzionali indipendenti.
 
 ### Stato navi — differenze rispetto a thrust-and-drift
 

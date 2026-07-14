@@ -18,9 +18,9 @@ const PHASE_LABEL = {
 }
 
 const PHASE_COLOR = {
-  setup:      'text-slate-300',
+  setup:      'text-gunmetal-300',
   initiative: 'text-amber-400',
-  combat:     'text-(--neon-cyan)',
+  combat:     'text-bronze-400',
 }
 
 /** Short label for each crew role's action budget readout. */
@@ -110,18 +110,18 @@ export function HUD() {
 
   const currentActor = ships.find((s) => s.id === initiativeOrder[currentActorIndex])
   const phaseLabel   = PHASE_LABEL[phase] ?? phase.toUpperCase()
-  const phaseColor   = PHASE_COLOR[phase] ?? 'text-slate-300'
+  const phaseColor   = PHASE_COLOR[phase] ?? 'text-gunmetal-300'
 
   return (
     <div className="absolute top-3 left-3 z-10 flex flex-col gap-1 items-start pointer-events-none max-h-[calc(100vh-3.5rem)] overflow-y-auto">
 
       {/* Round + phase badge */}
-      <div className="flex items-center gap-2 bg-slate-900/80 border border-slate-700 rounded px-3 py-1.5 backdrop-blur-sm pointer-events-auto">
+      <div className="flex items-center gap-2 bg-gunmetal-900/80 border border-gunmetal-700 rounded px-3 py-1.5 backdrop-blur-sm pointer-events-auto">
         <img src="/logo.png" alt="" className="w-5 h-5 shrink-0" />
-        <span className="text-slate-600 text-xs">│</span>
-        <span className="text-slate-400 text-xs font-display tracking-widest">ROUND</span>
-        <span className="text-(--neon-cyan) font-mono font-bold text-lg leading-none">{round}</span>
-        <span className="text-slate-600 text-xs">│</span>
+        <span className="text-gunmetal-600 text-xs">│</span>
+        <span className="text-gunmetal-400 text-xs font-display tracking-widest">ROUND</span>
+        <span className="text-bronze-400 font-mono font-bold text-lg leading-none">{round}</span>
+        <span className="text-gunmetal-600 text-xs">│</span>
         <span className={`font-display text-xs tracking-widest ${phaseColor}`}>{phaseLabel}</span>
       </div>
 
@@ -139,16 +139,16 @@ export function HUD() {
       {phase === 'combat' && initiativeOrder.length > 0 && (
         !allActorsGone ? (
           <div className="flex flex-col gap-1">
-            <div className="bg-slate-900/80 border border-slate-700 rounded px-3 py-1.5 backdrop-blur-sm">
-              <p className="text-[10px] font-display text-slate-500 tracking-widest">ACTING NOW</p>
-              <p className="font-mono text-sm text-(--neon-cyan) font-bold leading-tight truncate max-w-44">
+            <div className="bg-gunmetal-900/80 border border-gunmetal-700 rounded px-3 py-1.5 backdrop-blur-sm">
+              <p className="text-[10px] font-display text-gunmetal-500 tracking-widest">ACTING NOW</p>
+              <p className="font-mono text-sm text-bronze-400 font-bold leading-tight truncate max-w-44">
                 {currentActor?.profile?.name ?? '—'}
               </p>
-              <p className="text-[10px] font-mono text-slate-500">
+              <p className="text-[10px] font-mono text-gunmetal-500">
                 {currentActorIndex + 1} / {initiativeOrder.length}
               </p>
               {currentActor && (
-                <p className="text-[9px] font-mono text-slate-400 mt-1 leading-snug">
+                <p className="text-[9px] font-mono text-gunmetal-400 mt-1 leading-snug">
                   {Object.entries(currentActor.actionsRemaining ?? {})
                     .map(([role, n]) => `${ROLE_ABBR[role] ?? role} ${n}`)
                     .join(' · ')}
@@ -157,22 +157,22 @@ export function HUD() {
             </div>
             <button
               onClick={advanceActor}
-              className="pointer-events-auto bg-slate-800/80 border border-slate-600 hover:border-(--neon-cyan)/60 text-slate-300 hover:text-(--neon-cyan) font-mono text-xs tracking-widest rounded px-3 py-1.5 backdrop-blur-sm transition-colors"
+              className="pointer-events-auto bg-gunmetal-800/80 border border-gunmetal-600 hover:border-bronze-400/60 text-gunmetal-300 hover:text-bronze-400 font-mono text-xs tracking-widest rounded px-3 py-1.5 backdrop-blur-sm transition-colors"
             >
               END SHIP'S TURN ⟶
             </button>
           </div>
         ) : (
           <div className="flex flex-col gap-1">
-            <div className="bg-slate-900/80 border border-slate-700 rounded px-3 py-1 backdrop-blur-sm">
+            <div className="bg-gunmetal-900/80 border border-gunmetal-700 rounded px-3 py-1 backdrop-blur-sm">
               <p className="text-[10px] font-display text-emerald-400 tracking-widest">ALL SHIPS DONE</p>
             </div>
             <button
               onClick={handleNextRound}
               className={`pointer-events-auto border rounded px-3 py-1.5 backdrop-blur-sm transition-colors font-mono text-xs tracking-widest ${
                 canAdvanceRound
-                  ? 'bg-slate-800/80 border-slate-600 hover:border-(--neon-cyan)/60 text-slate-300 hover:text-(--neon-cyan)'
-                  : 'bg-slate-800/80 border-slate-700 text-slate-500 cursor-not-allowed'
+                  ? 'bg-gunmetal-800/80 border-gunmetal-600 hover:border-bronze-400/60 text-gunmetal-300 hover:text-bronze-400'
+                  : 'bg-gunmetal-800/80 border-gunmetal-700 text-gunmetal-500 cursor-not-allowed'
               }`}
             >
               NEXT ROUND ⟶
@@ -193,10 +193,10 @@ export function HUD() {
       {phase !== 'combat' && (
         <button
           onClick={handleAdvance}
-          className={`pointer-events-auto bg-slate-800/80 border rounded px-3 py-1.5 backdrop-blur-sm transition-colors font-mono text-xs tracking-widest ${
+          className={`pointer-events-auto bg-gunmetal-800/80 border rounded px-3 py-1.5 backdrop-blur-sm transition-colors font-mono text-xs tracking-widest ${
             canAdvance
-              ? 'border-slate-600 hover:border-(--neon-cyan)/60 text-slate-300 hover:text-(--neon-cyan)'
-              : 'border-slate-700 text-slate-500 cursor-not-allowed'
+              ? 'border-gunmetal-600 hover:border-bronze-400/60 text-gunmetal-300 hover:text-bronze-400'
+              : 'border-gunmetal-700 text-gunmetal-500 cursor-not-allowed'
           }`}
         >
           NEXT PHASE ⟶
@@ -210,21 +210,21 @@ export function HUD() {
       <div className="pointer-events-auto flex gap-1 mt-0.5">
         {canUndo && (
           <Tooltip label="Undo (Ctrl+Z)" position="bottom">
-            <button onClick={undo} className="bg-slate-800/80 border border-slate-700 font-mono text-sm rounded px-2 py-1 backdrop-blur-sm transition-colors text-slate-400 hover:text-slate-300 hover:border-slate-500">↩️</button>
+            <button onClick={undo} className="bg-gunmetal-800/80 border border-gunmetal-700 font-mono text-sm rounded px-2 py-1 backdrop-blur-sm transition-colors text-gunmetal-400 hover:text-gunmetal-300 hover:border-gunmetal-500">↩️</button>
           </Tooltip>
         )}
         {canRedo && (
           <Tooltip label="Redo (Ctrl+Y)" position="bottom">
-            <button onClick={redo} className="bg-slate-800/80 border border-slate-700 font-mono text-sm rounded px-2 py-1 backdrop-blur-sm transition-colors text-slate-400 hover:text-slate-300 hover:border-slate-500">↪️</button>
+            <button onClick={redo} className="bg-gunmetal-800/80 border border-gunmetal-700 font-mono text-sm rounded px-2 py-1 backdrop-blur-sm transition-colors text-gunmetal-400 hover:text-gunmetal-300 hover:border-gunmetal-500">↪️</button>
           </Tooltip>
         )}
         <Tooltip label="Save session to file" position="bottom">
-          <button onClick={exportBattleState} className="bg-slate-800/80 border border-slate-700 text-slate-400 hover:text-slate-300 hover:border-slate-500 font-mono text-xs rounded px-2 py-1 backdrop-blur-sm transition-colors">
+          <button onClick={exportBattleState} className="bg-gunmetal-800/80 border border-gunmetal-700 text-gunmetal-400 hover:text-gunmetal-300 hover:border-gunmetal-500 font-mono text-xs rounded px-2 py-1 backdrop-blur-sm transition-colors">
             💾 SAVE
           </button>
         </Tooltip>
         <Tooltip label="Return to lobby" position="bottom">
-          <button onClick={() => setShowExit(true)} className="bg-slate-800/80 border border-slate-700 text-slate-400 hover:text-slate-300 hover:border-slate-500 font-mono text-base rounded px-2 py-1 backdrop-blur-sm transition-colors">
+          <button onClick={() => setShowExit(true)} className="bg-gunmetal-800/80 border border-gunmetal-700 text-gunmetal-400 hover:text-gunmetal-300 hover:border-gunmetal-500 font-mono text-base rounded px-2 py-1 backdrop-blur-sm transition-colors">
             🏠
           </button>
         </Tooltip>
@@ -233,8 +233,8 @@ export function HUD() {
       {showExit && (
         <Modal title="ABANDON SESSION" onClose={() => setShowExit(false)} width="max-w-sm" variant="dialog">
           <div className="p-4 space-y-4">
-            <p className="font-mono text-sm text-slate-300 leading-relaxed">Unsaved progress will be lost.</p>
-            <p className="font-mono text-xs text-slate-400">Save the session before leaving to resume later.</p>
+            <p className="font-mono text-sm text-gunmetal-300 leading-relaxed">Unsaved progress will be lost.</p>
+            <p className="font-mono text-xs text-gunmetal-400">Save the session before leaving to resume later.</p>
             <div className="flex gap-2 pt-1">
               <button
                 onClick={() => { setShowExit(false); gotoScreen('dashboard') }}
@@ -244,7 +244,7 @@ export function HUD() {
               </button>
               <button
                 onClick={() => setShowExit(false)}
-                className="flex-1 py-2 border border-slate-600 text-slate-300 font-display text-xs tracking-widest rounded hover:border-slate-400 transition-colors"
+                className="flex-1 py-2 border border-gunmetal-600 text-gunmetal-300 font-display text-xs tracking-widest rounded hover:border-gunmetal-400 transition-colors"
               >
                 CANCEL
               </button>

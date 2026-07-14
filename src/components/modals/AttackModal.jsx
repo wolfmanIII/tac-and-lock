@@ -42,7 +42,7 @@ function DmRow({ label, value }) {
   if (value === 0) return null
   return (
     <div className="flex items-center justify-between text-xs font-mono">
-      <span className="text-slate-400">{label}</span>
+      <span className="text-gunmetal-400">{label}</span>
       <span className={value > 0 ? 'text-emerald-400' : 'text-red-400'}>{fmtDm(value)}</span>
     </div>
   )
@@ -50,11 +50,11 @@ function DmRow({ label, value }) {
 
 function DmBreakdown({ rows, total }) {
   return (
-    <div className="bg-slate-800/60 border border-slate-700 rounded px-3 py-2 space-y-1">
+    <div className="bg-gunmetal-800/60 border border-gunmetal-700 rounded px-3 py-2 space-y-1">
       {rows.map(([label, value]) => <DmRow key={label} label={label} value={value} />)}
-      <div className="border-t border-slate-700 pt-1 mt-1 flex items-center justify-between text-xs font-mono">
-        <span className="text-slate-300 tracking-widest">TOTAL DM</span>
-        <span className={`font-bold ${total >= 0 ? 'text-sky-300' : 'text-red-400'}`}>{fmtDm(total)}</span>
+      <div className="border-t border-gunmetal-700 pt-1 mt-1 flex items-center justify-between text-xs font-mono">
+        <span className="text-gunmetal-300 tracking-widest">TOTAL DM</span>
+        <span className={`font-bold ${total >= 0 ? 'text-bronze-300' : 'text-red-400'}`}>{fmtDm(total)}</span>
       </div>
     </div>
   )
@@ -67,8 +67,8 @@ function StepIndicator({ current }) {
         <div key={s}
           className={`h-1.5 flex-1 rounded-full transition-colors ${
             current > s  ? 'bg-emerald-600' :
-            current === s ? 'bg-(--neon-cyan)' :
-                            'bg-slate-700'
+            current === s ? 'bg-bronze-400' :
+                            'bg-gunmetal-700'
           }`}
         />
       ))}
@@ -83,14 +83,14 @@ function RollBlock({ dm, onRoll, onManual, result, target, disabled = false }) {
     <div className="space-y-2">
       <div className="flex items-center gap-3">
         <button
-          className="px-3 py-1.5 text-xs font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 hover:bg-(--neon-cyan)/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="px-3 py-1.5 text-xs font-display tracking-widest text-bronze-400 border border-bronze-400/40 hover:bg-bronze-400/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           onClick={onRoll}
           disabled={disabled}
         >
           ROLL 2D6
         </button>
         <button
-          className="text-xs font-mono text-slate-500 hover:text-slate-400 transition-colors underline"
+          className="text-xs font-mono text-gunmetal-500 hover:text-gunmetal-400 transition-colors underline"
           onClick={() => setShowManual((v) => !v)}
           disabled={disabled}
         >
@@ -109,16 +109,16 @@ function RollBlock({ dm, onRoll, onManual, result, target, disabled = false }) {
                 ? <span className="text-emerald-400">SUCCESS</span>
                 : <span className="text-red-400">FAILURE</span>}
             </span>
-            <span className="text-slate-400">
+            <span className="text-gunmetal-400">
               {result.dice[0]}+{result.dice[1]}{dm !== 0 ? ` ${fmtDm(dm)}` : ''} = {result.total}
             </span>
           </div>
-          <div className="text-slate-400">
+          <div className="text-gunmetal-400">
             Effect: <span className={result.effect >= 0 ? 'text-emerald-400' : 'text-red-400'}>
               {fmtDm(result.effect)}
             </span>
             {result.effect > 0 && (
-              <span className="ml-2 text-sky-400">→ carries as DM to next step</span>
+              <span className="ml-2 text-bronze-400">→ carries as DM to next step</span>
             )}
           </div>
         </div>
@@ -489,8 +489,8 @@ export function AttackModal({ payload, onClose }) {
   if (!attacker) {
     return (
       <div className="p-6">
-        <p className="text-slate-400 font-mono text-sm">No ships in battle.</p>
-        <button onClick={onClose} className="mt-4 px-4 py-2 text-xs font-display text-slate-300 border border-slate-600 rounded">CLOSE</button>
+        <p className="text-gunmetal-400 font-mono text-sm">No ships in battle.</p>
+        <button onClick={onClose} className="mt-4 px-4 py-2 text-xs font-display text-gunmetal-300 border border-gunmetal-600 rounded">CLOSE</button>
       </div>
     )
   }
@@ -501,41 +501,41 @@ export function AttackModal({ payload, onClose }) {
     return (
       <div className="p-5 space-y-4">
         <div>
-          <p className="font-display text-xs text-slate-500 tracking-widest uppercase mb-0.5">FIRING SOLUTION</p>
-          <p className="font-display text-(--neon-cyan) text-base tracking-widest">
+          <p className="font-display text-xs text-gunmetal-500 tracking-widest uppercase mb-0.5">FIRING SOLUTION</p>
+          <p className="font-display text-bronze-400 text-base tracking-widest">
             {attacker.profile?.name ?? attacker.id}
           </p>
         </div>
 
         {/* Target selection */}
         <div className="space-y-1">
-          <p className="font-mono text-[10px] text-slate-500 tracking-widest uppercase">TARGET</p>
+          <p className="font-mono text-[10px] text-gunmetal-500 tracking-widest uppercase">TARGET</p>
           <select
             value={targetId}
             onChange={(e) => setTargetId(e.target.value)}
-            className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1.5 focus:border-(--neon-cyan)/60 outline-none"
+            className="w-full bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-sm rounded px-2 py-1.5 focus:border-bronze-400/60 outline-none"
           >
             {targets.map((t) => <option key={t.id} value={t.id}>{t.profile?.name ?? t.id}</option>)}
           </select>
           {target && (
-            <p className="font-mono text-[10px] text-slate-500">
-              Range: <span className="text-slate-300">{band}</span>
-              {' '}· Signature: <span className="text-sky-400">+{computeEffectiveSignature(target).effective}</span>
-              {' '}· Hull: <span className="text-slate-300">{target.currentHull}/{target.hullPoints}</span>
-              {' '}· Armour: <span className="text-slate-300">{target.currentArmour ?? target.armour ?? 0}</span>
+            <p className="font-mono text-[10px] text-gunmetal-500">
+              Range: <span className="text-gunmetal-300">{band}</span>
+              {' '}· Signature: <span className="text-bronze-400">+{computeEffectiveSignature(target).effective}</span>
+              {' '}· Hull: <span className="text-gunmetal-300">{target.currentHull}/{target.hullPoints}</span>
+              {' '}· Armour: <span className="text-gunmetal-300">{target.currentArmour ?? target.armour ?? 0}</span>
             </p>
           )}
         </div>
 
         {/* Weapon selection */}
         <div className="space-y-1">
-          <p className="font-mono text-[10px] text-slate-500 tracking-widest uppercase">WEAPON</p>
+          <p className="font-mono text-[10px] text-gunmetal-500 tracking-widest uppercase">WEAPON</p>
           {shipWeapons.length > 0 ? (
             <div className="flex gap-2">
               <select
                 value={weaponIdx}
                 onChange={(e) => setWeaponIdx(Number(e.target.value))}
-                className="flex-1 bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1.5 focus:border-(--neon-cyan)/60 outline-none"
+                className="flex-1 bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-sm rounded px-2 py-1.5 focus:border-bronze-400/60 outline-none"
               >
                 {shipWeapons.map((w, i) => (
                   <option key={i} value={i}>
@@ -547,7 +547,7 @@ export function AttackModal({ payload, onClose }) {
               <select
                 value={weaponCount}
                 onChange={(e) => setWeaponCount(Number(e.target.value))}
-                className="w-16 bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1.5 focus:border-(--neon-cyan)/60 outline-none"
+                className="w-16 bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-sm rounded px-2 py-1.5 focus:border-bronze-400/60 outline-none"
               >
                 <option value={1}>×1</option>
                 <option value={2}>×2</option>
@@ -558,7 +558,7 @@ export function AttackModal({ payload, onClose }) {
             <p className="text-red-400 font-mono text-xs">No weapons mounted.</p>
           )}
           {weapon && (
-            <p className="font-mono text-[10px] text-slate-500">
+            <p className="font-mono text-[10px] text-gunmetal-500">
               {weapon.damage}{weaponCount > 1 ? ` (×${weaponCount})` : ''}
               {weapon.traits.length > 0 ? ` · ${weapon.traits.join(', ')}` : ''}
             </p>
@@ -567,8 +567,8 @@ export function AttackModal({ payload, onClose }) {
 
         {/* Auto X fire-mode selector — Single/Burst/Full Auto // 2300AD B3 p.59, Trav2022 CRB p.75 */}
         {weapon && getAutoScore(weapon.traits) > 0 && (
-          <div className="bg-slate-800/40 border border-slate-700 rounded p-3 space-y-2">
-            <p className="font-mono text-[10px] text-slate-400 tracking-widest uppercase">
+          <div className="bg-gunmetal-800/40 border border-gunmetal-700 rounded p-3 space-y-2">
+            <p className="font-mono text-[10px] text-gunmetal-400 tracking-widest uppercase">
               Fire Mode ({weapon.name} — Auto {getAutoScore(weapon.traits)})
             </p>
             <div className="flex gap-3">
@@ -577,13 +577,13 @@ export function AttackModal({ payload, onClose }) {
                 ['burst',  `Burst (+${getAutoScore(weapon.traits)} dmg)`],
                 ['full',   `Full Auto (×${getAutoScore(weapon.traits)})`],
               ].map(([mode, label]) => (
-                <label key={mode} className="flex items-center gap-1.5 font-mono text-xs text-slate-300 cursor-pointer">
+                <label key={mode} className="flex items-center gap-1.5 font-mono text-xs text-gunmetal-300 cursor-pointer">
                   <input
                     type="radio"
                     name="autoMode"
                     checked={autoMode === mode}
                     onChange={() => setAutoMode(mode)}
-                    className="accent-(--neon-cyan)"
+                    className="accent-bronze-400"
                   />
                   {label}
                 </label>
@@ -594,11 +594,11 @@ export function AttackModal({ payload, onClose }) {
 
         {/* Defensive Screens — Gunner Action, alternative to firing this round // B3 p.55, p.62 */}
         {attacker.screenRating > 0 && (
-          <div className="bg-sky-950/20 border border-sky-900/50 rounded p-3 space-y-2">
-            <p className="font-mono text-[10px] text-sky-400 tracking-widest uppercase">
+          <div className="bg-bronze-950/20 border border-bronze-900/50 rounded p-3 space-y-2">
+            <p className="font-mono text-[10px] text-bronze-400 tracking-widest uppercase">
               Defensive Screens (Gunner Action — instead of firing this round)
             </p>
-            <p className="font-mono text-[10px] text-slate-400">
+            <p className="font-mono text-[10px] text-gunmetal-400">
               Rating {attacker.screenCurrentRating}/{attacker.screenRating} · {attacker.screenReloads} reload(s) left
               {!attacker.screenDeployed && <span className="text-amber-400"> · not yet deployed</span>}
             </p>
@@ -610,7 +610,7 @@ export function AttackModal({ payload, onClose }) {
                 <button
                   onClick={() => { spendCrewAction(attacker.id, 'gunner_turret'); deployScreens(attacker.id); onClose() }}
                   disabled={budget.gunner_turret <= 0}
-                  className="flex-1 py-1.5 text-xs font-display tracking-widest text-sky-400 border border-sky-800 hover:bg-sky-900/20 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="flex-1 py-1.5 text-xs font-display tracking-widest text-bronze-400 border border-bronze-800 hover:bg-bronze-900/20 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   DEPLOY SCREENS
                 </button>
@@ -619,7 +619,7 @@ export function AttackModal({ payload, onClose }) {
                 <button
                   onClick={() => { spendCrewAction(attacker.id, 'gunner_turret'); rechargeScreens(attacker.id); onClose() }}
                   disabled={budget.gunner_turret <= 0}
-                  className="flex-1 py-1.5 text-xs font-display tracking-widest text-sky-400 border border-sky-800 hover:bg-sky-900/20 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="flex-1 py-1.5 text-xs font-display tracking-widest text-bronze-400 border border-bronze-800 hover:bg-bronze-900/20 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   RECHARGE SCREENS (−1 reload)
                 </button>
@@ -630,19 +630,19 @@ export function AttackModal({ payload, onClose }) {
 
         {/* Evasion DM — auto-read from target.evasionDm (set by ManoeuvreModal's opposed Pilot check), overridable */}
         <div className="space-y-1">
-          <p className="font-mono text-[10px] text-slate-500 tracking-widest uppercase">
-            TARGET EVASION DM <span className="text-slate-600 normal-case">(opposed Pilot check // B3 p.54 — applies to Sensor + Gunner checks)</span>
+          <p className="font-mono text-[10px] text-gunmetal-500 tracking-widest uppercase">
+            TARGET EVASION DM <span className="text-gunmetal-600 normal-case">(opposed Pilot check // B3 p.54 — applies to Sensor + Gunner checks)</span>
           </p>
           <div className="flex items-center gap-2">
             <input
               type="number" min={-10} max={2} value={evasionDm}
               onChange={(e) => setEvasionDmOverride(Math.min(2, Number(e.target.value) || 0))}
-              className="w-20 bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1.5 focus:border-(--neon-cyan)/60 outline-none"
+              className="w-20 bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-sm rounded px-2 py-1.5 focus:border-bronze-400/60 outline-none"
             />
             {evasionDmOverride === null && (target?.evasionDm ?? 0) !== 0 ? (
-              <span className="font-mono text-[10px] text-sky-400">auto from Manoeuvre action</span>
+              <span className="font-mono text-[10px] text-bronze-400">auto from Manoeuvre action</span>
             ) : (
-              <span className="font-mono text-[10px] text-slate-500">0 if no evasion; −1/−2, or +1 vs a badly-failed evasion</span>
+              <span className="font-mono text-[10px] text-gunmetal-500">0 if no evasion; −1/−2, or +1 vs a badly-failed evasion</span>
             )}
           </div>
         </div>
@@ -653,7 +653,7 @@ export function AttackModal({ payload, onClose }) {
             <p className="font-mono text-[10px] text-violet-400 tracking-widest uppercase">
               Operate UTES Array (Gunner Action — develop Firing Solution alone, no Sensor Operator needed)
             </p>
-            <p className="font-mono text-[10px] text-slate-400">
+            <p className="font-mono text-[10px] text-gunmetal-400">
               Very Difficult (12+) · Gunner · EDU — success applies DM+1 (Effect 1–4) or DM+2
               (Effect 5–6) to this weapon's Gunner check next round.
             </p>
@@ -695,12 +695,12 @@ export function AttackModal({ payload, onClose }) {
 
         <div className="flex gap-2 pt-1">
           <button onClick={onClose}
-            className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-600 hover:border-slate-500 rounded transition-colors">
+            className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-600 hover:border-gunmetal-500 rounded transition-colors">
             CANCEL
           </button>
           <button onClick={() => setStep(hasUtesSolution ? STEP_PILOT : STEP_SENSOR)}
             disabled={!target || !weapon || (!hasUtesSolution && budget.sensor_operator <= 0)}
-            className="flex-1 py-2 text-xs font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 hover:bg-(--neon-cyan)/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+            className="flex-1 py-2 text-xs font-display tracking-widest text-bronze-400 border border-bronze-400/40 hover:bg-bronze-400/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
             {hasUtesSolution ? 'BEGIN FIRING SOLUTION (SKIP SENSOR STEP) →' : 'BEGIN FIRING SOLUTION →'}
           </button>
         </div>
@@ -715,16 +715,16 @@ export function AttackModal({ payload, onClose }) {
       <div className="p-5 space-y-3">
         <StepIndicator current={STEP_SENSOR} />
         <div>
-          <p className="font-display text-xs text-slate-500 tracking-widest uppercase">{STEP_LABELS[STEP_SENSOR]}</p>
-          <p className="font-mono text-[10px] text-slate-500 mt-0.5">
+          <p className="font-display text-xs text-gunmetal-500 tracking-widest uppercase">{STEP_LABELS[STEP_SENSOR]}</p>
+          <p className="font-mono text-[10px] text-gunmetal-500 mt-0.5">
             Very Difficult (12+) · Electronics (sensors) · INT // 2300AD B3 p.56
           </p>
         </div>
 
         {/* Engineer assist — optional, before the main Sensor roll // 2300AD B3 p.56, issue #26 */}
         {!step1Result && (
-          <div className="bg-slate-800/40 border border-slate-700 rounded px-3 py-2 space-y-2">
-            <p className="font-mono text-[10px] text-slate-500 tracking-widest uppercase">
+          <div className="bg-gunmetal-800/40 border border-gunmetal-700 rounded px-3 py-2 space-y-2">
+            <p className="font-mono text-[10px] text-gunmetal-500 tracking-widest uppercase">
               Engineer assist (optional) · Routine (8+) · Engineer (power) · INT
               {budget.engineer <= 0 && <span className="text-red-400 normal-case"> — Engineer has no actions left this round</span>}
             </p>
@@ -751,14 +751,14 @@ export function AttackModal({ payload, onClose }) {
 
         <div className="flex gap-2 pt-1">
           <button onClick={() => setStep(STEP_SETUP)}
-            className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-600 hover:border-slate-500 rounded transition-colors">
+            className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-600 hover:border-gunmetal-500 rounded transition-colors">
             ← BACK
           </button>
           <button
             onClick={() => setStep(STEP_PILOT)}
             disabled={!step1Result || budget.pilot <= 0}
             title={budget.pilot <= 0 ? 'Pilot has no actions left this round' : undefined}
-            className="flex-1 py-2 text-xs font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 hover:bg-(--neon-cyan)/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+            className="flex-1 py-2 text-xs font-display tracking-widest text-bronze-400 border border-bronze-400/40 hover:bg-bronze-400/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
             NEXT → PILOT
           </button>
         </div>
@@ -776,24 +776,24 @@ export function AttackModal({ payload, onClose }) {
       <div className="p-5 space-y-3">
         <StepIndicator current={STEP_PILOT} />
         <div>
-          <p className="font-display text-xs text-slate-500 tracking-widest uppercase">{STEP_LABELS[STEP_PILOT]}</p>
-          <p className="font-mono text-[10px] text-slate-500 mt-0.5">
+          <p className="font-display text-xs text-gunmetal-500 tracking-widest uppercase">{STEP_LABELS[STEP_PILOT]}</p>
+          <p className="font-mono text-[10px] text-gunmetal-500 mt-0.5">
             Difficult (10+) · Pilot · DEX // 2300AD B3 p.56
           </p>
         </div>
 
         {step1CarryEffect > 0 && (
-          <div className="flex items-center gap-2 px-2.5 py-1.5 bg-sky-950/50 border border-sky-800/60 rounded text-xs font-mono">
-            <span className="text-sky-400">Step 1 Effect {fmtDm(step1Result.effect)}</span>
-            <span className="text-slate-500">→ carry</span>
-            <span className="text-sky-300">DM{fmtDm(step1CarryEffect)}</span>
+          <div className="flex items-center gap-2 px-2.5 py-1.5 bg-bronze-950/50 border border-bronze-800/60 rounded text-xs font-mono">
+            <span className="text-bronze-400">Step 1 Effect {fmtDm(step1Result.effect)}</span>
+            <span className="text-gunmetal-500">→ carry</span>
+            <span className="text-bronze-300">DM{fmtDm(step1CarryEffect)}</span>
           </div>
         )}
 
         {/* Engineer assist — optional, before the main Pilot roll // 2300AD B3 p.56, issue #26 */}
         {!step2Result && (
-          <div className="bg-slate-800/40 border border-slate-700 rounded px-3 py-2 space-y-2">
-            <p className="font-mono text-[10px] text-slate-500 tracking-widest uppercase">
+          <div className="bg-gunmetal-800/40 border border-gunmetal-700 rounded px-3 py-2 space-y-2">
+            <p className="font-mono text-[10px] text-gunmetal-500 tracking-widest uppercase">
               Engineer assist (optional) · Routine (8+) · Engineer (power) · INT
               {budget.engineer <= 0 && <span className="text-red-400 normal-case"> — Engineer has no actions left this round</span>}
             </p>
@@ -820,14 +820,14 @@ export function AttackModal({ payload, onClose }) {
 
         <div className="flex gap-2 pt-1">
           <button onClick={() => { setStep(STEP_SENSOR); setStep2Result(null); setPilotAssistResult(null) }}
-            className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-600 hover:border-slate-500 rounded transition-colors">
+            className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-600 hover:border-gunmetal-500 rounded transition-colors">
             ← BACK
           </button>
           <button
             onClick={() => setStep(STEP_GUNNER)}
             disabled={!step2Result || budget.gunner_turret <= 0}
             title={budget.gunner_turret <= 0 ? 'Gunner has no actions left this round' : undefined}
-            className="flex-1 py-2 text-xs font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 hover:bg-(--neon-cyan)/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+            className="flex-1 py-2 text-xs font-display tracking-widest text-bronze-400 border border-bronze-400/40 hover:bg-bronze-400/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
             NEXT → GUNNER
           </button>
         </div>
@@ -849,31 +849,31 @@ export function AttackModal({ payload, onClose }) {
       <div className="p-5 space-y-3">
         <StepIndicator current={STEP_GUNNER} />
         <div>
-          <p className="font-display text-xs text-slate-500 tracking-widest uppercase">{STEP_LABELS[STEP_GUNNER]}</p>
-          <p className="font-mono text-[10px] text-slate-500 mt-0.5">
+          <p className="font-display text-xs text-gunmetal-500 tracking-widest uppercase">{STEP_LABELS[STEP_GUNNER]}</p>
+          <p className="font-mono text-[10px] text-gunmetal-500 mt-0.5">
             Difficult (10+) · Gunner · INT · {weapon?.name ?? weaponId} // 2300AD B3 p.56
           </p>
         </div>
 
         {step2CarryEffect > 0 && (
-          <div className="flex items-center gap-2 px-2.5 py-1.5 bg-sky-950/50 border border-sky-800/60 rounded text-xs font-mono">
-            <span className="text-sky-400">Step 2 Effect {fmtDm(step2Result.effect)}</span>
-            <span className="text-slate-500">→ carry</span>
-            <span className="text-sky-300">DM{fmtDm(step2CarryEffect)}</span>
+          <div className="flex items-center gap-2 px-2.5 py-1.5 bg-bronze-950/50 border border-bronze-800/60 rounded text-xs font-mono">
+            <span className="text-bronze-400">Step 2 Effect {fmtDm(step2Result.effect)}</span>
+            <span className="text-gunmetal-500">→ carry</span>
+            <span className="text-bronze-300">DM{fmtDm(step2CarryEffect)}</span>
           </div>
         )}
 
         {critThreshold < 6 && (
           <div className="flex items-center gap-2 px-2.5 py-1.5 bg-red-950/40 border border-red-800/60 rounded text-xs font-mono">
             <span className="text-red-400">Improve Critical active</span>
-            <span className="text-slate-400">— this shot crits at Effect {critThreshold}+ instead of 6+ // B3 p.54</span>
+            <span className="text-gunmetal-400">— this shot crits at Effect {critThreshold}+ instead of 6+ // B3 p.54</span>
           </div>
         )}
 
         {/* Captain Tactics assist — optional, before the main Gunner roll // 2300AD B3 p.54, p.56 */}
         {!step3Result && (
-          <div className="bg-slate-800/40 border border-slate-700 rounded px-3 py-2 space-y-2">
-            <p className="font-mono text-[10px] text-slate-500 tracking-widest uppercase">
+          <div className="bg-gunmetal-800/40 border border-gunmetal-700 rounded px-3 py-2 space-y-2">
+            <p className="font-mono text-[10px] text-gunmetal-500 tracking-widest uppercase">
               Captain assist (optional) · Difficult (10+) · Tactics (naval) · INT
               {budget.captain <= 0 && <span className="text-red-400 normal-case"> — Captain has no actions left this round</span>}
             </p>
@@ -902,12 +902,12 @@ export function AttackModal({ payload, onClose }) {
         {hit && damageResult && (
           <div className="bg-red-950/40 border border-red-900/60 rounded px-3 py-2 space-y-1.5">
             <p className="font-display text-xs text-red-400 tracking-widest uppercase">Damage</p>
-            <p className="font-mono text-xs text-slate-300">
+            <p className="font-mono text-xs text-gunmetal-300">
               {weapon?.name}: {damageResult.rolls.join('+')}
               {damageResult.bonus !== 0 ? ` ${fmtDm(damageResult.bonus)}` : ''} = {damageResult.gross}
               {damageResult.volleys > 1 ? ` (Full Auto ×${damageResult.volleys})` : ''}
             </p>
-            <p className="font-mono text-xs text-slate-400">
+            <p className="font-mono text-xs text-gunmetal-400">
               ARM {damageResult.armour} → Net: <span className="text-red-400 font-bold">{damageResult.net}</span>
             </p>
             {getEasyTargetDamageMultiplier(target) > 1 && (
@@ -925,7 +925,7 @@ export function AttackModal({ payload, onClose }) {
         {step3Result && !hit && (
           <div className="flex gap-2 pt-1">
             <button onClick={() => { setStep(STEP_PILOT); setStep3Result(null); setDamageResult(null); setCaptainAssistResult(null) }}
-              className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-600 hover:border-slate-500 rounded transition-colors">
+              className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-600 hover:border-gunmetal-500 rounded transition-colors">
               ← BACK
             </button>
             <button onClick={() => {
@@ -935,7 +935,7 @@ export function AttackModal({ payload, onClose }) {
               if (hasUtesSolution) updateShip(attacker.id, { utesSolutionDm: null, utesSolutionSlotIdx: null })
               onClose()
             }}
-              className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-700 hover:bg-slate-800 rounded transition-colors">
+              className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-700 hover:bg-gunmetal-800 rounded transition-colors">
               MISS — CLOSE
             </button>
           </div>
@@ -944,7 +944,7 @@ export function AttackModal({ payload, onClose }) {
         {!step3Result && (
           <div className="flex gap-2 pt-1">
             <button onClick={() => { setStep(STEP_PILOT); setStep3Result(null); setDamageResult(null); setCaptainAssistResult(null) }}
-              className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-600 hover:border-slate-500 rounded transition-colors">
+              className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-600 hover:border-gunmetal-500 rounded transition-colors">
               ← BACK
             </button>
           </div>
@@ -953,7 +953,7 @@ export function AttackModal({ payload, onClose }) {
         {hit && damageResult && (
           <div className="flex gap-2">
             <button onClick={onClose}
-              className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-600 hover:border-slate-500 rounded transition-colors">
+              className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-600 hover:border-gunmetal-500 rounded transition-colors">
               SKIP
             </button>
             <button onClick={applyResults}

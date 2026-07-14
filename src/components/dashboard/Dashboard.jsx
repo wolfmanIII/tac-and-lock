@@ -35,8 +35,8 @@ function RosterShipToken({ ship, fallbackColor }) {
 function RosterCombatStats({ ship }) {
   return (
     <div className="w-24 shrink-0 leading-tight">
-      <p className="font-mono text-xs text-slate-300">TAC SPD {ship.currentTacSpeed ?? '—'}</p>
-      <p className="font-mono text-xs text-slate-300">ARMOUR {ship.currentArmour ?? '—'}</p>
+      <p className="font-mono text-xs text-gunmetal-300">TAC SPD {ship.currentTacSpeed ?? '—'}</p>
+      <p className="font-mono text-xs text-gunmetal-300">ARMOUR {ship.currentArmour ?? '—'}</p>
     </div>
   )
 }
@@ -58,8 +58,8 @@ function nearestEnemyRangeBand(ship, ships, rangeBands) {
 function RosterTelemetry({ band }) {
   return (
     <div className="w-28 shrink-0 leading-tight">
-      <p className="font-mono text-xs text-slate-300">RANGE</p>
-      <p className="font-mono text-xs text-slate-300">{band ?? '—'}</p>
+      <p className="font-mono text-xs text-gunmetal-300">RANGE</p>
+      <p className="font-mono text-xs text-gunmetal-300">{band ?? '—'}</p>
     </div>
   )
 }
@@ -71,8 +71,8 @@ function RosterStatus({ ship, band }) {
     : (band === 'Adjacent' || band === 'Close')
       ? { label: '⚔ DOGFIGHT', className: 'text-amber-400' }
       : ship.faction === 'neutral'
-        ? { label: '○ NEUTRAL', className: 'text-slate-400' }
-        : { label: '● COMBAT', className: 'text-(--neon-cyan)' }
+        ? { label: '○ NEUTRAL', className: 'text-gunmetal-400' }
+        : { label: '● COMBAT', className: 'text-bronze-400' }
   return (
     <div className="w-24 shrink-0 leading-tight">
       <p className={`font-mono text-xs font-bold truncate ${badge.className}`}>{badge.label}</p>
@@ -87,7 +87,7 @@ function ActionIcon({ label, title, onClick, dim = '' }) {
     <Tooltip label={title}>
       <button
         onClick={onClick}
-        className={`w-6 h-6 flex items-center justify-center text-slate-400 font-mono text-sm rounded hover:bg-slate-700 transition-colors ${dim}`}
+        className={`w-6 h-6 flex items-center justify-center text-gunmetal-400 font-mono text-sm rounded hover:bg-gunmetal-700 transition-colors ${dim}`}
       >
         {label}
       </button>
@@ -112,9 +112,9 @@ function ProfilesPanel({ editingId, onEdit, onNew, onCatalog, catalogOpen, onAdd
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-3 border-b border-slate-700 shrink-0 bg-slate-900">
-        <h2 className="font-display text-xs text-(--neon-cyan) tracking-widest">
-          SHIP PROFILES <span className="text-slate-400">({profiles.length})</span>
+      <div className="px-4 py-3 border-b border-gunmetal-700 shrink-0 bg-gunmetal-900">
+        <h2 className="font-display text-xs text-bronze-400 tracking-widest">
+          SHIP PROFILES <span className="text-gunmetal-400">({profiles.length})</span>
         </h2>
       </div>
 
@@ -124,13 +124,13 @@ function ProfilesPanel({ editingId, onEdit, onNew, onCatalog, catalogOpen, onAdd
           placeholder="Search profile…"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="w-full bg-slate-800 border border-slate-700 text-slate-200 font-mono text-xs rounded px-3 py-1.5 focus:outline-none focus:border-(--neon-cyan)/60 placeholder:text-slate-400"
+          className="w-full bg-gunmetal-800 border border-gunmetal-700 text-gunmetal-200 font-mono text-xs rounded px-3 py-1.5 focus:outline-none focus:border-bronze-400/60 placeholder:text-gunmetal-400"
         />
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 space-y-0.5 py-1">
         {filtered.length === 0 && (
-          <p className="text-slate-400 font-mono text-xs italic px-2 py-2">
+          <p className="text-gunmetal-400 font-mono text-xs italic px-2 py-2">
             {filter ? 'No results.' : 'No profiles. Create one.'}
           </p>
         )}
@@ -139,21 +139,21 @@ function ProfilesPanel({ editingId, onEdit, onNew, onCatalog, catalogOpen, onAdd
             key={p.id}
             className={`group flex items-center gap-2 px-2 py-2 rounded transition-colors ${
               editingId === p.id
-                ? 'bg-(--neon-cyan)/10 border border-(--neon-cyan)/30'
-                : 'border border-transparent hover:bg-slate-800'
+                ? 'bg-bronze-400/10 border border-bronze-400/30'
+                : 'border border-transparent hover:bg-gunmetal-800'
             }`}
           >
             <div className="flex-1 min-w-0">
-              <p className={`font-mono text-xs font-bold truncate ${editingId === p.id ? 'text-(--neon-cyan)' : 'text-slate-200'}`}>
+              <p className={`font-mono text-xs font-bold truncate ${editingId === p.id ? 'text-bronze-400' : 'text-gunmetal-200'}`}>
                 {p.name}
               </p>
-              <p className="text-slate-400 font-mono text-xs truncate">
+              <p className="text-gunmetal-400 font-mono text-xs truncate">
                 {[p.class, p.tonnage ? `${p.tonnage}t` : null, p.hullPoints ? `HP${p.hullPoints}` : null].filter(Boolean).join(' · ')}
               </p>
             </div>
             <div className={`flex gap-1 shrink-0 ${editingId === p.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
               <ActionIcon label="▶" title="Add to Battle" onClick={() => onAddToBattle(p)} dim="hover:text-emerald-400" />
-              <ActionIcon label="✎" title="Edit"      onClick={() => onEdit(p.id)} dim="text-(--neon-cyan)" />
+              <ActionIcon label="✎" title="Edit"      onClick={() => onEdit(p.id)} dim="text-bronze-400" />
               <ActionIcon label="⧉" title="Duplicate" onClick={() => duplicateProfile(p.id)} />
               <ActionIcon label="⊗" title="Delete"    onClick={() => { if (confirm(`Delete "${p.name}"?`)) deleteProfile(p.id) }} dim="hover:text-red-400" />
             </div>
@@ -161,7 +161,7 @@ function ProfilesPanel({ editingId, onEdit, onNew, onCatalog, catalogOpen, onAdd
         ))}
       </div>
 
-      <div className="px-4 py-3 border-t border-slate-800 shrink-0 space-y-2">
+      <div className="px-4 py-3 border-t border-gunmetal-800 shrink-0 space-y-2">
         {importStatus && (
           <p className={`font-mono text-xs ${importStatus.ok ? 'text-green-400' : 'text-red-400'}`}>
             {importStatus.ok ? '✅ ' : '🚨 '}{importStatus.msg}
@@ -169,7 +169,7 @@ function ProfilesPanel({ editingId, onEdit, onNew, onCatalog, catalogOpen, onAdd
         )}
         <button
           onClick={onNew}
-          className="w-full py-1.5 bg-(--neon-cyan)/10 border border-(--neon-cyan)/30 text-(--neon-cyan) font-display text-xs tracking-widest rounded hover:bg-(--neon-cyan)/20 transition-colors"
+          className="w-full py-1.5 bg-bronze-400/10 border border-bronze-400/30 text-bronze-400 font-display text-xs tracking-widest rounded hover:bg-bronze-400/20 transition-colors"
         >
           + NEW PROFILE
         </button>
@@ -178,7 +178,7 @@ function ProfilesPanel({ editingId, onEdit, onNew, onCatalog, catalogOpen, onAdd
           className={`w-full py-1.5 border font-display text-xs tracking-widest rounded transition-colors ${
             catalogOpen
               ? 'border-amber-600/50 bg-amber-900/20 text-amber-400'
-              : 'border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-300'
+              : 'border-gunmetal-700 text-gunmetal-400 hover:border-gunmetal-500 hover:text-gunmetal-300'
           }`}
         >
           📖 OFFICIAL CATALOG
@@ -187,11 +187,11 @@ function ProfilesPanel({ editingId, onEdit, onNew, onCatalog, catalogOpen, onAdd
           <input ref={fileInputRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex-1 py-1 border border-slate-700 text-slate-400 font-display text-xs rounded hover:border-slate-500 transition-colors"
+            className="flex-1 py-1 border border-gunmetal-700 text-gunmetal-400 font-display text-xs rounded hover:border-gunmetal-500 transition-colors"
           >↓ IMPORT</button>
           <button
             onClick={exportAll}
-            className="flex-1 py-1 border border-slate-700 text-slate-400 font-display text-xs rounded hover:border-slate-500 transition-colors"
+            className="flex-1 py-1 border border-gunmetal-700 text-gunmetal-400 font-display text-xs rounded hover:border-gunmetal-500 transition-colors"
           >↑ EXPORT</button>
         </div>
       </div>
@@ -208,18 +208,18 @@ function AddToBattleDialog({ profile, onConfirm, onCancel }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onCancel} />
-      <div className="relative z-10 bg-slate-900 border border-slate-700 rounded-lg p-6 w-full max-w-sm space-y-4">
-        <p className="font-display text-(--neon-cyan) text-sm tracking-widest">ADD TO BATTLE</p>
-        <p className="text-slate-300 text-sm font-mono">{profile.name}</p>
+      <div className="relative z-10 bg-gunmetal-900 border border-gunmetal-700 rounded-lg p-6 w-full max-w-sm space-y-4">
+        <p className="font-display text-bronze-400 text-sm tracking-widest">ADD TO BATTLE</p>
+        <p className="text-gunmetal-300 text-sm font-mono">{profile.name}</p>
 
         <div className="space-y-3">
           <div>
-            <label className="text-[10px] font-display text-slate-500 tracking-widest block mb-1">FACTION</label>
+            <label className="text-[10px] font-display text-gunmetal-500 tracking-widest block mb-1">FACTION</label>
             <div className="flex gap-2">
               {FACTIONS.map((f) => (
                 <button
                   key={f.id}
-                  className={`flex-1 py-1 text-xs font-mono border rounded transition-colors ${faction === f.id ? 'border-sky-500 text-sky-300 bg-sky-900/30' : 'border-slate-700 text-slate-400 hover:border-slate-500'}`}
+                  className={`flex-1 py-1 text-xs font-mono border rounded transition-colors ${faction === f.id ? 'border-bronze-500 text-bronze-300 bg-bronze-900/30' : 'border-gunmetal-700 text-gunmetal-400 hover:border-gunmetal-500'}`}
                   style={faction === f.id ? { borderColor: f.color, color: f.color } : {}}
                   onClick={() => setFaction(f.id)}
                 >
@@ -229,10 +229,10 @@ function AddToBattleDialog({ profile, onConfirm, onCancel }) {
             </div>
           </div>
           <div>
-            <label className="text-[10px] font-display text-slate-500 tracking-widest block mb-1">INITIAL RANGE</label>
+            <label className="text-[10px] font-display text-gunmetal-500 tracking-widest block mb-1">INITIAL RANGE</label>
             <select
               value={band} onChange={(e) => setBand(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1.5 focus:border-(--neon-cyan) outline-none"
+              className="w-full bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-sm rounded px-2 py-1.5 focus:border-bronze-400 outline-none"
             >
               {RANGE_BANDS.map((b) => <option key={b.id} value={b.id}>{b.label} — {b.distance}</option>)}
             </select>
@@ -240,8 +240,8 @@ function AddToBattleDialog({ profile, onConfirm, onCancel }) {
         </div>
 
         <div className="flex gap-2 pt-2">
-          <button className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-700 hover:bg-slate-800 rounded" onClick={onCancel}>CANCEL</button>
-          <button className="flex-1 py-2 text-xs font-display tracking-widest text-(--neon-cyan) border border-(--neon-cyan)/40 hover:bg-(--neon-cyan)/10 rounded" onClick={() => onConfirm(profile, faction, band)}>CONFIRM</button>
+          <button className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-700 hover:bg-gunmetal-800 rounded" onClick={onCancel}>CANCEL</button>
+          <button className="flex-1 py-2 text-xs font-display tracking-widest text-bronze-400 border border-bronze-400/40 hover:bg-bronze-400/10 rounded" onClick={() => onConfirm(profile, faction, band)}>CONFIRM</button>
         </div>
       </div>
     </div>
@@ -253,9 +253,9 @@ function AddToBattleDialog({ profile, onConfirm, onCancel }) {
 function StatusLine({ label, value, active = true }) {
   return (
     <div className="flex items-center gap-2">
-      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${active ? 'bg-(--neon-cyan) animate-pulse' : 'bg-slate-700'}`} />
-      <span className="font-mono text-xs text-slate-400 flex-1">{label}</span>
-      <span className={`font-mono text-xs ${active ? 'text-(--neon-cyan)/60' : 'text-slate-400'}`}>{value}</span>
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${active ? 'bg-bronze-400 animate-pulse' : 'bg-gunmetal-700'}`} />
+      <span className="font-mono text-xs text-gunmetal-400 flex-1">{label}</span>
+      <span className={`font-mono text-xs ${active ? 'text-bronze-400/60' : 'text-gunmetal-400'}`}>{value}</span>
     </div>
   )
 }
@@ -283,65 +283,65 @@ function SessionPanel({ onEnterBattle, onLoadBattle, loading, onFieldManual }) {
     <div className="h-full flex overflow-hidden">
 
       {/* Left: console */}
-      <div className="border-r border-slate-800 flex flex-col overflow-hidden" style={{ width: 300 }}>
-        <div className="px-5 py-3 border-b border-slate-800 shrink-0">
-          <p className="font-display text-xs text-slate-400 tracking-widest">// OPERATIONS CONSOLE</p>
+      <div className="border-r border-gunmetal-800 flex flex-col overflow-hidden" style={{ width: 300 }}>
+        <div className="px-5 py-3 border-b border-gunmetal-800 shrink-0">
+          <p className="font-display text-xs text-gunmetal-400 tracking-widest">// OPERATIONS CONSOLE</p>
         </div>
-        <div className="px-5 py-3 space-y-1.5 border-b border-slate-800 shrink-0">
+        <div className="px-5 py-3 space-y-1.5 border-b border-gunmetal-800 shrink-0">
           <StatusLine label="NAVIGATION"   value="ACTIVE"  />
           <StatusLine label="SENSORS"      value="ONLINE"  />
           <StatusLine label="ARMAMENTS"    value="READY"   />
           <StatusLine label="MISSION DATA" value="STANDBY" active={false} />
         </div>
         <div className="flex-1 px-5 py-5 space-y-3 overflow-y-auto">
-          <p className="font-display text-xs text-slate-400 tracking-widest mb-1">ACTIONS</p>
+          <p className="font-display text-xs text-gunmetal-400 tracking-widest mb-1">ACTIONS</p>
           <button
             onClick={onEnterBattle}
-            className="w-full py-3.5 bg-(--neon-cyan)/10 border border-(--neon-cyan)/40 text-(--neon-cyan) font-display text-xs tracking-widest rounded-lg hover:bg-(--neon-cyan)/20 transition-colors"
+            className="w-full py-3.5 bg-bronze-400/10 border border-bronze-400/40 text-bronze-400 font-display text-xs tracking-widest rounded-lg hover:bg-bronze-400/20 transition-colors"
           >
             <span className="text-base block mb-0.5">▶</span>
             ENTER BATTLE
-            <span className="block font-mono text-slate-400 mt-0.5 normal-case tracking-normal font-normal text-xs">Go to battle screen</span>
+            <span className="block font-mono text-gunmetal-400 mt-0.5 normal-case tracking-normal font-normal text-xs">Go to battle screen</span>
           </button>
           <button
             onClick={onLoadBattle}
             disabled={loading}
-            className="w-full py-3 border border-slate-700 text-slate-400 font-display text-xs tracking-widest rounded-lg hover:border-slate-500 hover:text-slate-300 transition-colors"
+            className="w-full py-3 border border-gunmetal-700 text-gunmetal-400 font-display text-xs tracking-widest rounded-lg hover:border-gunmetal-500 hover:text-gunmetal-300 transition-colors"
           >
             <span className="text-sm block mb-0.5">{loading ? '⌛' : '↓'}</span>
             {loading ? 'LOADING…' : 'RESUME FROM FILE'}
-            <span className="block font-mono text-slate-400 mt-0.5 normal-case tracking-normal font-normal text-xs">Import .json session</span>
+            <span className="block font-mono text-gunmetal-400 mt-0.5 normal-case tracking-normal font-normal text-xs">Import .json session</span>
           </button>
           {ships.length > 0 && (
             <div className="flex gap-2 pt-1">
-              <button className="flex-1 py-1.5 text-xs font-display tracking-widest text-slate-400 border border-slate-700 hover:bg-slate-800 rounded" onClick={exportBattleState}>SAVE</button>
+              <button className="flex-1 py-1.5 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-700 hover:bg-gunmetal-800 rounded" onClick={exportBattleState}>SAVE</button>
               <button className="flex-1 py-1.5 text-xs font-display tracking-widest text-red-400 border border-red-900 hover:bg-red-900/20 rounded" onClick={() => { if (confirm('Clear all ships?')) resetBattle() }}>CLEAR</button>
             </div>
           )}
           <button
             onClick={onFieldManual}
-            className="w-full py-2 border border-slate-700 text-slate-500 font-display text-xs tracking-widest rounded-lg hover:border-slate-600 hover:text-slate-400 transition-colors"
+            className="w-full py-2 border border-gunmetal-700 text-gunmetal-500 font-display text-xs tracking-widest rounded-lg hover:border-gunmetal-600 hover:text-gunmetal-400 transition-colors"
           >
             📖 FIELD MANUAL
           </button>
         </div>
-        <div className="shrink-0 px-5 py-3 border-t border-slate-800">
-          <p className="font-mono text-xs text-slate-400 leading-relaxed">Add profiles on the left before entering battle.</p>
+        <div className="shrink-0 px-5 py-3 border-t border-gunmetal-800">
+          <p className="font-mono text-xs text-gunmetal-400 leading-relaxed">Add profiles on the left before entering battle.</p>
         </div>
       </div>
 
       {/* Right: tactical display */}
-      <div className="relative flex flex-col flex-1 overflow-hidden bg-slate-950">
+      <div className="relative flex flex-col flex-1 overflow-hidden bg-gunmetal-950">
         <div className="absolute inset-0 pointer-events-none opacity-25"
           style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(15,23,42,0.5) 3px, rgba(15,23,42,0.5) 4px)' }} />
         <div className="relative z-10 flex flex-col h-full">
-          <div className="px-6 py-3 border-b border-slate-800/60 shrink-0 flex items-center gap-3">
-            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${ships.length ? 'bg-(--neon-cyan) animate-pulse' : 'bg-slate-600'}`} />
-            <span className="font-display text-xs text-slate-400 tracking-widest">TACTICAL DISPLAY</span>
-            <div className="flex-1 h-px bg-slate-800" />
-            <span className="font-display text-xs text-slate-400 tracking-widest">{ships.length ? 'ROSTER READY' : 'STANDBY'}</span>
+          <div className="px-6 py-3 border-b border-gunmetal-800/60 shrink-0 flex items-center gap-3">
+            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${ships.length ? 'bg-bronze-400 animate-pulse' : 'bg-gunmetal-600'}`} />
+            <span className="font-display text-xs text-gunmetal-400 tracking-widest">TACTICAL DISPLAY</span>
+            <div className="flex-1 h-px bg-gunmetal-800" />
+            <span className="font-display text-xs text-gunmetal-400 tracking-widest">{ships.length ? 'ROSTER READY' : 'STANDBY'}</span>
           </div>
-          <div className="px-6 py-3 border-b border-slate-800/60 shrink-0 grid grid-cols-2 gap-x-8 gap-y-1">
+          <div className="px-6 py-3 border-b border-gunmetal-800/60 shrink-0 grid grid-cols-2 gap-x-8 gap-y-1">
             {[
               { k: 'PROTOCOL',     v: '2300AD/TCV-1.0' },
               { k: 'RANGE SYSTEM', v: 'BAND' },
@@ -351,17 +351,17 @@ function SessionPanel({ onEnterBattle, onLoadBattle, loading, onFieldManual }) {
               { k: 'DRONES',       v: ships.length ? drones.length : '—' },
             ].map(({ k, v }) => (
               <div key={k} className="flex justify-between gap-2">
-                <span className="font-mono text-xs text-slate-400">{k}</span>
-                <span className={`font-mono text-xs ${ships.length ? 'text-(--neon-cyan)/70' : 'text-slate-400'}`}>{v}</span>
+                <span className="font-mono text-xs text-gunmetal-400">{k}</span>
+                <span className={`font-mono text-xs ${ships.length ? 'text-bronze-400/70' : 'text-gunmetal-400'}`}>{v}</span>
               </div>
             ))}
           </div>
           {ships.length > 0 && (
-            <div className="px-6 py-2 border-b border-slate-800/40 shrink-0">
-              <span className="font-mono text-xs text-slate-400">SESSION </span>
-              <span className="font-mono text-xs text-slate-300">{name}</span>
-              <span className="font-mono text-xs text-slate-400 ml-3">SAVED </span>
-              <span className="font-mono text-xs text-slate-400">{savedAtFormatted}</span>
+            <div className="px-6 py-2 border-b border-gunmetal-800/40 shrink-0">
+              <span className="font-mono text-xs text-gunmetal-400">SESSION </span>
+              <span className="font-mono text-xs text-gunmetal-300">{name}</span>
+              <span className="font-mono text-xs text-gunmetal-400 ml-3">SAVED </span>
+              <span className="font-mono text-xs text-gunmetal-400">{savedAtFormatted}</span>
             </div>
           )}
           <div className="flex-1 overflow-y-auto px-6 py-4">
@@ -375,11 +375,11 @@ function SessionPanel({ onEnterBattle, onLoadBattle, loading, onFieldManual }) {
                   <line x1="50" y1="12" x2="50" y2="26" stroke="#0891b2" strokeWidth="0.8" />
                   <line x1="50" y1="74" x2="50" y2="88" stroke="#0891b2" strokeWidth="0.8" />
                 </svg>
-                <p className="font-display text-xs text-slate-400 tracking-widest">NO VESSELS ASSIGNED</p>
+                <p className="font-display text-xs text-gunmetal-400 tracking-widest">NO VESSELS ASSIGNED</p>
               </div>
             ) : (
               <>
-                <p className="font-display text-xs text-slate-400 tracking-widest mb-3">SHIP ROSTER</p>
+                <p className="font-display text-xs text-gunmetal-400 tracking-widest mb-3">SHIP ROSTER</p>
                 {FACTIONS.map(({ id: fId, label }) => {
                   const group = byFaction[fId]
                   if (!group || group.length === 0) return null
@@ -399,16 +399,16 @@ function SessionPanel({ onEnterBattle, onLoadBattle, loading, onFieldManual }) {
                             <div key={s.id} className="flex items-center gap-2.5">
                               <RosterShipToken ship={s} fallbackColor={FACTION_COLOR[fId] ?? '#64748b'} />
                               <div className="min-w-0 flex-1">
-                                <p className="font-mono text-xs text-slate-200 font-bold truncate">{s.profile?.name ?? '?'}</p>
-                                <p className="font-mono text-xs text-slate-400 truncate">{s.profile?.class ?? '—'}</p>
+                                <p className="font-mono text-xs text-gunmetal-200 font-bold truncate">{s.profile?.name ?? '?'}</p>
+                                <p className="font-mono text-xs text-gunmetal-400 truncate">{s.profile?.class ?? '—'}</p>
                               </div>
                               <RosterCombatStats ship={s} />
                               <RosterTelemetry band={band} />
                               <RosterStatus ship={s} band={band} />
-                              <div className="w-14 h-1 bg-slate-800 rounded-full overflow-hidden shrink-0">
+                              <div className="w-14 h-1 bg-gunmetal-800 rounded-full overflow-hidden shrink-0">
                                 <div className="h-full rounded-full" style={{ width: `${pct * 100}%`, backgroundColor: bar }} />
                               </div>
-                              <span className="font-mono text-xs text-slate-400 w-10 text-right shrink-0">{cur}/{hull || '?'}</span>
+                              <span className="font-mono text-xs text-gunmetal-400 w-10 text-right shrink-0">{cur}/{hull || '?'}</span>
                             </div>
                           )
                         })}
@@ -419,8 +419,8 @@ function SessionPanel({ onEnterBattle, onLoadBattle, loading, onFieldManual }) {
               </>
             )}
           </div>
-          <div className="shrink-0 px-6 py-2 border-t border-slate-800/60">
-            <div className="flex justify-between font-mono text-xs text-slate-400">
+          <div className="shrink-0 px-6 py-2 border-t border-gunmetal-800/60">
+            <div className="flex justify-between font-mono text-xs text-gunmetal-400">
               <span>SYS:ONLINE</span>
               <span>2300AD // MONGOOSE PUBLISHING</span>
             </div>
@@ -476,10 +476,10 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="w-full h-full flex bg-slate-950">
+    <div className="w-full h-full flex bg-gunmetal-950">
 
       {/* Left: profile library */}
-      <div className="w-72 shrink-0 border-r border-slate-800 flex flex-col overflow-hidden">
+      <div className="w-72 shrink-0 border-r border-gunmetal-800 flex flex-col overflow-hidden">
         <ProfilesPanel
           editingId={editingId}
           onEdit={handleEdit}
@@ -493,18 +493,18 @@ export default function Dashboard() {
       {/* Right: header + main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
 
-        <header className="shrink-0 px-6 py-4 border-b border-slate-800 flex items-center gap-4">
+        <header className="shrink-0 px-6 py-4 border-b border-gunmetal-800 flex items-center gap-4">
           <div className="logo-stutter-wrap">
             <img src="/logo.png" alt="TAC &amp; LOCK" />
           </div>
           <div className="flex flex-col gap-0.5">
-            <h1 className="font-display font-bold italic text-(--neon-cyan) tracking-widest text-2xl leading-tight">
+            <h1 className="font-display font-bold italic text-bronze-400 tracking-widest text-2xl leading-tight">
               TAC &amp; LOCK
             </h1>
-            <span className="font-display text-xs text-slate-400 tracking-widest">TACTICAL INTERFACE // 2300AD SPACE COMBAT</span>
-            <span className="font-display text-xs text-slate-400 tracking-widest">SPACE COMBAT SIMULATOR</span>
+            <span className="font-display text-xs text-gunmetal-400 tracking-widest">TACTICAL INTERFACE // 2300AD SPACE COMBAT</span>
+            <span className="font-display text-xs text-gunmetal-400 tracking-widest">SPACE COMBAT SIMULATOR</span>
           </div>
-          <span className="ml-auto text-slate-400 font-mono text-xs">v{__APP_VERSION__}</span>
+          <span className="ml-auto text-gunmetal-400 font-mono text-xs">v{__APP_VERSION__}</span>
         </header>
 
         <main className="flex-1 overflow-hidden">

@@ -66,7 +66,7 @@ function BattleTopRight() {
         <button
           onClick={() => setHelpOpen(true)}
           aria-label="Open field manual"
-          className="bg-slate-900/80 border border-slate-700 rounded backdrop-blur-sm px-2.5 py-1 font-mono text-xs font-bold text-(--neon-cyan) hover:text-sky-200 hover:border-slate-500 transition-colors"
+          className="bg-gunmetal-900/80 border border-gunmetal-700 rounded backdrop-blur-sm px-2.5 py-1 font-mono text-xs font-bold text-bronze-400 hover:text-bronze-200 hover:border-gunmetal-500 transition-colors"
         >
           ?
         </button>
@@ -110,7 +110,7 @@ function AppScreens() {
 
   return (
     <>
-      <div className="relative w-full h-[calc(100%-1.75rem)] overflow-hidden bg-slate-950">
+      <div className="relative w-full h-[calc(100%-1.75rem)] overflow-hidden bg-gunmetal-950">
         <BattleView />
         <HUD />
         <PhaseTracker />

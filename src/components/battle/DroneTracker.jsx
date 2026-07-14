@@ -23,10 +23,10 @@ export function DroneTracker() {
       </h2>
       <div className="flex flex-wrap gap-2 mb-2">
         {inFlight.map((d) => (
-          <div key={d.id} className="flex items-center gap-1.5 text-xs font-mono bg-slate-900 border border-amber-900/50 rounded px-2 py-0.5">
+          <div key={d.id} className="flex items-center gap-1.5 text-xs font-mono bg-gunmetal-900 border border-amber-900/50 rounded px-2 py-0.5">
             <span className="text-amber-400">🚀</span>
-            <span className="text-slate-300">{WEAPONS[d.weaponId]?.name ?? d.weaponId}</span>
-            <span className="text-slate-400">{shipName(d.ownerId)} → {shipName(d.targetId)}</span>
+            <span className="text-gunmetal-300">{WEAPONS[d.weaponId]?.name ?? d.weaponId}</span>
+            <span className="text-gunmetal-400">{shipName(d.ownerId)} → {shipName(d.targetId)}</span>
             <span className="text-amber-300 font-bold">{d.currentBand}</span>
           </div>
         ))}

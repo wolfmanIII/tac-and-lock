@@ -18,29 +18,29 @@ export function PhaseTracker() {
 
   return (
     <div className="absolute top-10 right-3 z-10 w-48">
-      <div className="bg-slate-900/80 border border-slate-700 rounded backdrop-blur-sm overflow-hidden">
+      <div className="bg-gunmetal-900/80 border border-gunmetal-700 rounded backdrop-blur-sm overflow-hidden">
         <button
           onClick={() => setCollapsed((c) => !c)}
-          className="w-full flex items-center justify-between px-3 py-1.5 text-slate-400 hover:text-slate-200 transition-colors"
+          className="w-full flex items-center justify-between px-3 py-1.5 text-gunmetal-400 hover:text-gunmetal-200 transition-colors"
         >
           <span className="font-display text-xs tracking-widest">INITIATIVE</span>
           <span className="text-xs">{collapsed ? '▼' : '▲'}</span>
         </button>
 
         {!collapsed && (
-          <ul className="border-t border-slate-700/50">
+          <ul className="border-t border-gunmetal-700/50">
             {initiativeOrder.map((id, idx) => {
               const ship = shipMap[id]
               if (!ship) return null
               const isActive = idx === currentActorIndex
               return (
-                <li key={id} className={`flex items-center gap-2 px-3 py-1 ${isActive ? 'bg-slate-700/60' : ''}`}>
-                  <span className="text-slate-400 font-mono text-xs w-3">{isActive ? '●' : '○'}</span>
+                <li key={id} className={`flex items-center gap-2 px-3 py-1 ${isActive ? 'bg-gunmetal-700/60' : ''}`}>
+                  <span className="text-gunmetal-400 font-mono text-xs w-3">{isActive ? '●' : '○'}</span>
                   <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: ship.color ?? '#94a3b8' }} />
-                  <span className={`font-mono text-xs truncate ${isActive ? 'text-(--neon-cyan)' : 'text-slate-400'}`}>
+                  <span className={`font-mono text-xs truncate ${isActive ? 'text-bronze-400' : 'text-gunmetal-400'}`}>
                     {ship.profile?.name ?? ship.id}
                   </span>
-                  <span className="ml-auto font-mono text-xs text-slate-400 shrink-0">{ship.initiative ?? 0}</span>
+                  <span className="ml-auto font-mono text-xs text-gunmetal-400 shrink-0">{ship.initiative ?? 0}</span>
                 </li>
               )
             })}

@@ -27,10 +27,10 @@ const SECTIONS = [
 function Section({ id, title, children }) {
   return (
     <section id={id} className="scroll-mt-4 space-y-3">
-      <h2 className="font-display text-(--neon-cyan) tracking-widest text-sm border-b border-slate-800 pb-1">
+      <h2 className="font-display text-bronze-400 tracking-widest text-sm border-b border-gunmetal-800 pb-1">
         {title}
       </h2>
-      <div className="space-y-3 font-mono text-xs text-slate-300 leading-relaxed">
+      <div className="space-y-3 font-mono text-xs text-gunmetal-300 leading-relaxed">
         {children}
       </div>
     </section>
@@ -40,8 +40,8 @@ function Section({ id, title, children }) {
 function Sub({ title, children }) {
   return (
     <div className="space-y-1.5">
-      <h3 className="font-display text-slate-200 tracking-widest text-xs">{title}</h3>
-      <div className="text-slate-400 space-y-1.5 pl-3 border-l border-slate-800">
+      <h3 className="font-display text-gunmetal-200 tracking-widest text-xs">{title}</h3>
+      <div className="text-gunmetal-400 space-y-1.5 pl-3 border-l border-gunmetal-800">
         {children}
       </div>
     </div>
@@ -51,15 +51,15 @@ function Sub({ title, children }) {
 function KV({ k, v }) {
   return (
     <div className="flex gap-2">
-      <span className="text-(--neon-cyan) shrink-0 w-36">{k}</span>
-      <span className="text-slate-400">{v}</span>
+      <span className="text-bronze-400 shrink-0 w-36">{k}</span>
+      <span className="text-gunmetal-400">{v}</span>
     </div>
   )
 }
 
 function Note({ children }) {
   return (
-    <p className="bg-slate-900/60 border border-slate-700 rounded px-3 py-2 text-slate-400 italic">
+    <p className="bg-gunmetal-900/60 border border-gunmetal-700 rounded px-3 py-2 text-gunmetal-400 italic">
       {children}
     </p>
   )
@@ -70,17 +70,17 @@ function Table({ headers, rows }) {
     <div className="overflow-x-auto">
       <table className="w-full text-xs font-mono border-collapse">
         <thead>
-          <tr className="border-b border-slate-700">
+          <tr className="border-b border-gunmetal-700">
             {headers.map((h) => (
-              <th key={h} className="text-left py-1 pr-4 font-display tracking-widest text-slate-400 text-[10px]">{h}</th>
+              <th key={h} className="text-left py-1 pr-4 font-display tracking-widest text-gunmetal-400 text-[10px]">{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {rows.map((row, i) => (
-            <tr key={i} className="border-b border-slate-800/50">
+            <tr key={i} className="border-b border-gunmetal-800/50">
               {row.map((cell, j) => (
-                <td key={j} className={`py-1 pr-4 align-top ${j === 0 ? 'text-slate-200' : 'text-slate-400'}`}>{cell}</td>
+                <td key={j} className={`py-1 pr-4 align-top ${j === 0 ? 'text-gunmetal-200' : 'text-gunmetal-400'}`}>{cell}</td>
               ))}
             </tr>
           ))}
@@ -101,12 +101,12 @@ export function HelpScreen({ onBack } = {}) {
   }
 
   return (
-    <div className="w-full h-full flex bg-slate-950 overflow-hidden">
+    <div className="w-full h-full flex bg-gunmetal-950 overflow-hidden">
 
       {/* ── Sidebar TOC ─────────────────────────────────────────────── */}
-      <aside className="w-52 shrink-0 border-r border-slate-800 flex flex-col overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-800 shrink-0">
-          <p className="font-display text-xs text-(--neon-cyan) tracking-widest">// FIELD MANUAL</p>
+      <aside className="w-52 shrink-0 border-r border-gunmetal-800 flex flex-col overflow-hidden">
+        <div className="px-4 py-3 border-b border-gunmetal-800 shrink-0">
+          <p className="font-display text-xs text-bronze-400 tracking-widest">// FIELD MANUAL</p>
         </div>
         <nav className="flex-1 overflow-y-auto py-2">
           {SECTIONS.map(({ id, label }) => (
@@ -115,25 +115,25 @@ export function HelpScreen({ onBack } = {}) {
               onClick={() => scrollTo(id)}
               className={`w-full text-left px-4 py-1.5 font-mono text-xs transition-colors ${
                 active === id
-                  ? 'text-(--neon-cyan) bg-(--neon-cyan)/5'
-                  : 'text-slate-400 hover:text-slate-300'
+                  ? 'text-bronze-400 bg-bronze-400/5'
+                  : 'text-gunmetal-400 hover:text-gunmetal-300'
               }`}
             >
               {label}
             </button>
           ))}
         </nav>
-        <div className="shrink-0 px-4 py-3 border-t border-slate-800 space-y-2">
+        <div className="shrink-0 px-4 py-3 border-t border-gunmetal-800 space-y-2">
           <a
             href="/field-manual.pdf"
             download="tac-and-lock-field-manual.pdf"
-            className="block w-full py-2 border border-slate-700 text-slate-400 font-display text-xs tracking-widest rounded hover:border-slate-500 hover:text-slate-200 transition-colors text-center"
+            className="block w-full py-2 border border-gunmetal-700 text-gunmetal-400 font-display text-xs tracking-widest rounded hover:border-gunmetal-500 hover:text-gunmetal-200 transition-colors text-center"
           >
             ⬇ DOWNLOAD PDF
           </a>
           <button
             onClick={handleBack}
-            className="w-full py-2 border border-slate-700 text-slate-400 font-display text-xs tracking-widest rounded hover:border-slate-500 hover:text-slate-200 transition-colors"
+            className="w-full py-2 border border-gunmetal-700 text-gunmetal-400 font-display text-xs tracking-widest rounded hover:border-gunmetal-500 hover:text-gunmetal-200 transition-colors"
           >
             ⬅ BACK
           </button>
@@ -146,17 +146,17 @@ export function HelpScreen({ onBack } = {}) {
         {/* OVERVIEW */}
         <Section id="overview" title="Overview">
           <p>
-            <span className="text-(--neon-cyan) font-bold">Tac &amp; Lock</span> is a browser-based Virtual Tabletop tool for running{' '}
-            <span className="text-slate-200">2300AD</span> space combat at the gaming table.
+            <span className="text-bronze-400 font-bold">Tac &amp; Lock</span> is a browser-based Virtual Tabletop tool for running{' '}
+            <span className="text-gunmetal-200">2300AD</span> space combat at the gaming table.
             GM-operated, designed for shared-screen play.
           </p>
           <p>
-            Rules source: <span className="text-slate-200">2300AD Core Book 3: Vehicles and Spacecraft pp.52–62</span> (primary).
+            Rules source: <span className="text-gunmetal-200">2300AD Core Book 3: Vehicles and Spacecraft pp.52–62</span> (primary).
             Traveller 2022 CRB used only for internal critical hit tables (p.158–159) and weapon traits (p.75).
             Where B3 and CRB diverge, B3 wins.
           </p>
           <p>
-            Combat uses <span className="text-slate-200">range bands</span> — no hex grid, no velocity vectors.
+            Combat uses <span className="text-gunmetal-200">range bands</span> — no hex grid, no velocity vectors.
             Seven bands (Adjacent → Distant) define all spatial relationships.
             Ships spend TAC Speed to move between bands.
           </p>
@@ -195,7 +195,7 @@ export function HelpScreen({ onBack } = {}) {
           <p>
             There is no "Manoeuvre/Attack/Actions Step" in 2300AD B3 — that structure
             is the Traveller CRB's own generic spacecraft combat loop, not B3's. B3
-            instead gives <span className="text-slate-200">each crew role its own
+            instead gives <span className="text-gunmetal-200">each crew role its own
             action budget</span> (skill level in that role's primary skill; Gunnery
             is capped at 1 use/round). A ship's turn is open-ended: manoeuvre, attack,
             launch a drone, or run a crew action, in any order, until every role is
@@ -214,7 +214,7 @@ export function HelpScreen({ onBack } = {}) {
 
         {/* SETUP */}
         <Section id="setup" title="Setup Phase">
-          <p>Right-click the background → <span className="text-slate-200">Add ship</span>. Choose profile, faction, and initial range band.</p>
+          <p>Right-click the background → <span className="text-gunmetal-200">Add ship</span>. Choose profile, faction, and initial range band.</p>
           <p>Ships appear as bento cards grouped by faction. Each card shows hull bar, TAC Speed, armour, effective signature, weapons, critical tracks, and inbound drone ETA.</p>
           <p>Right-click a card → context menu. Manoeuvre/Attack/Launch Drone/Crew Action are only enabled during that ship's own turn in Combat.</p>
           <Sub title="CONTEXT MENU GATING">
@@ -231,10 +231,10 @@ export function HelpScreen({ onBack } = {}) {
 
         {/* INITIATIVE */}
         <Section id="initiative" title="Initiative">
-          <p>Formula: <span className="text-slate-200">2D6 + Tactics(naval) + INT DM</span> — opposed check. // B3 p.54</p>
+          <p>Formula: <span className="text-gunmetal-200">2D6 + Tactics(naval) + INT DM</span> — opposed check. // B3 p.54</p>
           <p>The Captain (or lead tactician) of each ship makes an opposed Tactics(naval) check. Highest total acts first. Ties re-roll. Order is fixed for the entire engagement.</p>
           <Sub title="HOW TO ROLL">
-            <p>Right-click background → <span className="text-slate-200">Roll Initiative</span>.</p>
+            <p>Right-click background → <span className="text-gunmetal-200">Roll Initiative</span>.</p>
             <KV k="Player ships"  v="Enter 2D6 dice manually. Select Tactics skill and INT DM." />
             <KV k="NPC ships"     v="Auto-rolled on confirm." />
             <KV k="🎲 button"     v="Opt-in auto-roll for player ships." />
@@ -244,7 +244,7 @@ export function HelpScreen({ onBack } = {}) {
         {/* MANOEUVRE */}
         <Section id="manoeuvre" title="Manoeuvre">
           <p>Each ship's Pilot may attempt to Open (flee) or Close (approach) against one opposing ship — an opposed Pilot (DEX) check, adding the ship's TAC Speed as a DM. // 2300AD B3 p.54</p>
-          <p>Right-click a ship → <span className="text-slate-200">Manoeuvre…</span></p>
+          <p>Right-click a ship → <span className="text-gunmetal-200">Manoeuvre…</span></p>
           <Sub title="CONTROLS">
             <KV k="◀ APPROACH / FLEE ▶" v="Pick which ship attempts Close (approach) or Open (flee)." />
             <KV k="ROLL"                v="Opposed Pilot (DEX) check for both ships: 2D6 + Pilot skill + DEX DM + TAC Speed each." />
@@ -256,8 +256,8 @@ export function HelpScreen({ onBack } = {}) {
 
         {/* ATTACK */}
         <Section id="attack" title="Attack — Firing Solution">
-          <p>Each ship in initiative order may attack. The attack is a <span className="text-slate-200">3-step task chain</span> — positive Effect from each step carries forward as a DM to the next. // B3 p.56</p>
-          <p>Right-click a ship → <span className="text-slate-200">Attack…</span></p>
+          <p>Each ship in initiative order may attack. The attack is a <span className="text-gunmetal-200">3-step task chain</span> — positive Effect from each step carries forward as a DM to the next. // B3 p.56</p>
+          <p>Right-click a ship → <span className="text-gunmetal-200">Attack…</span></p>
 
           <Sub title="GUNNER ACTIONS (choose one per round) // B3 p.55">
             <KV k="Fire Weapon"              v="The 3-step Firing Solution below." />
@@ -311,7 +311,7 @@ export function HelpScreen({ onBack } = {}) {
           <Note>Stationary or reaction-drive-propelled targets (not manoeuvring under stutterwarp): DM+2 and damage doubled — their Firing Solution becomes trivial. // B3 p.56</Note>
 
           <Sub title="DEFENSIVE SCREENS // B3 p.55, p.62">
-            <p>Ablative clouds/EM fields that disperse incoming <span className="text-slate-200">laser fire only</span> — no effect vs particle beams, kinetic weapons, or missile warheads (though nuclear "detonation laser" drones/submunitions count as laser).</p>
+            <p>Ablative clouds/EM fields that disperse incoming <span className="text-gunmetal-200">laser fire only</span> — no effect vs particle beams, kinetic weapons, or missile warheads (though nuclear "detonation laser" drones/submunitions count as laser).</p>
             <KV k="Rating 1/2/3" v="DM−1/−2/−3 to attack rolls made against this ship, while active" />
             <KV k="Depletion"    v="Any hit, regardless of damage, reduces the active Rating by 1" />
             <KV k="Deploy"       v="Free — activates the screen at its installed Rating for the first time this battle" />
@@ -331,19 +331,19 @@ export function HelpScreen({ onBack } = {}) {
           <p>The defender declares reactions before each attack resolves.</p>
 
           <Sub title="EVADE">
-            <p>Opposed Pilot (DEX) check, declared during a ship's turn (Manoeuvre action). Effect 1–4: <span className="text-slate-200">DM−1</span>; Effect 5+: <span className="text-slate-200">DM−2</span>; Effect ≤−5: enemy gains <span className="text-slate-200">DM+1</span>. Applies to both the enemy's Sensor Operator and Gunner checks for the rest of the round.</p>
+            <p>Opposed Pilot (DEX) check, declared during a ship's turn (Manoeuvre action). Effect 1–4: <span className="text-gunmetal-200">DM−1</span>; Effect 5+: <span className="text-gunmetal-200">DM−2</span>; Effect ≤−5: enemy gains <span className="text-gunmetal-200">DM+1</span>. Applies to both the enemy's Sensor Operator and Gunner checks for the rest of the round.</p>
           </Sub>
 
           <Sub title="POINT DEFENCE">
-            <p>Against a single incoming drone/missile — resolved inline in the <span className="text-slate-200">Drone Attack</span> modal, before the Firing Solution. <span className="text-slate-200">Difficult (10+) Gunner (DEX)</span> check.</p>
+            <p>Against a single incoming drone/missile — resolved inline in the <span className="text-gunmetal-200">Drone Attack</span> modal, before the Firing Solution. <span className="text-gunmetal-200">Difficult (10+) Gunner (DEX)</span> check.</p>
             <p>Success: destroys that one drone. DM+4 for PDC weapons (e.g. Quinn Type 17), DM−2 for conventional mounts — a PDC can attempt up to TL−4 separate intercepts per round (GM-tracked).</p>
           </Sub>
         </Section>
 
         {/* ACTIONS */}
         <Section id="actions" title="Crew Actions">
-          <p>Each ship in initiative order may perform one crew action. Right-click a ship → <span className="text-slate-200">Crew Action…</span></p>
-          <p>Select the action, configure options, roll (if required), click <span className="text-slate-200">APPLY RESULT</span>.</p>
+          <p>Each ship in initiative order may perform one crew action. Right-click a ship → <span className="text-gunmetal-200">Crew Action…</span></p>
+          <p>Select the action, configure options, roll (if required), click <span className="text-gunmetal-200">APPLY RESULT</span>.</p>
 
           <Sub title="CAPTAIN">
             <KV k="Commands" v="Average (8+) Leadership (INT or SOC). Order one crew role. Effect 1–4 → DM+1, Effect 5–6 → DM+2 to their actions this round. Cap = the Captain's own action budget. Applies immediately — the Captain acts first, so a Command issued early in the ship's turn is available to that role's later actions this same round." />
@@ -386,7 +386,7 @@ export function HelpScreen({ onBack } = {}) {
         {/* CRITICAL HITS */}
         <Section id="crits" title="Critical Hits">
           <Sub title="SURFACE FIXTURE DAMAGE // B3 p.58">
-            <p>Triggered on any hit with <span className="text-slate-200">Effect ≥ 3</span>, even non-penetrating. Roll 2D:</p>
+            <p>Triggered on any hit with <span className="text-gunmetal-200">Effect ≥ 3</span>, even non-penetrating. Roll 2D:</p>
             <Table
               headers={['2D', 'System', '1st Hit', '2nd Hit']}
               rows={[
@@ -409,7 +409,7 @@ export function HelpScreen({ onBack } = {}) {
           </Sub>
 
           <Sub title="ACTIVE HAZARDS">
-            <p>Some critical hits generate ongoing hazards (fire, hull breach, fuel leak, radiation). The GM adds hazards via <span className="text-slate-200">Ship Sheet → ACTIVE HAZARDS</span>. A successful <span className="text-slate-200">Damage Control</span> action removes one hazard.</p>
+            <p>Some critical hits generate ongoing hazards (fire, hull breach, fuel leak, radiation). The GM adds hazards via <span className="text-gunmetal-200">Ship Sheet → ACTIVE HAZARDS</span>. A successful <span className="text-gunmetal-200">Damage Control</span> action removes one hazard.</p>
           </Sub>
         </Section>
 
@@ -418,18 +418,18 @@ export function HelpScreen({ onBack } = {}) {
           <p>2300AD B3 has no "salvo" abstraction — each drone/missile is an individually piloted unit that closes range on its own TAC Speed and resolves its own 3-step Firing Solution, exactly like a ship. // B3 p.55–56, p.61</p>
 
           <Sub title="LAUNCHING">
-            <p>Right-click attacker → <span className="text-slate-200">Launch Drone…</span> Pick target, weapon (Ritage-1/2, 'Whiskey', or vehicle-sourced missiles), and how many separate units to launch. Each unit is tracked independently in the Drone Tracker and closes one range band per round.</p>
+            <p>Right-click attacker → <span className="text-gunmetal-200">Launch Drone…</span> Pick target, weapon (Ritage-1/2, 'Whiskey', or vehicle-sourced missiles), and how many separate units to launch. Each unit is tracked independently in the Drone Tracker and closes one range band per round.</p>
           </Sub>
 
           <Sub title="RESOLVING AN ATTACK">
-            <p>Once a ship's own drone reaches Close/Adjacent range, right-click that ship → <span className="text-slate-200">Resolve drone attack…</span> (or click it in the Drone Tracker). This opens the same 3-step Firing Solution as a normal attack:</p>
+            <p>Once a ship's own drone reaches Close/Adjacent range, right-click that ship → <span className="text-gunmetal-200">Resolve drone attack…</span> (or click it in the Drone Tracker). This opens the same 3-step Firing Solution as a normal attack:</p>
             <KV k="Step 1 — Sensor" v="Hand-off from a sensor operator (no penalty) or self-generated by the Remote Pilot (Piloting action, DM−2)." />
             <KV k="Step 2 — Position Vessel" v="Remote Pilot, Electronics(remote ops) DEX, +drone TAC Speed." />
             <KV k="Step 3 — Gunner" v="Difficult (10+), Fire Control + range DM at the drone's current band + target's reactive DMs." />
           </Sub>
 
           <Sub title="POINT DEFENCE">
-            <p>Resolved inline, at the top of the same modal — one drone at a time. <span className="text-slate-200">Difficult (10+) Gunner (DEX)</span>, DM+4 for PDC weapons / DM−2 for conventional mounts. Success destroys that specific drone before it can attack.</p>
+            <p>Resolved inline, at the top of the same modal — one drone at a time. <span className="text-gunmetal-200">Difficult (10+) Gunner (DEX)</span>, DM+4 for PDC weapons / DM−2 for conventional mounts. Success destroys that specific drone before it can attack.</p>
           </Sub>
 
           <Sub title="ENDURANCE">
@@ -439,8 +439,8 @@ export function HelpScreen({ onBack } = {}) {
 
         {/* BOARDING */}
         <Section id="boarding" title="Boarding">
-          <p>Close-quarters resolution. One opposed roll per round. Only at <span className="text-slate-200">Adjacent range</span>, during a ship's turn.</p>
-          <p>Attacker declares <span className="text-slate-200">Boarding Action</span>; defender declares <span className="text-slate-200">Repel Boarders</span>.</p>
+          <p>Close-quarters resolution. One opposed roll per round. Only at <span className="text-gunmetal-200">Adjacent range</span>, during a ship's turn.</p>
+          <p>Attacker declares <span className="text-gunmetal-200">Boarding Action</span>; defender declares <span className="text-gunmetal-200">Repel Boarders</span>.</p>
           <p>Both roll 2D6 + Gun Combat/Melee + modifiers. Attacker total − Defender total = difference.</p>
 
           <Sub title="MODIFIERS">
@@ -476,8 +476,8 @@ export function HelpScreen({ onBack } = {}) {
 
         {/* SIGNATURE */}
         <Section id="signature" title="Signature">
-          <p>Every ship has a base <span className="text-slate-200">Signature</span> value — used as a positive DM in enemy Electronics(sensors) checks during Firing Solution Step 1. // B3 p.57</p>
-          <p>Open the <span className="text-slate-200">Ship Sheet</span> to see the breakdown and toggle conditions.</p>
+          <p>Every ship has a base <span className="text-gunmetal-200">Signature</span> value — used as a positive DM in enemy Electronics(sensors) checks during Firing Solution Step 1. // B3 p.57</p>
+          <p>Open the <span className="text-gunmetal-200">Ship Sheet</span> to see the breakdown and toggle conditions.</p>
 
           <Sub title="AUTOMATIC MODIFIERS">
             <Table
@@ -517,16 +517,16 @@ export function HelpScreen({ onBack } = {}) {
         {/* SAVE & RESUME */}
         <Section id="save" title="Save & Resume">
           <Sub title="AUTOSAVE">
-            <p>The app autosaves to IndexedDB after every significant action. On return, click <span className="text-slate-200">🔄 RESUME</span> on the Dashboard to restore instantly.</p>
+            <p>The app autosaves to IndexedDB after every significant action. On return, click <span className="text-gunmetal-200">🔄 RESUME</span> on the Dashboard to restore instantly.</p>
           </Sub>
           <Sub title="MANUAL SAVE">
-            <p>Click <span className="text-slate-200">💾 SAVE</span> in the HUD to download the full session as a <code className="text-(--neon-cyan)">.json</code> file.</p>
+            <p>Click <span className="text-gunmetal-200">💾 SAVE</span> in the HUD to download the full session as a <code className="text-bronze-400">.json</code> file.</p>
           </Sub>
           <Sub title="RESUME FROM FILE">
-            <p>Dashboard → <span className="text-slate-200">↓ RESUME FROM FILE</span>. Select a <code className="text-(--neon-cyan)">.json</code> file. A preview shows the full roster before you confirm loading.</p>
+            <p>Dashboard → <span className="text-gunmetal-200">↓ RESUME FROM FILE</span>. Select a <code className="text-bronze-400">.json</code> file. A preview shows the full roster before you confirm loading.</p>
           </Sub>
           <Sub title="PROFILE EXPORT / IMPORT">
-            <p>Ship profiles are independent from battle sessions. Use <span className="text-slate-200">↑ EXPORT</span> / <span className="text-slate-200">↓ IMPORT</span> in the profile panel to share or back up profiles separately.</p>
+            <p>Ship profiles are independent from battle sessions. Use <span className="text-gunmetal-200">↑ EXPORT</span> / <span className="text-gunmetal-200">↓ IMPORT</span> in the profile panel to share or back up profiles separately.</p>
           </Sub>
           <Note>Clicking 🏠 in the HUD returns to the Dashboard. A confirmation modal warns that unsaved battle data will be lost.</Note>
         </Section>

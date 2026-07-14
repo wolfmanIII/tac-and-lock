@@ -57,10 +57,10 @@ function SurfaceFixtureMode({ ship, onClose }) {
     <div className="p-5 space-y-4">
       <div>
         <p className="font-display text-amber-400 text-sm tracking-widest">SURFACE FIXTURE</p>
-        <p className="font-mono text-[10px] text-slate-500 mt-0.5">
+        <p className="font-mono text-[10px] text-gunmetal-500 mt-0.5">
           Effect ≥ 3 — roll 2D on fixture table // 2300AD B3 p.58
         </p>
-        <p className="font-mono text-xs text-slate-300 mt-1">{ship?.profile?.name ?? ship?.id}</p>
+        <p className="font-mono text-xs text-gunmetal-300 mt-1">{ship?.profile?.name ?? ship?.id}</p>
       </div>
 
       {/* Roll */}
@@ -75,16 +75,16 @@ function SurfaceFixtureMode({ ship, onClose }) {
           type="number" min={2} max={12} value={manual}
           onChange={(e) => { setManual(e.target.value); setRoll(null) }}
           placeholder="or type"
-          className="w-20 text-center bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-slate-200 font-mono text-sm focus:border-amber-500 outline-none"
+          className="w-20 text-center bg-gunmetal-800 border border-gunmetal-600 rounded px-2 py-1.5 text-gunmetal-200 font-mono text-sm focus:border-amber-500 outline-none"
         />
         {total !== null && <span className="font-mono text-amber-300 font-bold">= {total}</span>}
       </div>
 
       {/* Compact reference table */}
-      <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 bg-slate-800/50 rounded p-2.5 text-[10px] font-mono">
+      <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 bg-gunmetal-800/50 rounded p-2.5 text-[10px] font-mono">
         {Object.entries(SURFACE_FIXTURE_TABLE).map(([d, sys]) => (
-          <div key={d} className={`flex gap-2 ${sys === system ? 'text-amber-400 font-bold' : 'text-slate-500'}`}>
-            <span className="text-slate-600 w-5">{d}:</span>
+          <div key={d} className={`flex gap-2 ${sys === system ? 'text-amber-400 font-bold' : 'text-gunmetal-500'}`}>
+            <span className="text-gunmetal-600 w-5">{d}:</span>
             <span>{SURFACE_FIXTURE_SYSTEM_LABELS[sys] ?? sys}</span>
           </div>
         ))}
@@ -97,23 +97,23 @@ function SurfaceFixtureMode({ ship, onClose }) {
             <p className="font-display text-amber-300 text-sm tracking-wide">
               {SURFACE_FIXTURE_SYSTEM_LABELS[system] ?? system}
             </p>
-            <span className="font-mono text-xs text-slate-400">
+            <span className="font-mono text-xs text-gunmetal-400">
               hit #{currentHits + 1}
             </span>
           </div>
           {effect
-            ? <p className="font-mono text-xs text-slate-200">{effect.label}</p>
-            : <p className="font-mono text-xs text-slate-500 italic">No further effect.</p>
+            ? <p className="font-mono text-xs text-gunmetal-200">{effect.label}</p>
+            : <p className="font-mono text-xs text-gunmetal-500 italic">No further effect.</p>
           }
           {effect?.mechanics?.map((m, i) => (
-            <p key={i} className="font-mono text-[10px] text-slate-400">⟩ {m.type}{m.value !== undefined ? `: ${m.value}` : ''}</p>
+            <p key={i} className="font-mono text-[10px] text-gunmetal-400">⟩ {m.type}{m.value !== undefined ? `: ${m.value}` : ''}</p>
           ))}
         </div>
       )}
 
       <div className="flex gap-2 pt-1">
         <button onClick={onClose}
-          className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-700 hover:bg-slate-800 rounded">
+          className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-700 hover:bg-gunmetal-800 rounded">
           {applied ? 'CLOSE' : 'SKIP'}
         </button>
         {system && !applied && (
@@ -160,10 +160,10 @@ function InternalCritMode({ ship, effect: attackEffect, onClose }) {
     <div className="p-5 space-y-4">
       <div>
         <p className="font-display text-red-400 text-sm tracking-widest">INTERNAL CRITICAL</p>
-        <p className="font-mono text-[10px] text-slate-500 mt-0.5">
+        <p className="font-mono text-[10px] text-gunmetal-500 mt-0.5">
           Roll 2D on location table // Trav2022 CRB p.158–159 + 2300AD substitutions
         </p>
-        <p className="font-mono text-xs text-slate-300 mt-1">{ship?.profile?.name ?? ship?.id}</p>
+        <p className="font-mono text-xs text-gunmetal-300 mt-1">{ship?.profile?.name ?? ship?.id}</p>
       </div>
 
       {/* Roll */}
@@ -178,16 +178,16 @@ function InternalCritMode({ ship, effect: attackEffect, onClose }) {
           type="number" min={2} max={12} value={manual}
           onChange={(e) => { setManual(e.target.value); setRoll(null) }}
           placeholder="or type"
-          className="w-20 text-center bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-slate-200 font-mono text-sm focus:border-red-500 outline-none"
+          className="w-20 text-center bg-gunmetal-800 border border-gunmetal-600 rounded px-2 py-1.5 text-gunmetal-200 font-mono text-sm focus:border-red-500 outline-none"
         />
         {total !== null && <span className="font-mono text-red-300 font-bold">= {total}</span>}
       </div>
 
       {/* Compact reference table */}
-      <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 bg-slate-800/50 rounded p-2.5 text-[10px] font-mono">
+      <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 bg-gunmetal-800/50 rounded p-2.5 text-[10px] font-mono">
         {Object.entries(INTERNAL_LOCATION_TABLE).map(([d, sys]) => (
-          <div key={d} className={`flex gap-2 ${sys === system ? 'text-red-400 font-bold' : 'text-slate-500'}`}>
-            <span className="text-slate-600 w-5">{d}:</span>
+          <div key={d} className={`flex gap-2 ${sys === system ? 'text-red-400 font-bold' : 'text-gunmetal-500'}`}>
+            <span className="text-gunmetal-600 w-5">{d}:</span>
             <span>{CRITICAL_HIT_SYSTEM_LABELS[sys] ?? sys}</span>
           </div>
         ))}
@@ -200,7 +200,7 @@ function InternalCritMode({ ship, effect: attackEffect, onClose }) {
             <p className="font-display text-red-300 text-sm tracking-wide">
               {CRITICAL_HIT_SYSTEM_LABELS[system] ?? system}
             </p>
-            <span className="font-mono text-xs text-slate-400">
+            <span className="font-mono text-xs text-gunmetal-400">
               {severityLabel(system, currentSev)} → <span className="text-red-400">{isMaxed ? severityLabel(system, currentSev) : severityLabel(system, newSev)}</span>
             </span>
           </div>
@@ -209,16 +209,16 @@ function InternalCritMode({ ship, effect: attackEffect, onClose }) {
               {CRITICAL_HIT_SYSTEM_LABELS[system] ?? system} already at max severity — CRB: this hit instead inflicts 6D extra damage, ignoring Armour (apply manually).
             </p>
           )}
-          {!isMaxed && effectEntry && <p className="font-mono text-xs text-slate-200">{effectEntry.label}</p>}
+          {!isMaxed && effectEntry && <p className="font-mono text-xs text-gunmetal-200">{effectEntry.label}</p>}
           {!isMaxed && effectEntry?.mechanics?.map((m, i) => (
-            <p key={i} className="font-mono text-[10px] text-slate-400">⟩ {m.type}{m.value !== undefined ? `: ${m.value}` : ''}</p>
+            <p key={i} className="font-mono text-[10px] text-gunmetal-400">⟩ {m.type}{m.value !== undefined ? `: ${m.value}` : ''}</p>
           ))}
         </div>
       )}
 
       <div className="flex gap-2 pt-1">
         <button onClick={onClose}
-          className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-700 hover:bg-slate-800 rounded">
+          className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-700 hover:bg-gunmetal-800 rounded">
           {applied ? 'CLOSE' : 'SKIP'}
         </button>
         {system && !applied && !isMaxed && (

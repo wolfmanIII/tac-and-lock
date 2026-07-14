@@ -63,7 +63,7 @@ export function InitiativeModal({ onClose }) {
       <div className="flex items-center justify-between">
         <div>
           <p className="font-display text-amber-400 text-sm tracking-widest">INITIATIVE</p>
-          <p className="font-mono text-[10px] text-slate-500 mt-0.5">
+          <p className="font-mono text-[10px] text-gunmetal-500 mt-0.5">
             2D6 + Tactics(naval) + INT DM — opposed Captain check // 2300AD B3 p.54
           </p>
         </div>
@@ -81,16 +81,16 @@ export function InitiativeModal({ onClose }) {
           return (
             <div key={r.shipId}
               className={`flex items-center gap-3 rounded px-3 py-2 border ${
-                idx === 0 && r.total > 0 ? 'border-amber-800/60 bg-amber-950/30' : 'border-slate-700/50 bg-slate-800/40'
+                idx === 0 && r.total > 0 ? 'border-amber-800/60 bg-amber-950/30' : 'border-gunmetal-700/50 bg-gunmetal-800/40'
               }`}>
-              <span className="text-slate-500 text-xs font-mono w-4">{idx + 1}.</span>
+              <span className="text-gunmetal-500 text-xs font-mono w-4">{idx + 1}.</span>
               <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: r.color ?? '#94a3b8' }} />
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-mono truncate ${idx === 0 && r.total > 0 ? 'text-amber-300' : 'text-slate-200'}`}>
+                <p className={`text-sm font-mono truncate ${idx === 0 && r.total > 0 ? 'text-amber-300' : 'text-gunmetal-200'}`}>
                   {r.name}
                 </p>
                 {bd && (
-                  <p className="text-[10px] font-mono text-slate-500">
+                  <p className="text-[10px] font-mono text-gunmetal-500">
                     [{bd.dice.join('+')}]
                     {bd.tacticsNaval > 0 ? ` +tactics${bd.tacticsNaval}` : ''}
                     {bd.intDm !== 0 ? ` INT${bd.intDm > 0 ? '+' : ''}${bd.intDm}` : ''}
@@ -102,11 +102,11 @@ export function InitiativeModal({ onClose }) {
                 type="number"
                 value={r.total}
                 onChange={(e) => setManual(r.shipId, e.target.value)}
-                className="w-14 text-center bg-slate-800 border border-slate-600 rounded px-1 py-1 text-amber-300 font-mono text-sm focus:border-amber-500 outline-none"
+                className="w-14 text-center bg-gunmetal-800 border border-gunmetal-600 rounded px-1 py-1 text-amber-300 font-mono text-sm focus:border-amber-500 outline-none"
               />
               <button
                 onClick={() => rollSingle(r.shipId)}
-                className="text-xs font-mono text-slate-400 hover:text-amber-400 border border-slate-700 hover:border-amber-800 rounded px-2 py-1 transition-colors"
+                className="text-xs font-mono text-gunmetal-400 hover:text-amber-400 border border-gunmetal-700 hover:border-amber-800 rounded px-2 py-1 transition-colors"
               >
                 🎲
               </button>
@@ -118,7 +118,7 @@ export function InitiativeModal({ onClose }) {
       <div className="flex gap-2 pt-1">
         <button
           onClick={onClose}
-          className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-700 hover:bg-slate-800 rounded"
+          className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-700 hover:bg-gunmetal-800 rounded"
         >
           CANCEL
         </button>

@@ -34,17 +34,17 @@ export function DiceInput({ dm = 0, onChange }) {
 
   return (
     <div className="flex items-center gap-2 font-mono text-sm">
-      <span className="text-slate-400">2D6:</span>
+      <span className="text-gunmetal-400">2D6:</span>
       <input
         type="number" min={1} max={6} value={d1}
         onChange={(e) => handleChange(1, e.target.value)}
-        className="w-10 text-center bg-slate-800 border border-slate-600 rounded px-1 py-0.5 text-slate-200 focus:border-sky-400 outline-none"
+        className="w-10 text-center bg-gunmetal-800 border border-gunmetal-600 rounded px-1 py-0.5 text-gunmetal-200 focus:border-bronze-400 outline-none"
       />
-      <span className="text-slate-500">+</span>
+      <span className="text-gunmetal-500">+</span>
       <input
         type="number" min={1} max={6} value={d2}
         onChange={(e) => handleChange(2, e.target.value)}
-        className="w-10 text-center bg-slate-800 border border-slate-600 rounded px-1 py-0.5 text-slate-200 focus:border-sky-400 outline-none"
+        className="w-10 text-center bg-gunmetal-800 border border-gunmetal-600 rounded px-1 py-0.5 text-gunmetal-200 focus:border-bronze-400 outline-none"
       />
       {dm !== 0 && (
         <span className={`text-sm ${dm > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -52,7 +52,7 @@ export function DiceInput({ dm = 0, onChange }) {
         </span>
       )}
       {total !== null && (
-        <span className="ml-1 text-sky-300 font-bold">= {total}</span>
+        <span className="ml-1 text-bronze-300 font-bold">= {total}</span>
       )}
     </div>
   )

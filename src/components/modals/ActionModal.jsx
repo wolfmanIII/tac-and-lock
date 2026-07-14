@@ -240,21 +240,21 @@ export function ActionModal({ payload, onClose }) {
     <div className="p-6 space-y-4" style={{ minWidth: 480 }}>
       <div className="flex items-center justify-between">
         <p className="font-display text-emerald-400 text-sm tracking-widest">CREW ACTION</p>
-        <p className="text-xs font-mono text-slate-400">{ship?.profile?.name}</p>
+        <p className="text-xs font-mono text-gunmetal-400">{ship?.profile?.name}</p>
       </div>
 
       {/* Action picker */}
       <div className="max-h-52 overflow-y-auto space-y-3 pr-1">
         {groupedActions.map(({ role, actions }) => (
           <div key={role}>
-            <p className="text-[10px] font-display text-slate-600 tracking-widest mb-1">{role.toUpperCase()}</p>
+            <p className="text-[10px] font-display text-gunmetal-600 tracking-widest mb-1">{role.toUpperCase()}</p>
             {actions.map((a) => (
               <button
                 key={a.id}
                 className={`w-full text-left px-3 py-2 rounded border mb-1 transition-colors
                   ${selectedAction === a.id
                     ? 'border-emerald-600 bg-emerald-900/20 text-emerald-300'
-                    : 'border-slate-800 bg-slate-800/30 hover:border-slate-600 text-slate-300'}`}
+                    : 'border-gunmetal-800 bg-gunmetal-800/30 hover:border-gunmetal-600 text-gunmetal-300'}`}
                 onClick={() => { setSelectedAction(a.id); setRollResult(null); setBoardingHullDamage(null) }}
               >
                 <div className="flex items-center justify-between">
@@ -262,7 +262,7 @@ export function ActionModal({ payload, onClose }) {
                   {a.reaction && <span className="text-[10px] text-amber-400 border border-amber-800 rounded px-1">REACTION</span>}
                 </div>
                 {selectedAction === a.id && (
-                  <p className="text-[10px] text-slate-400 mt-1">{a.description}</p>
+                  <p className="text-[10px] text-gunmetal-400 mt-1">{a.description}</p>
                 )}
               </button>
             ))}
@@ -271,14 +271,14 @@ export function ActionModal({ payload, onClose }) {
       </div>
 
       {action && (
-        <div className="space-y-3 border-t border-slate-800 pt-3">
+        <div className="space-y-3 border-t border-gunmetal-800 pt-3">
 
           {/* Target ship picker */}
           {action.requiresTarget && (
             <div>
-              <p className="text-[10px] font-display text-slate-500 tracking-widest mb-1">TARGET</p>
+              <p className="text-[10px] font-display text-gunmetal-500 tracking-widest mb-1">TARGET</p>
               <select value={targetId} onChange={(e) => setTargetId(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1 focus:border-sky-400 outline-none">
+                className="w-full bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-sm rounded px-2 py-1 focus:border-bronze-400 outline-none">
                 {targets.map((t) => <option key={t.id} value={t.id}>{t.profile?.name}</option>)}
               </select>
             </div>
@@ -287,18 +287,18 @@ export function ActionModal({ payload, onClose }) {
           {/* Emergency Repair — hull vs system mode */}
           {action.id === 'emergency_repair' && (
             <div className="space-y-2">
-              <p className="text-[10px] font-display text-slate-500 tracking-widest">REPAIR TARGET</p>
+              <p className="text-[10px] font-display text-gunmetal-500 tracking-widest">REPAIR TARGET</p>
               <div className="flex gap-2">
                 {['system', 'hull'].map((mode) => (
                   <button key={mode} onClick={() => setRepairMode(mode)}
-                    className={`flex-1 py-1 text-xs font-mono border rounded ${repairMode === mode ? 'border-emerald-500 text-emerald-300 bg-emerald-900/30' : 'border-slate-700 text-slate-400'}`}>
+                    className={`flex-1 py-1 text-xs font-mono border rounded ${repairMode === mode ? 'border-emerald-500 text-emerald-300 bg-emerald-900/30' : 'border-gunmetal-700 text-gunmetal-400'}`}>
                     {mode === 'system' ? 'Critical System' : 'Hull (+5 HP)'}
                   </button>
                 ))}
               </div>
               {repairMode === 'system' && (
                 <select value={critSystem} onChange={(e) => setCritSystem(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1 focus:border-sky-400 outline-none">
+                  className="w-full bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-sm rounded px-2 py-1 focus:border-bronze-400 outline-none">
                   <option value="">— select system —</option>
                   {Object.entries(ship?.criticalTracks ?? {}).filter(([, sev]) => sev > 0).map(([sys, sev]) => (
                     <option key={sys} value={sys}>{sys} (sev {sev})</option>
@@ -311,12 +311,12 @@ export function ActionModal({ payload, onClose }) {
           {/* Damage Control — hazard picker */}
           {action.id === 'damage_control' && (
             <div>
-              <p className="text-[10px] font-display text-slate-500 tracking-widest mb-1">ACTIVE HAZARD</p>
+              <p className="text-[10px] font-display text-gunmetal-500 tracking-widest mb-1">ACTIVE HAZARD</p>
               {(ship?.hazards ?? []).length === 0 ? (
-                <p className="text-xs font-mono text-slate-500 italic">No active hazards — add them in Ship Sheet.</p>
+                <p className="text-xs font-mono text-gunmetal-500 italic">No active hazards — add them in Ship Sheet.</p>
               ) : (
                 <select value={selectedHazardId} onChange={(e) => setSelectedHazardId(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1 focus:border-sky-400 outline-none">
+                  className="w-full bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-sm rounded px-2 py-1 focus:border-bronze-400 outline-none">
                   <option value="">— select hazard —</option>
                   {(ship?.hazards ?? []).map((h) => <option key={h.id} value={h.id}>{h.label}</option>)}
                 </select>
@@ -328,16 +328,16 @@ export function ActionModal({ payload, onClose }) {
           {action.id === 'commands' && (
             <div>
               <div className="flex items-center justify-between mb-1">
-                <p className="text-[10px] font-display text-slate-500 tracking-widest">ORDER RECIPIENT (crew role)</p>
-                <p className="text-[10px] font-mono text-slate-500">
+                <p className="text-[10px] font-display text-gunmetal-500 tracking-widest">ORDER RECIPIENT (crew role)</p>
+                <p className="text-[10px] font-mono text-gunmetal-500">
                   {commandsRemaining} captain action(s) left this round
                 </p>
               </div>
               {availableCommandRoles.length === 0 ? (
-                <p className="text-xs font-mono text-slate-500 italic">Every crew role already has a Command this round.</p>
+                <p className="text-xs font-mono text-gunmetal-500 italic">Every crew role already has a Command this round.</p>
               ) : (
                 <select value={effectiveCommandRole} onChange={(e) => setCommandRole(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1 focus:border-sky-400 outline-none">
+                  className="w-full bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-sm rounded px-2 py-1 focus:border-bronze-400 outline-none">
                   {availableCommandRoles.map((r) => <option key={r} value={r}>{CREW_SKILLS[r]} ({r})</option>)}
                 </select>
               )}
@@ -352,12 +352,12 @@ export function ActionModal({ payload, onClose }) {
           {/* Issue Order — grant +1 action to another role, no check // B3 p.53 */}
           {action.id === 'issue_order' && (
             <div>
-              <p className="text-[10px] font-display text-slate-500 tracking-widest mb-1">RECIPIENT (crew role)</p>
+              <p className="text-[10px] font-display text-gunmetal-500 tracking-widest mb-1">RECIPIENT (crew role)</p>
               <select value={issueOrderRole} onChange={(e) => setIssueOrderRole(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1 focus:border-sky-400 outline-none">
+                className="w-full bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-sm rounded px-2 py-1 focus:border-bronze-400 outline-none">
                 {COMMAND_TARGET_ROLES.map((r) => <option key={r} value={r}>{CREW_SKILLS[r]} ({r})</option>)}
               </select>
-              <p className="text-[10px] font-mono text-slate-500 mt-1">
+              <p className="text-[10px] font-mono text-gunmetal-500 mt-1">
                 Costs one of the Captain's own actions ({budget.captain ?? 0} left this round).
               </p>
             </div>
@@ -366,21 +366,21 @@ export function ActionModal({ payload, onClose }) {
           {/* Boarding Action — defender total input + result table */}
           {action.id === 'boarding_action' && (
             <div className="space-y-2">
-              <p className="text-[10px] font-display text-slate-500 tracking-widest">DEFENDER TOTAL (2D + mods)</p>
+              <p className="text-[10px] font-display text-gunmetal-500 tracking-widest">DEFENDER TOTAL (2D + mods)</p>
               <input type="number" min={2} max={24} value={boardingDefenderTotal}
                 onChange={(e) => { setBoardingDefenderTotal(e.target.value); setBoardingHullDamage(null) }}
                 placeholder="enter defender's 2D+mods total"
-                className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-sm rounded px-2 py-1.5 focus:border-sky-400 outline-none" />
+                className="w-full bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-sm rounded px-2 py-1.5 focus:border-bronze-400 outline-none" />
               {boardingResult && (
                 <div className={`rounded p-3 border space-y-1 ${
                   boardingResult.label.includes('SUCCEEDED') || boardingResult.label.includes('IMMEDIATE')
                     ? 'bg-emerald-950/50 border-emerald-800'
                     : boardingResult.label.includes('DEFEATED')
                       ? 'bg-red-950/50 border-red-900'
-                      : 'bg-slate-800/60 border-slate-700'
+                      : 'bg-gunmetal-800/60 border-gunmetal-700'
                 }`}>
-                  <p className="font-display text-xs tracking-widest text-slate-200">{boardingResult.label}</p>
-                  <p className="text-[11px] font-mono text-slate-400">{boardingResult.detail}</p>
+                  <p className="font-display text-xs tracking-widest text-gunmetal-200">{boardingResult.label}</p>
+                  <p className="text-[11px] font-mono text-gunmetal-400">{boardingResult.detail}</p>
                   {boardingResult.hullDice > 0 && (
                     <div className="flex items-center gap-2 pt-1">
                       <span className="text-[10px] font-mono text-red-400">{boardingResult.hullDice}D Hull damage</span>
@@ -409,23 +409,23 @@ export function ActionModal({ payload, onClose }) {
           {action.difficulty > 0 && (
             <>
               <div>
-                <p className="text-[10px] font-display text-slate-500 tracking-widest mb-1">
+                <p className="text-[10px] font-display text-gunmetal-500 tracking-widest mb-1">
                   SKILL LEVEL — {action.skill} ({action.difficultyLabel})
                 </p>
                 <div className="flex gap-2">
                   {[0,1,2,3,4].map((n) => (
                     <button key={n}
-                      className={`flex-1 py-1.5 text-xs font-mono border rounded ${skillLevel === n ? 'border-emerald-500 text-emerald-300 bg-emerald-900/30' : 'border-slate-700 text-slate-400'}`}
+                      className={`flex-1 py-1.5 text-xs font-mono border rounded ${skillLevel === n ? 'border-emerald-500 text-emerald-300 bg-emerald-900/30' : 'border-gunmetal-700 text-gunmetal-400'}`}
                       onClick={() => setSkillLevel(n)}>{n}</button>
                   ))}
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <button className="px-4 py-2 text-xs font-display tracking-widest text-emerald-400 border border-emerald-800 hover:bg-emerald-900/20 rounded" onClick={doRoll}>ROLL DICE</button>
-                <button className="text-xs font-mono text-slate-400 underline" onClick={() => setManualMode((m) => !m)}>manual</button>
+                <button className="text-xs font-mono text-gunmetal-400 underline" onClick={() => setManualMode((m) => !m)}>manual</button>
               </div>
               {manualMode && <DiceInput dm={skillLevel} onChange={onManual} />}
-              <p className="text-[9px] font-mono text-slate-600">
+              <p className="text-[9px] font-mono text-gunmetal-600">
                 Acting out of the Captain's declared order: apply DM−1 manually // 2300AD B3 p.53
               </p>
             </>
@@ -439,7 +439,7 @@ export function ActionModal({ payload, onClose }) {
                   : <span className="text-red-400">FAILURE — Effect {rollResult.effect}</span>}
               </p>
               {action.id === 'boarding_action' && rollResult && (
-                <p className="text-[10px] font-mono text-slate-400 mt-0.5">Attacker total: {rollResult.total} — enter defender total above</p>
+                <p className="text-[10px] font-mono text-gunmetal-400 mt-0.5">Attacker total: {rollResult.total} — enter defender total above</p>
               )}
             </div>
           )}
@@ -447,7 +447,7 @@ export function ActionModal({ payload, onClose }) {
       )}
 
       <div className="flex gap-2 pt-2">
-        <button className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-700 hover:bg-slate-800 rounded" onClick={onClose}>CANCEL</button>
+        <button className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-700 hover:bg-gunmetal-800 rounded" onClick={onClose}>CANCEL</button>
         {canApply && (
           <button className="flex-1 py-2 text-xs font-display tracking-widest text-emerald-400 border border-emerald-800 hover:bg-emerald-900/20 rounded" onClick={applyAction}>
             APPLY RESULT

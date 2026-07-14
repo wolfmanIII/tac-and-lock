@@ -10,10 +10,10 @@ function MenuItem({ icon, label, onClick, danger = false, disabled = false, hint
       title={disabled && hint ? hint : undefined}
       className={`w-full flex items-center gap-2 px-3 py-1.5 text-left font-mono text-xs transition-colors ${
         disabled
-          ? 'text-slate-600 cursor-not-allowed'
+          ? 'text-gunmetal-600 cursor-not-allowed'
           : danger
             ? 'text-red-400 hover:bg-red-950/50'
-            : 'text-slate-300 hover:bg-slate-700/60 hover:text-slate-100'
+            : 'text-gunmetal-300 hover:bg-gunmetal-700/60 hover:text-gunmetal-100'
       }`}
     >
       <span className={`w-4 text-center shrink-0 ${disabled ? 'opacity-40' : ''}`}>{icon}</span>
@@ -23,7 +23,7 @@ function MenuItem({ icon, label, onClick, danger = false, disabled = false, hint
 }
 
 function MenuDivider() {
-  return <div className="border-t border-slate-700/50 my-0.5" />
+  return <div className="border-t border-gunmetal-700/50 my-0.5" />
 }
 
 function MenuShell({ x, y, menuRef, children }) {
@@ -31,7 +31,7 @@ function MenuShell({ x, y, menuRef, children }) {
     <div
       ref={menuRef}
       style={{ left: x, top: y }}
-      className="absolute z-50 min-w-44 bg-slate-900 border border-slate-600 rounded shadow-xl overflow-hidden"
+      className="absolute z-50 min-w-44 bg-gunmetal-900 border border-gunmetal-600 rounded shadow-xl overflow-hidden"
     >
       {children}
     </div>
@@ -89,9 +89,9 @@ function ShipMenu({ x, y, menuRef, shipId, close }) {
   return (
     <MenuShell x={x} y={y} menuRef={menuRef}>
       {ship && (
-        <div className="px-3 py-1.5 bg-slate-800 border-b border-slate-700">
-          <p className="font-mono text-xs text-(--neon-cyan) font-bold truncate">{ship.profile.name}</p>
-          <p className="font-mono text-xs text-slate-400">Hull {ship.currentHull}/{ship.hullPoints}</p>
+        <div className="px-3 py-1.5 bg-gunmetal-800 border-b border-gunmetal-700">
+          <p className="font-mono text-xs text-bronze-400 font-bold truncate">{ship.profile.name}</p>
+          <p className="font-mono text-xs text-gunmetal-400">Hull {ship.currentHull}/{ship.hullPoints}</p>
         </div>
       )}
       <MenuItem icon="📊" label="Ship sheet"         onClick={() => { openModal('ship-detail',     { shipId }); close() }} />

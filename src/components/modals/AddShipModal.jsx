@@ -45,11 +45,11 @@ function ShapePreview({ shape, selected, onClick }) {
       type="button"
       onClick={onClick}
       className={`flex flex-col items-center gap-1 p-1.5 rounded border transition-colors ${
-        selected ? 'border-(--neon-cyan)/60 bg-(--neon-cyan)/10' : 'border-slate-700 hover:border-slate-500'
+        selected ? 'border-bronze-400/60 bg-bronze-400/10' : 'border-gunmetal-700 hover:border-gunmetal-500'
       }`}
     >
       <canvas ref={canvasRef} style={{ width: PREVIEW_SIZE, height: PREVIEW_SIZE }} />
-      <span className={`font-mono text-[10px] ${selected ? 'text-(--neon-cyan)' : 'text-slate-400'}`}>
+      <span className={`font-mono text-[10px] ${selected ? 'text-bronze-400' : 'text-gunmetal-400'}`}>
         {SHAPE_LABELS[shape]}
       </span>
     </button>
@@ -93,13 +93,13 @@ export function AddShipModal({ onClose }) {
         placeholder="Search profile…"
         value={filter}
         onChange={(e) => setFilter(e.target.value)}
-        className="w-full bg-slate-800 border border-slate-600 text-slate-200 font-mono text-xs rounded px-3 py-1.5 focus:outline-none focus:border-(--neon-cyan)/60"
+        className="w-full bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-xs rounded px-3 py-1.5 focus:outline-none focus:border-bronze-400/60"
       />
 
       {/* Profile list */}
-      <div className="max-h-40 overflow-y-auto space-y-0.5 border border-slate-700 rounded">
+      <div className="max-h-40 overflow-y-auto space-y-0.5 border border-gunmetal-700 rounded">
         {filtered.length === 0 && (
-          <p className="text-slate-400 font-mono text-xs italic px-3 py-2">No profiles found.</p>
+          <p className="text-gunmetal-400 font-mono text-xs italic px-3 py-2">No profiles found.</p>
         )}
         {filtered.map((p) => {
           const isSel = p.id === selectedId
@@ -109,13 +109,13 @@ export function AddShipModal({ onClose }) {
               onClick={() => setSelectedId(p.id)}
               className={`w-full text-left px-3 py-1.5 font-mono text-xs transition-colors flex items-center gap-2 border-l-2 ${
                 isSel
-                  ? 'bg-sky-950 text-sky-200 border-sky-400'
-                  : 'text-slate-300 hover:bg-slate-800 border-transparent'
+                  ? 'bg-bronze-950 text-bronze-200 border-bronze-400'
+                  : 'text-gunmetal-300 hover:bg-gunmetal-800 border-transparent'
               }`}
             >
-              <span className={`w-3 shrink-0 text-center ${isSel ? 'text-sky-400' : 'text-transparent'}`}>▶</span>
+              <span className={`w-3 shrink-0 text-center ${isSel ? 'text-bronze-400' : 'text-transparent'}`}>▶</span>
               <span className="font-bold">{p.name}</span>
-              {p.class && <span className={`ml-1 ${isSel ? 'text-sky-400/60' : 'text-slate-400'}`}>{p.class}</span>}
+              {p.class && <span className={`ml-1 ${isSel ? 'text-bronze-400/60' : 'text-gunmetal-400'}`}>{p.class}</span>}
             </button>
           )
         })}
@@ -123,7 +123,7 @@ export function AddShipModal({ onClose }) {
 
       {/* Faction */}
       <div>
-        <p className="text-slate-400 font-mono text-xs mb-1.5">Faction</p>
+        <p className="text-gunmetal-400 font-mono text-xs mb-1.5">Faction</p>
         <div className="flex gap-2">
           {FACTIONS.map((f) => (
             <button
@@ -131,8 +131,8 @@ export function AddShipModal({ onClose }) {
               onClick={() => { setFaction(f.id); setColor(f.color) }}
               className={`flex-1 py-1.5 font-mono text-xs rounded border transition-colors ${
                 faction === f.id
-                  ? 'border-(--neon-cyan)/60 bg-(--neon-cyan)/10 text-(--neon-cyan)'
-                  : 'border-slate-700 text-slate-400 hover:border-slate-500'
+                  ? 'border-bronze-400/60 bg-bronze-400/10 text-bronze-400'
+                  : 'border-gunmetal-700 text-gunmetal-400 hover:border-gunmetal-500'
               }`}
             >
               {f.label}
@@ -143,7 +143,7 @@ export function AddShipModal({ onClose }) {
 
       {/* Token color */}
       <div>
-        <p className="text-slate-400 font-mono text-xs mb-1.5">Token color</p>
+        <p className="text-gunmetal-400 font-mono text-xs mb-1.5">Token color</p>
         <div className="flex gap-2 flex-wrap">
           {PRESET_COLORS.map((c) => (
             <button
@@ -160,7 +160,7 @@ export function AddShipModal({ onClose }) {
 
       {/* Token shape */}
       <div>
-        <p className="text-slate-400 font-mono text-xs mb-1.5">Token shape</p>
+        <p className="text-gunmetal-400 font-mono text-xs mb-1.5">Token shape</p>
         <div className="grid grid-cols-5 gap-1.5">
           {Object.keys(SHIP_SHAPES).map((shape) => (
             <ShapePreview
@@ -175,7 +175,7 @@ export function AddShipModal({ onClose }) {
 
       {/* Entry range band */}
       <div>
-        <p className="text-slate-400 font-mono text-xs mb-1.5">Entry range</p>
+        <p className="text-gunmetal-400 font-mono text-xs mb-1.5">Entry range</p>
         <div className="flex gap-1.5 flex-wrap">
           {RANGE_BANDS.map((b) => (
             <button
@@ -183,8 +183,8 @@ export function AddShipModal({ onClose }) {
               onClick={() => setStartBand(b.id)}
               className={`px-2.5 py-1 font-mono text-xs rounded border transition-colors ${
                 startBand === b.id
-                  ? 'border-(--neon-cyan)/60 bg-(--neon-cyan)/10 text-(--neon-cyan)'
-                  : 'border-slate-700 text-slate-400 hover:border-slate-500'
+                  ? 'border-bronze-400/60 bg-bronze-400/10 text-bronze-400'
+                  : 'border-gunmetal-700 text-gunmetal-400 hover:border-gunmetal-500'
               }`}
             >
               {b.label}
@@ -197,7 +197,7 @@ export function AddShipModal({ onClose }) {
       <button
         onClick={handleConfirm}
         disabled={!selected}
-        className="w-full py-2 bg-(--neon-cyan)/10 border border-(--neon-cyan)/40 text-(--neon-cyan) font-mono text-sm tracking-widest rounded hover:bg-(--neon-cyan)/20 transition-colors disabled:text-slate-400 disabled:border-slate-600/50 disabled:bg-transparent disabled:cursor-not-allowed"
+        className="w-full py-2 bg-bronze-400/10 border border-bronze-400/40 text-bronze-400 font-mono text-sm tracking-widest rounded hover:bg-bronze-400/20 transition-colors disabled:text-gunmetal-400 disabled:border-gunmetal-600/50 disabled:bg-transparent disabled:cursor-not-allowed"
       >
         ADD TO BATTLE
       </button>

@@ -44,10 +44,10 @@ export function ShipProfileModal({ payload, onClose }) {
   return (
     <div className="p-6 space-y-5" style={{ minWidth: 480, maxWidth: 600 }}>
       <div className="flex items-center justify-between">
-        <p className="font-display text-sky-300 text-sm tracking-widest">
+        <p className="font-display text-bronze-300 text-sm tracking-widest">
           {existing ? 'EDIT PROFILE' : 'NEW SHIP PROFILE'}
         </p>
-        {existing && <p className="text-[10px] font-mono text-slate-500">{existing.id}</p>}
+        {existing && <p className="text-[10px] font-mono text-gunmetal-500">{existing.id}</p>}
       </div>
 
       <div className="max-h-[60vh] overflow-y-auto pr-1">
@@ -56,12 +56,12 @@ export function ShipProfileModal({ payload, onClose }) {
 
       {error && <p className="text-red-400 text-xs font-mono">{error}</p>}
 
-      <div className="flex gap-2 pt-2 border-t border-slate-800">
+      <div className="flex gap-2 pt-2 border-t border-gunmetal-800">
         <button
-          className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-700 hover:bg-slate-800 rounded"
+          className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-700 hover:bg-gunmetal-800 rounded"
           onClick={onClose}>CANCEL</button>
         <button
-          className="flex-1 py-2 text-xs font-display tracking-widest text-sky-300 border border-sky-700 hover:bg-sky-900/20 rounded"
+          className="flex-1 py-2 text-xs font-display tracking-widest text-bronze-300 border border-bronze-700 hover:bg-bronze-900/20 rounded"
           onClick={save}>
           {existing ? 'SAVE CHANGES' : 'CREATE PROFILE'}
         </button>

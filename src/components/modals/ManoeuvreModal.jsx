@@ -62,9 +62,9 @@ export function ManoeuvreModal({ payload, onClose }) {
   if (!pair) {
     return (
       <div className="p-6 space-y-4">
-        <p className="font-display text-sky-300 text-sm tracking-widest">MANOEUVRE</p>
-        <p className="text-slate-400 font-mono text-sm">No pairs available. Add at least 2 ships.</p>
-        <button className="px-4 py-2 text-xs font-display text-slate-300 border border-slate-600 hover:bg-slate-800 rounded" onClick={onClose}>CLOSE</button>
+        <p className="font-display text-bronze-300 text-sm tracking-widest">MANOEUVRE</p>
+        <p className="text-gunmetal-400 font-mono text-sm">No pairs available. Add at least 2 ships.</p>
+        <button className="px-4 py-2 text-xs font-display text-gunmetal-300 border border-gunmetal-600 hover:bg-gunmetal-800 rounded" onClick={onClose}>CLOSE</button>
       </div>
     )
   }
@@ -154,11 +154,11 @@ export function ManoeuvreModal({ payload, onClose }) {
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <p className="font-display text-sky-300 text-sm tracking-widest">MANOEUVRE</p>
+        <p className="font-display text-bronze-300 text-sm tracking-widest">MANOEUVRE</p>
         {relevantPairs.length > 1 && (
           <div className="flex gap-1">
             {relevantPairs.map((_, i) => (
-              <button key={i} className={`w-6 h-6 text-xs border rounded ${i === pairIdx ? 'border-sky-500 text-sky-300' : 'border-slate-700 text-slate-500'}`}
+              <button key={i} className={`w-6 h-6 text-xs border rounded ${i === pairIdx ? 'border-bronze-500 text-bronze-300' : 'border-gunmetal-700 text-gunmetal-500'}`}
                 onClick={() => { setPairIdx(i); setActingShipId(null); setIntent(null); setManoeuvreRoll(null); setDirectBand(null) }}>
                 {i + 1}
               </button>
@@ -167,20 +167,20 @@ export function ManoeuvreModal({ payload, onClose }) {
         )}
       </div>
 
-      <div className="bg-slate-800/50 rounded p-3 text-sm font-mono text-slate-200 text-center">
-        {a.profile?.name} <span className="text-slate-500">↔</span> {b.profile?.name}
+      <div className="bg-gunmetal-800/50 rounded p-3 text-sm font-mono text-gunmetal-200 text-center">
+        {a.profile?.name} <span className="text-gunmetal-500">↔</span> {b.profile?.name}
       </div>
 
       {/* Current band */}
       <div className="text-center">
-        <p className="text-[10px] font-display text-slate-500 tracking-widest mb-1">CURRENT RANGE</p>
-        <p className="text-xl font-display text-sky-300">{bandDef?.label ?? current}</p>
-        <p className="text-xs font-mono text-slate-500">{bandDef?.distance}</p>
+        <p className="text-[10px] font-display text-gunmetal-500 tracking-widest mb-1">CURRENT RANGE</p>
+        <p className="text-xl font-display text-bronze-300">{bandDef?.label ?? current}</p>
+        <p className="text-xs font-mono text-gunmetal-500">{bandDef?.distance}</p>
       </div>
 
       {/* Manoeuvre — opposed Pilot check // 2300AD B3 p.54 */}
       <div>
-        <p className="text-[10px] font-display text-slate-500 tracking-widest mb-2">
+        <p className="text-[10px] font-display text-gunmetal-500 tracking-widest mb-2">
           MANOEUVRE — OPPOSED PILOT (DEX) // 2300AD B3 p.54
         </p>
         <div className="grid grid-cols-2 gap-2 mb-2">
@@ -189,7 +189,7 @@ export function ManoeuvreModal({ payload, onClose }) {
               key={ship.id}
               disabled={(!closer && !farther)}
               className={`py-1.5 text-xs font-mono border rounded transition-colors truncate
-                ${actingShipId === ship.id ? 'border-sky-500 text-sky-300 bg-sky-900/30' : 'border-slate-700 text-slate-400 hover:border-slate-500'}`}
+                ${actingShipId === ship.id ? 'border-bronze-500 text-bronze-300 bg-bronze-900/30' : 'border-gunmetal-700 text-gunmetal-400 hover:border-gunmetal-500'}`}
               onClick={() => { setActingShipId(ship.id); setManoeuvreRoll(null) }}
             >
               {ship.profile?.name ?? ship.id}
@@ -206,7 +206,7 @@ export function ManoeuvreModal({ payload, onClose }) {
             <button
               disabled={!closer}
               className={`py-2 text-xs font-display tracking-widest border rounded transition-colors
-                ${intent === 'closer' ? 'border-sky-500 text-sky-300 bg-sky-900/30' : 'border-slate-700 text-slate-400 hover:border-slate-500'}
+                ${intent === 'closer' ? 'border-bronze-500 text-bronze-300 bg-bronze-900/30' : 'border-gunmetal-700 text-gunmetal-400 hover:border-gunmetal-500'}
                 disabled:opacity-30 disabled:cursor-not-allowed`}
               onClick={() => { setIntent('closer'); setManoeuvreRoll(null) }}
             >
@@ -215,7 +215,7 @@ export function ManoeuvreModal({ payload, onClose }) {
             <button
               disabled={!farther}
               className={`py-2 text-xs font-display tracking-widest border rounded transition-colors
-                ${intent === 'farther' ? 'border-sky-500 text-sky-300 bg-sky-900/30' : 'border-slate-700 text-slate-400 hover:border-slate-500'}
+                ${intent === 'farther' ? 'border-bronze-500 text-bronze-300 bg-bronze-900/30' : 'border-gunmetal-700 text-gunmetal-400 hover:border-gunmetal-500'}
                 disabled:opacity-30 disabled:cursor-not-allowed`}
               onClick={() => { setIntent('farther'); setManoeuvreRoll(null) }}
             >
@@ -227,24 +227,24 @@ export function ManoeuvreModal({ payload, onClose }) {
         {actingShipId && intent && !manoeuvreRoll && (
           <button
             onClick={rollManoeuvre}
-            className="w-full py-1.5 text-xs font-display tracking-widest text-slate-400 border border-slate-600 hover:border-sky-600 hover:text-sky-400 rounded transition-colors"
+            className="w-full py-1.5 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-600 hover:border-bronze-600 hover:text-bronze-400 rounded transition-colors"
           >
             ROLL 🎲
           </button>
         )}
 
         {manoeuvreRoll && (
-          <div className="rounded border border-slate-700 bg-slate-800/30 p-2 space-y-1.5">
-            <p className="font-mono text-[10px] text-slate-400">
+          <div className="rounded border border-gunmetal-700 bg-gunmetal-800/30 p-2 space-y-1.5">
+            <p className="font-mono text-[10px] text-gunmetal-400">
               {actingShip.profile?.name}: [{manoeuvreRoll.actingCheck.dice.join('+')}] +{manoeuvreRoll.actingCheck.pilotSkill} +dex{manoeuvreRoll.actingCheck.dexDm} +tac{manoeuvreRoll.actingCheck.tacSpeed}
               {manoeuvreRoll.actingCheck.commandDm ? ` +cmd${manoeuvreRoll.actingCheck.commandDm}` : ''} = {manoeuvreRoll.actingCheck.total}
             </p>
-            <p className="font-mono text-[10px] text-slate-400">
+            <p className="font-mono text-[10px] text-gunmetal-400">
               {otherShip.profile?.name}: [{manoeuvreRoll.otherCheck.dice.join('+')}] +{manoeuvreRoll.otherCheck.pilotSkill} +dex{manoeuvreRoll.otherCheck.dexDm} +tac{manoeuvreRoll.otherCheck.tacSpeed}
               {manoeuvreRoll.otherCheck.commandDm ? ` +cmd${manoeuvreRoll.otherCheck.commandDm}` : ''} = {manoeuvreRoll.otherCheck.total}
             </p>
             {manoeuvreRoll.effect > 0 ? (
-              <p className="font-mono text-xs font-bold text-sky-400">
+              <p className="font-mono text-xs font-bold text-bronze-400">
                 {actingShip.profile?.name} succeeds — Effect {manoeuvreRoll.effect}: moves {Math.abs(manoeuvreRoll.effect)} band(s) {intent === 'closer' ? 'closer' : 'farther'}.
               </p>
             ) : manoeuvreRoll.effect < 0 ? (
@@ -252,16 +252,16 @@ export function ManoeuvreModal({ payload, onClose }) {
                 <p className="font-mono text-xs font-bold text-red-400">
                   {actingShip.profile?.name} fails — Effect {manoeuvreRoll.effect}: {otherShip.profile?.name} may {intent === 'closer' ? 'open the range' : 'close the range'} by {Math.abs(manoeuvreRoll.effect)} band(s), if desired.
                 </p>
-                <label className="flex items-center gap-2 font-mono text-[10px] text-slate-400">
+                <label className="flex items-center gap-2 font-mono text-[10px] text-gunmetal-400">
                   <input type="checkbox" checked={applyEnemyChoice} onChange={(e) => setApplyEnemyChoice(e.target.checked)} />
                   Enemy takes the opportunity
                 </label>
               </>
             ) : (
-              <p className="font-mono text-xs font-bold text-slate-400">Tied check — no range change.</p>
+              <p className="font-mono text-xs font-bold text-gunmetal-400">Tied check — no range change.</p>
             )}
             <button onClick={clearManoeuvreRoll}
-              className="text-[9px] font-mono text-slate-500 hover:text-slate-300 underline">
+              className="text-[9px] font-mono text-gunmetal-500 hover:text-gunmetal-300 underline">
               re-roll
             </button>
           </div>
@@ -270,14 +270,14 @@ export function ManoeuvreModal({ payload, onClose }) {
 
       {/* GM override: set band directly */}
       <div>
-        <p className="text-[10px] font-display text-slate-500 tracking-widest mb-2">GM OVERRIDE — SET BAND DIRECTLY</p>
+        <p className="text-[10px] font-display text-gunmetal-500 tracking-widest mb-2">GM OVERRIDE — SET BAND DIRECTLY</p>
         <div className="grid grid-cols-4 gap-1">
           {RANGE_BANDS.map((bd) => (
             <button
               key={bd.id}
               className={`py-1 text-[10px] font-mono border rounded transition-colors
-                ${directBand === bd.id ? 'border-sky-500 text-sky-300 bg-sky-900/30' :
-                  current === bd.id ? 'border-slate-600 text-slate-300 bg-slate-800/50' : 'border-slate-800 text-slate-500 hover:border-slate-600'}`}
+                ${directBand === bd.id ? 'border-bronze-500 text-bronze-300 bg-bronze-900/30' :
+                  current === bd.id ? 'border-gunmetal-600 text-gunmetal-300 bg-gunmetal-800/50' : 'border-gunmetal-800 text-gunmetal-500 hover:border-gunmetal-600'}`}
               onClick={() => setDirectBand(bd.id === current ? null : bd.id)}
             >
               {bd.label}
@@ -288,7 +288,7 @@ export function ManoeuvreModal({ payload, onClose }) {
 
       {/* Evasion — B3 p.55: opposed Pilot check (DEX) */}
       <div>
-        <p className="text-[10px] font-display text-slate-500 tracking-widest mb-2">
+        <p className="text-[10px] font-display text-gunmetal-500 tracking-widest mb-2">
           EVASION — OPPOSED PILOT (DEX) // 2300AD B3 p.55
         </p>
         <div className="grid grid-cols-2 gap-2">
@@ -296,26 +296,26 @@ export function ManoeuvreModal({ payload, onClose }) {
             const isEvading = evadingShipId === ship.id
             const result    = isEvading ? evasionRoll : null
             return (
-              <div key={ship.id} className={`rounded border p-2 space-y-1 ${isEvading ? 'border-sky-700 bg-sky-950/30' : 'border-slate-700 bg-slate-800/30'}`}>
-                <p className="font-mono text-[10px] text-slate-300 truncate">{ship.profile?.name ?? ship.id}</p>
+              <div key={ship.id} className={`rounded border p-2 space-y-1 ${isEvading ? 'border-bronze-700 bg-bronze-950/30' : 'border-gunmetal-700 bg-gunmetal-800/30'}`}>
+                <p className="font-mono text-[10px] text-gunmetal-300 truncate">{ship.profile?.name ?? ship.id}</p>
                 {result ? (
                   <>
-                    <p className="font-mono text-[10px] text-slate-400">
+                    <p className="font-mono text-[10px] text-gunmetal-400">
                       [{result.dice.join('+')}] +{result.pilotSkill} +dex{result.dexDm}
                       {result.commandDm ? ` +cmd${result.commandDm}` : ''} = {result.total}
                     </p>
-                    <p className={`font-mono text-xs font-bold ${result.dm < 0 ? 'text-sky-400' : result.dm > 0 ? 'text-red-400' : 'text-slate-400'}`}>
+                    <p className={`font-mono text-xs font-bold ${result.dm < 0 ? 'text-bronze-400' : result.dm > 0 ? 'text-red-400' : 'text-gunmetal-400'}`}>
                       Evasion DM: {result.dm > 0 ? '+' : ''}{result.dm}
                     </p>
                     <button onClick={() => clearEvasion(ship.id)}
-                      className="text-[9px] font-mono text-slate-500 hover:text-slate-300 underline">
+                      className="text-[9px] font-mono text-gunmetal-500 hover:text-gunmetal-300 underline">
                       clear
                     </button>
                   </>
                 ) : (
                   <>
                     <button onClick={() => rollEvasion(ship.id)}
-                      className="w-full py-1 text-[10px] font-display tracking-widest text-slate-400 border border-slate-600 hover:border-sky-600 hover:text-sky-400 rounded transition-colors">
+                      className="w-full py-1 text-[10px] font-display tracking-widest text-gunmetal-400 border border-gunmetal-600 hover:border-bronze-600 hover:text-bronze-400 rounded transition-colors">
                       EVADE 🎲
                     </button>
                     {pilotBudget(ship) <= 0 && (
@@ -327,15 +327,15 @@ export function ManoeuvreModal({ payload, onClose }) {
             )
           })}
         </div>
-        <p className="text-[9px] font-mono text-slate-600 mt-1">Effect 1–4: DM−1 · Effect 5+: DM−2 · Effect ≤−5: enemy DM+1</p>
+        <p className="text-[9px] font-mono text-gunmetal-600 mt-1">Effect 1–4: DM−1 · Effect 5+: DM−2 · Effect ≤−5: enemy DM+1</p>
       </div>
 
       <div className="flex gap-2 pt-2">
-        <button className="flex-1 py-2 text-xs font-display tracking-widest text-slate-400 border border-slate-700 hover:bg-slate-800 rounded" onClick={onClose}>
+        <button className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-700 hover:bg-gunmetal-800 rounded" onClick={onClose}>
           CANCEL
         </button>
         <button
-          className="flex-1 py-2 text-xs font-display tracking-widest text-sky-300 border border-sky-700 hover:bg-sky-900/30 rounded"
+          className="flex-1 py-2 text-xs font-display tracking-widest text-bronze-300 border border-bronze-700 hover:bg-bronze-900/30 rounded"
           onClick={applyManoeuvre}
         >
           APPLY
