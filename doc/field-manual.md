@@ -31,7 +31,7 @@
 It is GM-operated and designed for shared-screen play — one person drives, everyone watches.
 
 Rules source: **2300AD Core Book 3: Vehicles and Spacecraft** pp.52–62 (primary).
-**Traveller 2022 Core Rulebook** is used only for internal critical hit tables (p.158–159) and weapon traits (p.75).
+**Traveller 2022 Core Rulebook** is used only for internal critical hit tables (p.158–159) and weapon traits (p.78).
 Where B3 and CRB diverge, **B3 wins**.
 
 Combat uses **range bands** — no hex grid, no velocity vectors.
@@ -311,7 +311,7 @@ entry, since it must be declared against one specific incoming drone, not chosen
 has no other Crew Action beyond Fire Weapon / Deploy-Recharge Screens / Point Defence / Operate
 UTES Array, all sharing the same single Gunnery action per round.
 
-Evasion (opposed Pilot check, B3 p.55) is resolved directly in the **Manoeuvre…** modal (see
+Evasion (opposed Pilot check, B3 p.54) is resolved directly in the **Manoeuvre…** modal (see
 §6/§8), not as a Crew Action — Pilot has no entry in this menu.
 
 ### Mechanic / Engineer

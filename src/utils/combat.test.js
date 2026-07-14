@@ -550,7 +550,7 @@ describe('rollDamage — Advanced/Obsolete traits', () => {
   })
 })
 
-// === getAutoScore — Auto X fire-mode trait // 2300AD B3 p.59, Trav2022 CRB p.75 ===
+// === getAutoScore — Auto X fire-mode trait // 2300AD B3 p.59, Trav2022 CRB p.78 ===
 
 describe('getAutoScore', () => {
   it('parses the numeric rating out of an "Auto X" trait string', () => {
@@ -598,7 +598,7 @@ describe('rollDamage — Auto X Burst mode', () => {
   })
 })
 
-// === rollFullAuto — Auto X Full Auto fire mode (N separate volleys) // Trav2022 CRB p.75 ===
+// === rollFullAuto — Auto X Full Auto fire mode (N separate volleys) // Trav2022 CRB p.78 ===
 
 describe('rollFullAuto', () => {
   beforeEach(() => vi.spyOn(Math, 'random').mockReturnValue(0.5))

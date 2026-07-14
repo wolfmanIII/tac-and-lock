@@ -58,7 +58,7 @@ describe('ALL_CREW_ACTIONS', () => {
   })
 })
 
-// Evasion (opposed Pilot check, B3 p.55) is resolved directly inside
+// Evasion (opposed Pilot check, B3 p.54) is resolved directly inside
 // ManoeuvreModal as part of a ship's movement — there is no "pilot" role entry
 // in CREW_ACTIONS for it (see crewActions.js top-of-file note).
 describe('pilot role', () => {

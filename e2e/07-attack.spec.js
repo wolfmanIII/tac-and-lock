@@ -821,7 +821,7 @@ test.describe('AttackModal — Gunnery action budget (one use per round)', () =>
   })
 })
 
-// === Auto X fire mode — Single/Burst/Full Auto selector // 2300AD B3 p.59, Trav2022 CRB p.75 (#11) ===
+// === Auto X fire mode — Single/Burst/Full Auto selector // 2300AD B3 p.59, Trav2022 CRB p.78 (#11) ===
 
 test.describe('AttackModal — Auto X fire mode', () => {
   test.beforeEach(async ({ page }) => {

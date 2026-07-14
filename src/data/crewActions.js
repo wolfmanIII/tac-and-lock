@@ -19,7 +19,7 @@
  * }} CrewAction
  */
 
-// Note: Evasion (opposed Pilot check, B3 p.55) is resolved directly inside
+// Note: Evasion (opposed Pilot check, B3 p.54) is resolved directly inside
 // ManoeuvreModal as a Pilot action, not as a captain/engineer/sensor_operator/
 // marine crew action — there is no separate "pilot" role entry here.
 

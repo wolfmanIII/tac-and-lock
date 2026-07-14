@@ -26,7 +26,7 @@ export default function LegalFooter() {
             <p>
               <span className="text-bronze-400 font-bold">TAC &amp; LOCK</span> is a free, non-commercial
               browser tool for playing 2300AD space combat (Mongoose Publishing, 2021) at the table.
-              Rules implemented: 2300AD Core Book 3 p.52–62 (primary); Trav2022 CRB p.158–159 (internal crits), p.75 (weapon traits).
+              Rules implemented: 2300AD Core Book 3 p.52–62 (primary); Trav2022 CRB p.158–159 (internal crits), p.78 (weapon traits).
             </p>
             <p>
               The Traveller, 2300AD and related games in all forms are owned by Mongoose Publishing.

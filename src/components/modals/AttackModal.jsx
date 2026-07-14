@@ -162,7 +162,7 @@ export function AttackModal({ payload, onClose }) {
   const [weaponIdx,     setWeaponIdx]     = useState(0)
   const [weaponCount,   setWeaponCount]   = useState(1)
   // Auto X fire mode — Single/Burst/Full Auto selector, Burst default (inert on non-Auto weapons)
-  // // 2300AD B3 p.59, Trav2022 CRB p.75
+  // // 2300AD B3 p.59, Trav2022 CRB p.78
   const [autoMode,      setAutoMode]      = useState('burst')
   // evasionDm auto-reads target.evasionDm (set by ManoeuvreModal's opposed Pilot check // B3 p.54);
   // GM can still override manually for untracked crew — null override means "use the auto value"
@@ -429,7 +429,7 @@ export function AttackModal({ payload, onClose }) {
     spendOnce('engineer', 'engineer_pilot')
   }
 
-  // Auto X fire mode — Single/Burst/Full Auto // 2300AD B3 p.59, Trav2022 CRB p.75
+  // Auto X fire mode — Single/Burst/Full Auto // 2300AD B3 p.59, Trav2022 CRB p.78
   function resolveDamage() {
     const autoScore = getAutoScore(weapon?.traits)
     const armour    = target?.currentArmour ?? 0
@@ -565,7 +565,7 @@ export function AttackModal({ payload, onClose }) {
           )}
         </div>
 
-        {/* Auto X fire-mode selector — Single/Burst/Full Auto // 2300AD B3 p.59, Trav2022 CRB p.75 */}
+        {/* Auto X fire-mode selector — Single/Burst/Full Auto // 2300AD B3 p.59, Trav2022 CRB p.78 */}
         {weapon && getAutoScore(weapon.traits) > 0 && (
           <div className="bg-gunmetal-800/40 border border-gunmetal-700 rounded p-3 space-y-2">
             <p className="font-mono text-[10px] text-gunmetal-400 tracking-widest uppercase">

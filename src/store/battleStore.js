@@ -68,7 +68,7 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     currentArmour:      profile.armour,
     tacSpeed:           profile.tacSpeed,
     currentTacSpeed:    profile.tacSpeed, // fixed DM added to Pilot checks (Open/Close/Position Vessel) — never spent // 2300AD B3 p.54
-    evasionDm:          0,  // B3 p.55: result of opposed Pilot check (−1, −2, or +1 for enemy)
+    evasionDm:          0,  // B3 p.54: result of opposed Pilot check (−1, −2, or +1 for enemy)
     sensors:            { ...profile.sensors },
     computer:           { ...profile.computer },
     weapons:            profile.weapons.map((w) => ({ ...w, offline: false, destroyed: false })),
@@ -562,7 +562,7 @@ export const useBattleStore = create((set, get) => {
     }),
 
     /**
-     * Set B3 evasion DM for a ship from an opposed Pilot check result. // 2300AD B3 p.55
+     * Set B3 evasion DM for a ship from an opposed Pilot check result. // 2300AD B3 p.54
      * @param {string} shipId
      * @param {number} dm — negative or 0 (e.g. -1, -2); +1 if enemy wins badly
      */

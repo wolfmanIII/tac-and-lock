@@ -1,6 +1,6 @@
 /**
  * ManoeuvreModal — range band changes, evasion, GM override.
- * // 2300AD B3 p.55
+ * // 2300AD B3 p.54
  */
 
 import { test, expect } from '@playwright/test'

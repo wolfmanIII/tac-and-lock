@@ -54,7 +54,7 @@ export function ManoeuvreModal({ payload, onClose }) {
   const [manoeuvreRoll, setManoeuvreRoll] = useState(null)
   const [applyEnemyChoice, setApplyEnemyChoice] = useState(false)
   const [directBand,  setDirectBand] = useState(null)
-  // Evasion — B3 p.55: opposed Pilot check (DEX), Effect → DM table
+  // Evasion — B3 p.54: opposed Pilot check (DEX), Effect → DM table
   const [evadingShipId, setEvadingShipId] = useState(null)
   const [evasionRoll,   setEvasionRoll]   = useState(null)
 
@@ -79,7 +79,7 @@ export function ManoeuvreModal({ payload, onClose }) {
   const actingShip = actingShipId ? (actingShipId === a.id ? a : b) : null
   const otherShip   = actingShipId ? (actingShipId === a.id ? b : a) : null
 
-  /** B3 p.55 — Effect of opposed Pilot check → DM applied to all incoming attacks. */
+  /** B3 p.54 — Effect of opposed Pilot check → DM applied to all incoming attacks. */
   function evasionEffectToDm(effect) {
     if (effect >= 5)  return -2
     if (effect >= 1)  return -1
@@ -102,7 +102,7 @@ export function ManoeuvreModal({ payload, onClose }) {
     setEvadingShipId(shipId)
     setEvasionRoll({ dice, total, effect, dm, pilotSkill, dexDm, commandDm })
     setEvasionDm(shipId, dm)
-    spendCrewAction(shipId, 'pilot') // Evade is a Pilot action, committed immediately // 2300AD B3 p.53, p.55
+    spendCrewAction(shipId, 'pilot') // Evade is a Pilot action, committed immediately // 2300AD B3 p.53, p.54
   }
 
   function clearEvasion(shipId) {
@@ -286,10 +286,10 @@ export function ManoeuvreModal({ payload, onClose }) {
         </div>
       </div>
 
-      {/* Evasion — B3 p.55: opposed Pilot check (DEX) */}
+      {/* Evasion — B3 p.54: opposed Pilot check (DEX) */}
       <div>
         <p className="text-[10px] font-display text-gunmetal-500 tracking-widest mb-2">
-          EVASION — OPPOSED PILOT (DEX) // 2300AD B3 p.55
+          EVASION — OPPOSED PILOT (DEX) // 2300AD B3 p.54
         </p>
         <div className="grid grid-cols-2 gap-2">
           {[a, b].map((ship) => {

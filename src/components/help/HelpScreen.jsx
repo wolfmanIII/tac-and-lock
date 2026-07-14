@@ -152,7 +152,7 @@ export function HelpScreen({ onBack } = {}) {
           </p>
           <p>
             Rules source: <span className="text-gunmetal-200">2300AD Core Book 3: Vehicles and Spacecraft pp.52–62</span> (primary).
-            Traveller 2022 CRB used only for internal critical hit tables (p.158–159) and weapon traits (p.75).
+            Traveller 2022 CRB used only for internal critical hit tables (p.158–159) and weapon traits (p.78).
             Where B3 and CRB diverge, B3 wins.
           </p>
           <p>
@@ -369,7 +369,7 @@ export function HelpScreen({ onBack } = {}) {
             <KV k="Point Defence" v="Moved to the Drone Attack modal — see REACTIONS above. Intercepts one drone at a time, not a crew action." />
           </Sub>
 
-          <Note>Evasion (opposed Pilot check, B3 p.55) is resolved in the Manoeuvre… modal, not here — Pilot has no separate Crew Action entry.</Note>
+          <Note>Evasion (opposed Pilot check, B3 p.54) is resolved in the Manoeuvre… modal, not here — Pilot has no separate Crew Action entry.</Note>
 
           <Sub title="MECHANIC / ENGINEER">
             <KV k="Damage Control" v="Average (8+) Mechanic INT/EDU. Pick an active hazard (fire, breach, fuel leak, radiation). Success removes it. Effect ≥ 4: suppressed 1D rounds." />
