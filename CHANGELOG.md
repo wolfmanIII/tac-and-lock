@@ -9,6 +9,21 @@ ___
 
 ___
 
+## [1.4.0] — 2026-07-14
+
+### Changed
+
+- **[#44](https://github.com/wolfmanIII/tac-and-lock/issues/44)** — Retheme: replaced the
+  generic dark-sci-fi slate/zinc + neon-cyan palette (blindly reused from the sibling project
+  thrust-and-drift) with a palette actually sourced from the official 2300AD sourcebooks —
+  sampled directly from the core book covers and interior pages (gunmetal steel, bronze/gold
+  metallic accents, warm near-black ink; no cyan/neon anywhere in the real print identity). Kept
+  a dark UI, synthesized from the same sampled tones, since the books' own light parchment page
+  background isn't suitable for a live-session GM HUD. Touches `src/index.css`'s `@theme` token
+  block and all 28 component files; semantic status colors (danger/warning/success) unchanged.
+
+___
+
 ## [1.3.0] — 2026-07-12
 
 Rules-fidelity fixes and features from closed GitHub issues #4–#27, each verified against the
