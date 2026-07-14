@@ -198,15 +198,15 @@ test.describe('Drone attack — Point Defence and Firing Solution', () => {
     // same pattern as e2e/07-attack.spec.js. Step 3 uses manual entry for a guaranteed hit.
     await page.getByText('NO INTERCEPT → FIRING SOLUTION').click()
     await expect(page.getByText('STEP 1 — SENSOR / FIRING SOLUTION')).toBeVisible()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → PILOT').click()
 
     await expect(page.getByText('STEP 2 — POSITION VESSEL')).toBeVisible()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → GUNNER').click()
 
     await expect(page.getByText(/STEP 3 — GUNNER/)).toBeVisible()
-    await page.getByText('enter manually').click()
+    await page.getByText('enter manually').last().click()
     await page.locator('input[type="number"]').nth(0).fill('6')
     await page.locator('input[type="number"]').nth(1).fill('6')
     await expect(page.getByText('Damage', { exact: true })).toBeVisible()
@@ -229,7 +229,7 @@ test.describe('Drone attack — Point Defence and Firing Solution', () => {
       window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
     }, droneId)
     await page.getByText('NO INTERCEPT → FIRING SOLUTION').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → PILOT').click()
 
     await expect(page.getByText('STEP 2 — POSITION VESSEL')).toBeVisible()
@@ -249,13 +249,13 @@ test.describe('Drone attack — Point Defence and Firing Solution', () => {
       window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
     }, droneId)
     await page.getByText('NO INTERCEPT → FIRING SOLUTION').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → PILOT').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → GUNNER').click()
 
     await expect(page.getByText('Stationary/reaction-drive target')).toBeVisible()
-    await page.getByText('enter manually').click()
+    await page.getByText('enter manually').last().click()
     await page.locator('input[type="number"]').nth(0).fill('6')
     await page.locator('input[type="number"]').nth(1).fill('6')
     await expect(page.getByText('×2 damage', { exact: false })).toBeVisible()
@@ -298,9 +298,9 @@ test.describe('Drone attack — Point Defence and Firing Solution', () => {
       window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
     }, droneId)
     await page.getByText('NO INTERCEPT → FIRING SOLUTION').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → PILOT').click()
-    await page.getByText('ROLL 2D6').click()
+    await page.getByText('ROLL 2D6').last().click()
     await page.getByText('NEXT → GUNNER').click()
 
     const row = page.locator('div').filter({ hasText: 'Weapon trait' }).last()
@@ -335,6 +335,106 @@ test.describe('Drone attack — Point Defence and Firing Solution', () => {
     await page.locator('select').filter({ hasText: 'Laser' }).selectOption('1')
     row = page.locator('div').filter({ hasText: 'Point Defence' }).last()
     await expect(row).toContainText('+4')
+  })
+})
+
+// === Ship-only Firing Solution DMs ported to the drone modal — issues #31-#34 ===
+// Captain Tactics assist (Step 3), Engineer assist (Step 1 + Step 2), Command bonus
+// (Step 3), and target Evasion DM (Step 1) were implemented in AttackModal.jsx but
+// never ported to DroneAttackModal.jsx. // 2300AD B3 p.54, p.56
+
+test.describe('Drone attack — ported ship-only Firing Solution DMs (issues #31-#34)', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+    await addShipsToStore(page, SHIPS_WITH_DRONES)
+  })
+
+  test('Step 1 shows an Engineer assist roll block; success adds a raw-Effect row // issue #32', async ({ page }) => {
+    const droneId = await injectDrone(page, { band: 'Close' })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await page.getByText('NO INTERCEPT → FIRING SOLUTION').click()
+    await expect(page.getByText('Engineer assist (optional)')).toBeVisible()
+
+    await page.getByText('enter manually').first().click()
+    await page.locator('input[type="number"]').nth(0).fill('6')
+    await page.locator('input[type="number"]').nth(1).fill('6')
+    await expect(page.getByText('Engineer assist', { exact: true })).toBeVisible()
+  })
+
+  test('Step 2 shows its own Engineer assist roll block; success adds the banded TAC Speed row // issue #32', async ({ page }) => {
+    const droneId = await injectDrone(page, { band: 'Close' })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await page.getByText('NO INTERCEPT → FIRING SOLUTION').click()
+    await page.getByText('ROLL 2D6').last().click() // Step 1 main roll, no assist
+    await page.getByText('NEXT → PILOT').click()
+
+    await expect(page.getByText('Engineer assist (optional)')).toBeVisible()
+    await page.getByText('enter manually').first().click()
+    await page.locator('input[type="number"]').nth(0).fill('6')
+    await page.locator('input[type="number"]').nth(1).fill('6') // total 12+dm → Effect ≥ 5 → +2
+    await expect(page.getByText('Engineer assist (TAC Speed)')).toBeVisible()
+    const row = page.locator('div').filter({ hasText: 'Engineer assist (TAC Speed)' }).last()
+    await expect(row).toContainText('+2')
+  })
+
+  test('Step 3 shows a Captain assist roll block; success adds a Tactics assist row // issue #31', async ({ page }) => {
+    const droneId = await injectDrone(page, { band: 'Close' })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await page.getByText('NO INTERCEPT → FIRING SOLUTION').click()
+    await page.getByText('ROLL 2D6').last().click()
+    await page.getByText('NEXT → PILOT').click()
+    await page.getByText('ROLL 2D6').last().click()
+    await page.getByText('NEXT → GUNNER').click()
+
+    await expect(page.getByText('Captain assist (optional)')).toBeVisible()
+    await page.getByText('enter manually').first().click()
+    await page.locator('input[type="number"]').nth(0).fill('6')
+    await page.locator('input[type="number"]').nth(1).fill('6')
+    await expect(page.getByText('Tactics assist', { exact: true })).toBeVisible()
+  })
+
+  test('a Command issued to remote_pilot shows a Command (Captain) row in Step 3 // issue #33', async ({ page }) => {
+    const droneId = await injectDrone(page, { band: 'Close' })
+    await page.evaluate(() => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const owner = store.getState().ships[0]
+      store.getState().applyCommand(owner.id, 'remote_pilot', 2)
+    })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await page.getByText('NO INTERCEPT → FIRING SOLUTION').click()
+    await page.getByText('ROLL 2D6').last().click()
+    await page.getByText('NEXT → PILOT').click()
+    await page.getByText('ROLL 2D6').last().click()
+    await page.getByText('NEXT → GUNNER').click()
+
+    const row = page.locator('div').filter({ hasText: 'Command (Captain)' }).last()
+    await expect(row).toContainText('+2')
+  })
+
+  test('an evading target\'s DM appears in the drone\'s Step 1 breakdown, not just Step 3 // issue #34', async ({ page }) => {
+    await page.evaluate(() => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const target = store.getState().ships[1]
+      store.getState().updateShip(target.id, { evasionDm: -2 })
+    })
+    const droneId = await injectDrone(page, { band: 'Close' })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await page.getByText('NO INTERCEPT → FIRING SOLUTION').click()
+    await expect(page.getByText('STEP 1 — SENSOR / FIRING SOLUTION')).toBeVisible()
+
+    const row = page.locator('div').filter({ hasText: 'Target evasion' }).last()
+    await expect(row).toContainText('-2')
   })
 })
 

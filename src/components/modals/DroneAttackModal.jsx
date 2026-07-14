@@ -151,6 +151,12 @@ export function DroneAttackModal({ payload, onClose }) {
   const [step2Result,   setStep2Result]   = useState(null)
   const [step3Result,   setStep3Result]   = useState(null)
   const [damageResult,  setDamageResult]  = useState(null)
+  // Engineer assist — optional, Routine (8+) Engineer (power) INT, one at Step 1 (Sensor)
+  // and one at Step 2 (Pilot); Captain Tactics assist — optional, Difficult (10+) Tactics
+  // (naval) INT, at Step 3 (Gunner). Ported from AttackModal.jsx // 2300AD B3 p.56, issues #31/#32
+  const [sensorAssistResult, setSensorAssistResult] = useState(null)
+  const [pilotAssistResult,  setPilotAssistResult]  = useState(null)
+  const [captainAssistResult, setCaptainAssistResult] = useState(null)
   const [detonationMode, setDetonationMode] = useState(false) // Whiskey only — single-use alt warhead
   // Tracks which (ship, role, step-slot) combos have already spent an action this
   // session, so re-rolling the SAME step via ← BACK doesn't double-spend — but two
@@ -226,24 +232,58 @@ export function DroneAttackModal({ payload, onClose }) {
     onClose()
   }
 
+  // Engineer assist — Routine (8+) Engineer (power) INT, same skill/role regardless of
+  // which step it assists // 2300AD B3 p.56, issue #32
+  const engineerAssistDms = useMemo(() => {
+    if (!owner) return { skill: 0, intDm: 0, total: 0 }
+    const skill = getAssignedSkill('engineer', owner.crewAssignments, owner.crew)
+    const intDm = getCharDM(getAssignedCharacteristic('engineer', owner.crewAssignments, owner.crew))
+    return { skill, intDm, total: skill + intDm }
+  }, [owner])
+
+  // Step 1: no Effect band given in B3 for this assist — raw Effect (min 0), same pattern
+  // as the Step 3 Captain Tactics assist below.
+  const sensorAssistDm = sensorAssistResult?.success ? Math.max(0, sensorAssistResult.effect) : 0
+  // Step 2: B3 cross-references the "Boost Tac Speed" Effect bands (p.54) — Effect 1-4 → +1,
+  // Effect 5-6 → +2 — for this one Pilot check only.
+  const pilotAssistDm = pilotAssistResult?.success
+    ? (pilotAssistResult.effect >= 5 ? 2 : pilotAssistResult.effect >= 1 ? 1 : 0)
+    : 0
+
   // ── Step 1: Sensor (hand-off, no penalty) or self-generated (Piloting, DM-2) // B3 p.55 ──
   const step1Dms = useMemo(() => {
     if (!owner || !target) return { rows: [], total: 0 }
     const sig       = computeEffectiveSignature(target)
     const sensorQDm = owner.sensors?.dm ?? 0
     const timeLagDm = SENSOR_TIME_LAG_DM[drone?.currentBand] ?? 0
+    // Evade penalizes both Electronics(sensors) and Gunner checks // 2300AD B3 p.54, issue #34
+    const evasionDm = target.evasionDm ?? 0
     if (sensorMode === 'handoff') {
       const skill = getAssignedSkill('sensor_operator', owner.crewAssignments, owner.crew)
       const intDm = getCharDM(getAssignedCharacteristic('sensor_operator', owner.crewAssignments, owner.crew))
-      const total = skill + intDm + sig.effective + sensorQDm + timeLagDm
-      return { rows: [['Sensors skill', skill], ['INT DM', intDm], ['Target Signature', sig.effective], ['Sensor quality', sensorQDm], ['Time-lag', timeLagDm]], total }
+      const total = skill + intDm + sig.effective + sensorQDm + timeLagDm + evasionDm + sensorAssistDm
+      return {
+        rows: [
+          ['Sensors skill', skill], ['INT DM', intDm], ['Target Signature', sig.effective],
+          ['Sensor quality', sensorQDm], ['Time-lag', timeLagDm], ['Target evasion', evasionDm],
+          ...(sensorAssistDm !== 0 ? [['Engineer assist', sensorAssistDm]] : []),
+        ],
+        total,
+      }
     }
     // Self-generated — Remote Pilot's Piloting action, DEX, DM-2 // B3 p.55
     const skill = getAssignedSkill('remote_pilot', owner.crewAssignments, owner.crew)
     const dexDm = getCharDM(getAssignedCharacteristic('remote_pilot', owner.crewAssignments, owner.crew, 'DEX'))
-    const total = skill + dexDm + sig.effective + timeLagDm - 2
-    return { rows: [['Remote Pilot skill', skill], ['DEX DM', dexDm], ['Target Signature', sig.effective], ['Time-lag', timeLagDm], ['Self-generated', -2]], total }
-  }, [owner, target, sensorMode, drone])
+    const total = skill + dexDm + sig.effective + timeLagDm - 2 + evasionDm + sensorAssistDm
+    return {
+      rows: [
+        ['Remote Pilot skill', skill], ['DEX DM', dexDm], ['Target Signature', sig.effective],
+        ['Time-lag', timeLagDm], ['Self-generated', -2], ['Target evasion', evasionDm],
+        ...(sensorAssistDm !== 0 ? [['Engineer assist', sensorAssistDm]] : []),
+      ],
+      total,
+    }
+  }, [owner, target, sensorMode, drone, sensorAssistDm])
 
   const step1CarryEffect = step1Result ? Math.max(0, step1Result.effect) : 0
 
@@ -258,6 +298,17 @@ export function DroneAttackModal({ payload, onClose }) {
     if (owner) spendOnce(owner.id, sensorMode === 'handoff' ? 'sensor_operator' : 'remote_pilot', 'step1')
   }
 
+  function rollSensorAssist() {
+    const dice = roll2D6()
+    const total = dice[0] + dice[1] + engineerAssistDms.total
+    setSensorAssistResult({ dice, total, effect: total - 8, success: total >= 8 })
+    if (owner) spendOnce(owner.id, 'engineer', 'engineer_sensor')
+  }
+  function manualSensorAssist({ dice, total }) {
+    setSensorAssistResult({ dice, total, effect: total - 8, success: total >= 8 })
+    if (owner) spendOnce(owner.id, 'engineer', 'engineer_sensor')
+  }
+
   // ── Step 2: Position Vessel — Remote Pilot, Electronics(remote ops) DEX // B3 p.55–56 ──
   // Drones get a flat DM+2 to all Pilot checks (crewed fighters under 100 tons get DM+1
   // instead — not currently a modeled unit type, so every drone/missile weapon here is DM+2).
@@ -267,9 +318,16 @@ export function DroneAttackModal({ payload, onClose }) {
     const dexDm = getCharDM(getAssignedCharacteristic('remote_pilot', owner.crewAssignments, owner.crew, 'DEX'))
     const tacSpeed = weapon?.tacSpeed ?? 0
     const droneDm = 2
-    const total = skill + dexDm + tacSpeed + droneDm + step1CarryEffect
-    return { rows: [['Remote Pilot skill', skill], ['DEX DM', dexDm], ['Drone TAC Speed', tacSpeed], ['Drone Pilot bonus', droneDm], ['Carry (Step 1)', step1CarryEffect]], total }
-  }, [owner, weapon, step1CarryEffect])
+    const total = skill + dexDm + tacSpeed + droneDm + step1CarryEffect + pilotAssistDm
+    return {
+      rows: [
+        ['Remote Pilot skill', skill], ['DEX DM', dexDm], ['Drone TAC Speed', tacSpeed],
+        ['Drone Pilot bonus', droneDm], ['Carry (Step 1)', step1CarryEffect],
+        ...(pilotAssistDm !== 0 ? [['Engineer assist (TAC Speed)', pilotAssistDm]] : []),
+      ],
+      total,
+    }
+  }, [owner, weapon, step1CarryEffect, pilotAssistDm])
 
   const step2CarryEffect = step2Result ? Math.max(0, step2Result.effect) : 0
 
@@ -284,9 +342,30 @@ export function DroneAttackModal({ payload, onClose }) {
     if (owner) spendOnce(owner.id, 'remote_pilot', 'step2')
   }
 
+  function rollPilotAssist() {
+    const dice = roll2D6()
+    const total = dice[0] + dice[1] + engineerAssistDms.total
+    setPilotAssistResult({ dice, total, effect: total - 8, success: total >= 8 })
+    if (owner) spendOnce(owner.id, 'engineer', 'engineer_pilot')
+  }
+  function manualPilotAssist({ dice, total }) {
+    setPilotAssistResult({ dice, total, effect: total - 8, success: total >= 8 })
+    if (owner) spendOnce(owner.id, 'engineer', 'engineer_pilot')
+  }
+
   // ── Step 3: Gunner — Difficult (10+), Fire Control, range, target's reactive DMs // B3 p.56 ──
   // Remote Pilot is the one who "fights drones" per the B3 p.53 Crew Actions table
   // (not a separate turret gunner) — this step draws the owner's own remote_pilot skill.
+  // Captain Tactics assist DM — only counts on a successful roll, using its Effect (min 0) // B3 p.54, p.56
+  const captainAssistDm = captainAssistResult?.success ? Math.max(0, captainAssistResult.effect) : 0
+
+  const captainAssistDms = useMemo(() => {
+    if (!owner) return { skill: 0, intDm: 0, total: 0 }
+    const skill = getAssignedSkill('captain', owner.crewAssignments, owner.crew)
+    const intDm = getCharDM(getAssignedCharacteristic('captain', owner.crewAssignments, owner.crew))
+    return { skill, intDm, total: skill + intDm }
+  }, [owner])
+
   const step3Dms = useMemo(() => {
     if (!owner || !target || !weapon) return { rows: [], total: 0 }
     const remotePilotSkill = getAssignedSkill('remote_pilot', owner.crewAssignments, owner.crew)
@@ -296,6 +375,8 @@ export function DroneAttackModal({ payload, onClose }) {
     const evasionDm    = target.evasionDm ?? 0
     const jammer = ships.find((s) => s.ewTarget === owner.id)
     const jammerPenalty = jammer?.ewEffect ?? 0
+    // Captain's Command, if it targeted this drone's Remote Pilot // B3 p.54, issue #33
+    const commandDm = (owner.commandBonus ?? []).find((cb) => cb.role === 'remote_pilot')?.dm ?? 0
     // Stationary or reaction-drive target — Firing Solution is trivial // B3 p.56
     const easyTargetDm = getEasyTargetAttackDm(target)
     // Planetary surface / atmospheric flight range modifiers, and Ortillery vs. surface targets // B3 p.56, p.59
@@ -305,7 +386,7 @@ export function DroneAttackModal({ payload, onClose }) {
     const screenDm = getScreenDm(target, weapon)
     // Weapon traits — Accurate +1, Slow −2 // B3 p.59
     const weaponTraitDm = getWeaponTraitAttackDm(weapon.traits)
-    const total = remotePilotSkill + remotePilotDexDm + fireControlDm + rangeDm + step2CarryEffect + evasionDm + jammerPenalty + easyTargetDm + atmosphericDm + ortilleryDm + screenDm + weaponTraitDm
+    const total = remotePilotSkill + remotePilotDexDm + fireControlDm + rangeDm + step2CarryEffect + evasionDm + jammerPenalty + commandDm + captainAssistDm + easyTargetDm + atmosphericDm + ortilleryDm + screenDm + weaponTraitDm
     return {
       rows: [
         ['Remote Pilot skill', remotePilotSkill],
@@ -316,6 +397,8 @@ export function DroneAttackModal({ payload, onClose }) {
         ['Evasion penalty', evasionDm],
         ['Weapon trait', weaponTraitDm],
         ...(jammerPenalty !== 0 ? [['EW jamming', jammerPenalty]] : []),
+        ...(commandDm !== 0 ? [['Command (Captain)', commandDm]] : []),
+        ...(captainAssistDm !== 0 ? [['Tactics assist', captainAssistDm]] : []),
         ...(easyTargetDm !== 0 ? [['Stationary/reaction-drive target', easyTargetDm]] : []),
         ...(atmosphericDm !== 0 ? [['Planetary/atmospheric condition', atmosphericDm]] : []),
         ...(ortilleryDm !== 0 ? [['Ortillery', ortilleryDm]] : []),
@@ -323,7 +406,7 @@ export function DroneAttackModal({ payload, onClose }) {
       ],
       total,
     }
-  }, [owner, target, weapon, drone, ships, step2CarryEffect])
+  }, [owner, target, weapon, drone, ships, step2CarryEffect, captainAssistDm])
 
   const damageOverride = detonationMode && weapon.detonationMode ? weapon.detonationMode : null
 
@@ -344,6 +427,17 @@ export function DroneAttackModal({ payload, onClose }) {
     if (total >= 10) {
       setDamageResult(rollDamage(drone.weaponId, 1, target.currentArmour ?? 0, damageOverride, getEasyTargetDamageMultiplier(target)))
     }
+  }
+
+  function rollCaptainAssist() {
+    const dice = roll2D6()
+    const total = dice[0] + dice[1] + captainAssistDms.total
+    setCaptainAssistResult({ dice, total, effect: total - 10, success: total >= 10 })
+    if (owner) spendOnce(owner.id, 'captain', 'captain_assist')
+  }
+  function manualCaptainAssist({ dice, total }) {
+    setCaptainAssistResult({ dice, total, effect: total - 10, success: total >= 10 })
+    if (owner) spendOnce(owner.id, 'captain', 'captain_assist')
   }
 
   function applyResults() {
@@ -482,6 +576,19 @@ export function DroneAttackModal({ payload, onClose }) {
             {sensorMode === 'handoff' ? 'Sensor Operator' : 'Remote Pilot'} has no actions left this round.
           </p>
         )}
+
+        {/* Engineer assist — optional, before the main Sensor roll // 2300AD B3 p.56, issue #32 */}
+        {!step1Result && (
+          <div className="bg-gunmetal-800/40 border border-gunmetal-700 rounded px-3 py-2 space-y-2">
+            <p className="font-mono text-[10px] text-gunmetal-500 tracking-widest uppercase">
+              Engineer assist (optional) · Routine (8+) · Engineer (power) · INT
+              {ownerBudget.engineer <= 0 && <span className="text-red-400 normal-case"> — Engineer has no actions left this round</span>}
+            </p>
+            <RollBlock dm={engineerAssistDms.total} onRoll={rollSensorAssist} onManual={manualSensorAssist}
+              result={sensorAssistResult} target={8} disabled={ownerBudget.engineer <= 0} />
+          </div>
+        )}
+
         <DmBreakdown rows={step1Dms.rows} total={step1Dms.total} />
         <RollBlock dm={step1Dms.total} onRoll={rollStep1} onManual={manualStep1} result={step1Result} target={12}
           disabled={(sensorMode === 'handoff' ? ownerBudget.sensor_operator : ownerBudget.remote_pilot) <= 0} />
@@ -518,11 +625,24 @@ export function DroneAttackModal({ payload, onClose }) {
         {ownerBudget.remote_pilot <= 0 && (
           <p className="font-mono text-[10px] text-red-400">Remote Pilot has no actions left this round.</p>
         )}
+
+        {/* Engineer assist — optional, before the main Pilot roll // 2300AD B3 p.56, issue #32 */}
+        {!step2Result && (
+          <div className="bg-gunmetal-800/40 border border-gunmetal-700 rounded px-3 py-2 space-y-2">
+            <p className="font-mono text-[10px] text-gunmetal-500 tracking-widest uppercase">
+              Engineer assist (optional) · Routine (8+) · Engineer (power) · INT
+              {ownerBudget.engineer <= 0 && <span className="text-red-400 normal-case"> — Engineer has no actions left this round</span>}
+            </p>
+            <RollBlock dm={engineerAssistDms.total} onRoll={rollPilotAssist} onManual={manualPilotAssist}
+              result={pilotAssistResult} target={8} disabled={ownerBudget.engineer <= 0} />
+          </div>
+        )}
+
         <DmBreakdown rows={step2Dms.rows} total={step2Dms.total} />
         <RollBlock dm={step2Dms.total} onRoll={rollStep2} onManual={manualStep2} result={step2Result} target={10} disabled={ownerBudget.remote_pilot <= 0} />
 
         <div className="flex gap-2 pt-1">
-          <button onClick={() => { setStep(STEP_SENSOR); setStep2Result(null) }} className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-600 hover:border-gunmetal-500 rounded transition-colors">← BACK</button>
+          <button onClick={() => { setStep(STEP_SENSOR); setStep2Result(null); setPilotAssistResult(null) }} className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-600 hover:border-gunmetal-500 rounded transition-colors">← BACK</button>
           <button onClick={() => setStep(STEP_GUNNER)} disabled={!step2Result || ownerBudget.remote_pilot <= 0} className="flex-1 py-2 text-xs font-display tracking-widest text-bronze-400 border border-bronze-400/40 hover:bg-bronze-400/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
             NEXT → GUNNER
           </button>
@@ -570,6 +690,19 @@ export function DroneAttackModal({ payload, onClose }) {
       {ownerBudget.remote_pilot <= 0 && (
         <p className="font-mono text-[10px] text-red-400">Remote Pilot has no actions left this round.</p>
       )}
+
+      {/* Captain Tactics assist — optional, before the main Gunner roll // 2300AD B3 p.54, p.56, issue #31 */}
+      {!step3Result && (
+        <div className="bg-gunmetal-800/40 border border-gunmetal-700 rounded px-3 py-2 space-y-2">
+          <p className="font-mono text-[10px] text-gunmetal-500 tracking-widest uppercase">
+            Captain assist (optional) · Difficult (10+) · Tactics (naval) · INT
+            {ownerBudget.captain <= 0 && <span className="text-red-400 normal-case"> — Captain has no actions left this round</span>}
+          </p>
+          <RollBlock dm={captainAssistDms.total} onRoll={rollCaptainAssist} onManual={manualCaptainAssist}
+            result={captainAssistResult} target={10} disabled={ownerBudget.captain <= 0} />
+        </div>
+      )}
+
       <DmBreakdown rows={step3Dms.rows} total={step3Dms.total} />
       <RollBlock dm={step3Dms.total} onRoll={rollStep3} onManual={manualStep3} result={step3Result} target={10} disabled={ownerBudget.remote_pilot <= 0} />
 
@@ -595,7 +728,7 @@ export function DroneAttackModal({ payload, onClose }) {
       )}
 
       <div className="flex gap-2 pt-1">
-        <button onClick={() => { setStep(STEP_PILOT); setStep3Result(null); setDamageResult(null) }} className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-600 hover:border-gunmetal-500 rounded transition-colors">← BACK</button>
+        <button onClick={() => { setStep(STEP_PILOT); setStep3Result(null); setDamageResult(null); setCaptainAssistResult(null) }} className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-600 hover:border-gunmetal-500 rounded transition-colors">← BACK</button>
         {step3Result && !hit && (
           <button onClick={applyMiss} className="flex-1 py-2 text-xs font-display tracking-widest text-gunmetal-400 border border-gunmetal-700 hover:bg-gunmetal-800 rounded transition-colors">MISS — CLOSE</button>
         )}
