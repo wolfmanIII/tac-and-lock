@@ -346,7 +346,7 @@ export function HelpScreen({ onBack } = {}) {
           <p>Select the action, configure options, roll (if required), click <span className="text-gunmetal-200">APPLY RESULT</span>.</p>
 
           <Sub title="CAPTAIN">
-            <KV k="Commands" v="Average (8+) Leadership (INT or SOC). Order one crew role. Effect 1–4 → DM+1, Effect 5–6 → DM+2 to their actions this round. Cap = the Captain's own action budget. Applies immediately — the Captain acts first, so a Command issued early in the ship's turn is available to that role's later actions this same round." />
+            <KV k="Commands" v="Routine (8+) Leadership (INT or SOC). Order one crew role. Effect 1–4 → DM+1, Effect 5–6 → DM+2 to their actions this round. Cap = the Captain's own action budget. Applies immediately — the Captain acts first, so a Command issued early in the ship's turn is available to that role's later actions this same round." />
             <KV k="Issue Order" v="No check — spend one of the Captain's own actions to grant another role +1 action this round. Distinct from Commands (a DM buff, not an extra action)." />
             <KV k="Tactics assist" v="Optional inline roll inside the Attack modal, Difficult (10+) Tactics(naval) INT — adds its Effect to that single Gunner check only. Also costs a Captain action." />
           </Sub>
