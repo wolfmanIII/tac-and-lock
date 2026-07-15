@@ -323,13 +323,17 @@ Quando il danno penetra l'armatura, seguire la tabella Internal Critical Hits (�
 
 Trigger: **Effect ≥ 3** su qualsiasi hit (anche non penetrante). Tirare 2D:
 
+B3 stampa solo colonne 1° Hit / 2° Hit per Fire Control, Weapon e Sensors — nessuna
+escalation a "Destroyed" al 3° hit nella fonte (issue #35). La colonna 3° Hit sotto è
+mostrata solo dove B3 la definisce davvero (Discharge Vanes, Other System).
+
 | 2D | Sistema | 1° Hit | 2° Hit | 3° Hit |
 | --- | --- | --- | --- | --- |
-| 2 | Fire Control | DM−2 ai roll di attacco | — | Destroyed |
-| 3–4 | Weapon | −1D Damage, DM−2 ai roll di attacco | Disabled | Destroyed |
-| 5 | Sensors | DM−2 ai check Electronics (sensors) | — | Destroyed |
+| 2 | Fire Control | DM−2 ai roll di attacco | — | — |
+| 3–4 | Weapon | −1D Damage, DM−2 ai roll di attacco | Disabled | — |
+| 5 | Sensors | DM−2 ai check Electronics (sensors) | — | — |
 | 6–8 | Radiator | (vedi regole Radiator) | — | — |
-| 9 | Sensors | DM−2 ai check Electronics (sensors) | — | Destroyed |
+| 9 | Sensors | DM−2 ai check Electronics (sensors) | — | — |
 | 10–11 | Discharge Vanes (se presenti; altrimenti nessun effetto) | Disabled | Destroyed | — |
 | 12 | Other System | Disabled | Destroyed | — |
 

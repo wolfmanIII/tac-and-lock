@@ -115,6 +115,16 @@ describe('SURFACE_FIXTURE_EFFECTS', () => {
     expect(dm).toBeDefined()
     expect(dm.value).toBe(-2)
   })
+
+  // B3 p.58 only prints 1st/2nd Hit columns for Fire Control, Weapon, and Sensors — there is
+  // no 3rd-hit escalation to "destroyed" in the source. // issue #35
+  it('fireControl/surfaceWeapon/surfaceSensors 3rd hit has no further effect (no fabricated destroyed tier)', () => {
+    for (const system of ['fireControl', 'surfaceWeapon', 'surfaceSensors']) {
+      const entry = SURFACE_FIXTURE_EFFECTS[system][3]
+      expect(entry.mechanics).toEqual([])
+      expect(entry.label.toLowerCase()).not.toContain('destroyed')
+    }
+  })
 })
 
 // === INTERNAL_LOCATION_TABLE ===

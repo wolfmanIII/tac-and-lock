@@ -46,17 +46,17 @@ export const SURFACE_FIXTURE_EFFECTS = {
   fireControl: {
     1: { label: 'Fire Control — DM−2 to all attack rolls.', mechanics: [{ type: 'attack_dm', value: -2 }] },
     2: { label: 'Fire Control — no additional effect.', mechanics: [] },
-    3: { label: 'Fire Control destroyed.', mechanics: [{ type: 'fire_control_destroyed' }] },
+    3: { label: 'Fire Control — no further effect.', mechanics: [] },
   },
   surfaceWeapon: {
     1: { label: 'Weapon — −1D Damage, DM−2 to attack rolls.', mechanics: [{ type: 'weapon_damage_dm', value: -1 }, { type: 'attack_dm', value: -2 }] },
     2: { label: 'Weapon disabled.', mechanics: [{ type: 'weapon_offline', value: 1 }] },
-    3: { label: 'Weapon destroyed.', mechanics: [{ type: 'weapon_destroyed', value: 1 }] },
+    3: { label: 'Weapon — no further effect.', mechanics: [] },
   },
   surfaceSensors: {
     1: { label: 'Sensors — DM−2 to all Electronics (sensors) checks.', mechanics: [{ type: 'sensors_dm', value: -2 }] },
     2: { label: 'Sensors — no additional effect.', mechanics: [] },
-    3: { label: 'Sensors destroyed.', mechanics: [{ type: 'sensors_offline', value: true }] },
+    3: { label: 'Sensors — no further effect.', mechanics: [] },
   },
   radiator: {
     // B3 p.58: 1st and 2nd hits have no effect. 3rd hit: Signature +2.
