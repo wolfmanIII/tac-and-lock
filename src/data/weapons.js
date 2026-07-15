@@ -153,7 +153,7 @@ export const WEAPONS = {
     optimalRange: 'Adjacent',   // Range: Adjacent // 2300AD B3 p.60
     rangeDm: {
       Adjacent:  2,
-      Close:     0,
+      Close:   -20,  // beyond its Adjacent max Range — out of range // issue #30
       Short:   -20,
       Medium:  -20,
       Long:    -20,
@@ -262,7 +262,9 @@ export const WEAPONS = {
     optimalRange: 'Adjacent', // Range: Adjacent // 2300AD B3 p.60
     rangeDm: {
       Adjacent:  2,
-      Close:     0,  // Point Defence works at Close range (intercept role)
+      Close:   -20,  // beyond its Adjacent max Range — out of range. Point Defence's Close-range
+                     // role (getPointDefenceDm/getPointDefenceTraitAttackDm) gates on traits/
+                     // rangeBand directly and never reads rangeDm, so this doesn't affect it. // issue #30
       Short:   -20,
       Medium:  -20,
       Long:    -20,

@@ -112,6 +112,14 @@ describe('2300AD canonical weapons', () => {
     expect(WEAPONS.anti_missile_laser.optimalRange).toBe('Adjacent')
   })
 
+  it('anti_missile_laser — beyond Adjacent is out of range (rangeDm Close = -20) // issue #30', () => {
+    expect(WEAPONS.anti_missile_laser.rangeDm.Close).toBe(-20)
+  })
+
+  it('darlan_g2 — beyond Adjacent is out of range (rangeDm Close = -20) // issue #30', () => {
+    expect(WEAPONS.darlan_g2.rangeDm.Close).toBe(-20)
+  })
+
   it('anti_missile_laser — damage is 1D // B3 p.60', () => {
     expect(WEAPONS.anti_missile_laser.damage).toBe('1D')
   })
