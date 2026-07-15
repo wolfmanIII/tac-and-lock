@@ -621,8 +621,8 @@ attacchi. `mode: 'engage'` in `DroneAttackModal.jsx`, menu contestuale "Fire at 
 
 - Solo a **Adjacent range**, in qualsiasi momento del turno della nave (budget azioni Marine)
 - Ogni round di boarding si risolve con un **check opposto** (attacker vs defender).
-- **Formula attaccante**: 2D + Gun Combat/Melee + modificatori.
-- **Formula difensore**: 2D + Gun Combat/Melee + modificatori.
+- **Formula attaccante**: 2D + modificatori. **Nessuno skill check** — CRB p.175 non prevede skill, characteristic DM o difficulty threshold.
+- **Formula difensore**: 2D + modificatori. Stesso principio.
 - **Differenza** (attaccante − difensore) determina il risultato dalla tabella sottostante.
 - La VTT gestisce un round di boarding alla volta; il GM traccia i round totali separatamente.
 
@@ -653,10 +653,10 @@ attacchi. `mode: 'engage'` in `DroneAttackModal.jsx`, menu contestuale "Fire at 
 
 ### Repel Boarders — Marine (Reaction)
 
-**Average (8+) Gun Combat/Melee** — difensore
+**Nessuno skill check** — difensore // Trav2022 CRB p.175
 
 - Reaction: si dichiara quando la propria nave viene abbordante.
-- Fornisce il **tiro difensore** per la risoluzione boarding: 2D + modificatori.
+- Fornisce il **tiro difensore** per la risoluzione boarding: 2D + modificatori, nessuno skill.
 - Il risultato viene usato nel calcolo (attaccante − difensore) della tabella sopra.
 - **DM+2** se la nave ha marines assegnati ai ruoli di difesa.
 

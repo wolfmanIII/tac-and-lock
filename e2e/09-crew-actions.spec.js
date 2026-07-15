@@ -479,6 +479,74 @@ test.describe('Boarding — boardingDmNextRound carry-over', () => {
   })
 })
 
+// === Boarding Action / Repel Boarders — no skill check, flat 2D6+mods (issue #29) ==========
+// // Trav2022 CRB p.175 — "Resolving a Boarding Action" has no skill, no characteristic DM,
+// no difficulty threshold. Both sides roll flat 2D + modifiers; attacker − defender is read
+// off the results table.
+
+test.describe('Boarding Action — flat 2D6+mods, no skill check (issue #29)', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  test('Boarding Action shows no skill-check UI', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((shipId) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId })
+    }, id0)
+    await page.getByText('Boarding Action', { exact: true }).click()
+    await expect(page.getByText('SKILL LEVEL', { exact: false })).not.toBeVisible()
+    await expect(page.getByText('ATTACKER — 2D6 + MODIFIERS')).toBeVisible()
+    await expect(page.getByText('DEFENDER TOTAL (2D + mods)')).toBeVisible()
+  })
+
+  test('attacker 12 vs defender 5 (diff +7) resolves IMMEDIATE BOARDING', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((shipId) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId })
+    }, id0)
+    await page.getByText('Boarding Action', { exact: true }).click()
+
+    await page.getByText('manual', { exact: true }).click()
+    const numberInputs = page.locator('input[type="number"]')
+    await numberInputs.nth(1).fill('6') // attacker die 1
+    await numberInputs.nth(2).fill('6') // attacker die 2 — attacker total = 12
+    await numberInputs.nth(3).fill('5') // defender total
+
+    await expect(page.getByText('IMMEDIATE BOARDING')).toBeVisible()
+    await expect(page.getByText('APPLY RESULT', { exact: true })).toBeVisible()
+  })
+
+  test('attacker 2 vs defender 9 (diff −7) resolves ATTACKERS DEFEATED', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((shipId) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId })
+    }, id0)
+    await page.getByText('Boarding Action', { exact: true }).click()
+
+    await page.getByText('manual', { exact: true }).click()
+    const numberInputs = page.locator('input[type="number"]')
+    await numberInputs.nth(1).fill('1') // attacker die 1
+    await numberInputs.nth(2).fill('1') // attacker die 2 — attacker total = 2
+    await numberInputs.nth(3).fill('9') // defender total
+
+    await expect(page.getByText('ATTACKERS DEFEATED')).toBeVisible()
+    await expect(page.getByText('Defender may counter-attack DM+4 next round.')).toBeVisible()
+  })
+
+  test('Repel Boarders shows the flat helper roll and applies without a check', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((shipId) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId })
+    }, id0)
+    await page.getByText('Repel Boarders', { exact: true }).click()
+    await expect(page.getByText('SKILL LEVEL', { exact: false })).not.toBeVisible()
+    await expect(page.getByText('DEFENDER — 2D6 + MODIFIERS')).toBeVisible()
+    await expect(page.getByText('APPLY RESULT', { exact: true })).toBeVisible()
+  })
+})
+
 // Sensor Lock removed — it was never a 2300AD B3 action (only exists in the
 // Traveller 2022 CRB, outside this project's declared CRB-fallback scope).
 

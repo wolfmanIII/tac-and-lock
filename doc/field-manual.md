@@ -324,8 +324,8 @@ Evasion (opposed Pilot check, B3 p.54) is resolved directly in the **Manoeuvre�
 
 | Action | Check | Effect |
 | ------ | ----- | ------ |
-| **Boarding Action** | Average (8+) Gun Combat/Melee | Two-roll opposed resolution (see §12 Boarding). |
-| **Repel Boarders** | Average (8+) Gun Combat/Melee | Defender's roll for boarding resolution (see §12 Boarding). |
+| **Boarding Action** | No skill check — flat 2D6 + modifiers | Two-roll opposed resolution (see §12 Boarding). |
+| **Repel Boarders** | No skill check — flat 2D6 + modifiers | Defender's roll for boarding resolution (see §12 Boarding). |
 
 ---
 
@@ -406,11 +406,11 @@ Only at **Adjacent range**, spent from the Marines' own action budget.
 
 ### Attacker's Roll (Boarding Action)
 
-2D6 + Gun Combat/Melee + modifiers.
+2D6 + modifiers. No skill check. // Trav2022 CRB p.175
 
 ### Defender's Roll (Repel Boarders)
 
-2D6 + Gun Combat/Melee + modifiers.
+2D6 + modifiers. No skill check. // Trav2022 CRB p.175
 
 ### Modifiers
 

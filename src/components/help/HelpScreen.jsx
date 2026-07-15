@@ -376,8 +376,8 @@ export function HelpScreen({ onBack } = {}) {
           </Sub>
 
           <Sub title="MARINES">
-            <KV k="Boarding Action" v="Average (8+) Gun Combat/Melee. Opposed roll vs defender — see Boarding section." />
-            <KV k="Repel Boarders"  v="Average (8+) Gun Combat/Melee. Defender's roll for boarding resolution." />
+            <KV k="Boarding Action" v="No skill check — flat 2D6 + modifiers. Opposed vs defender — see Boarding section." />
+            <KV k="Repel Boarders"  v="No skill check — flat 2D6 + modifiers. Defender's roll for boarding resolution." />
           </Sub>
 
           <Note>Hazards are added by the GM via Ship Sheet → ACTIVE HAZARDS. Add labels like "Hull Fire", "Coolant Leak", "Radiation Exposure" — Damage Control clears them one at a time.</Note>
@@ -441,7 +441,7 @@ export function HelpScreen({ onBack } = {}) {
         <Section id="boarding" title="Boarding">
           <p>Close-quarters resolution. One opposed roll per round. Only at <span className="text-gunmetal-200">Adjacent range</span>, during a ship's turn.</p>
           <p>Attacker declares <span className="text-gunmetal-200">Boarding Action</span>; defender declares <span className="text-gunmetal-200">Repel Boarders</span>.</p>
-          <p>Both roll 2D6 + Gun Combat/Melee + modifiers. Attacker total − Defender total = difference.</p>
+          <p>Both roll 2D6 + modifiers — no skill check. Attacker total − Defender total = difference. // Trav2022 CRB p.175</p>
 
           <Sub title="MODIFIERS">
             <Table

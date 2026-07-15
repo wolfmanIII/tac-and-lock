@@ -32,7 +32,7 @@ Riferimenti regole:
 Regole complete in `doc/space-combat-rules.md`.
 
 > **FONTE PRIMARIA per il combattimento spaziale: 2300AD B3 p.52–62** (non il CRB).
-> Il CRB si usa per le tabelle di critical hit interno (p.158–159), weapon traits (p.78 — B3 cita erroneamente p.75, verificato via estrazione diretta del PDF, issue #42), e Boarding Actions (p.175 — B3 p.57 rimanda esplicitamente al CRB per queste regole).
+> Il CRB si usa per le tabelle di critical hit interno (p.158–159), weapon traits (p.78 — B3 cita erroneamente p.75, verificato via estrazione diretta del PDF, issue #42), e Boarding Actions (p.175 — B3 p.57 rimanda esplicitamente al CRB per queste regole; risoluzione a 2D+modificatori, nessuno skill check — issue #29).
 > Dove B3 e CRB divergono, B3 vince sempre.
 
 ## GAME RULES SUMMARY

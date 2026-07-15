@@ -68,6 +68,13 @@ export function ActionModal({ payload, onClose }) {
   const [critSystem,             setCritSystem]             = useState('')
   const [repairMode,             setRepairMode]             = useState('system') // 'system' | 'hull'
   const [selectedHazardId,       setSelectedHazardId]       = useState('')
+  // Flat 2D6 + net-modifiers roll helper — used for the attacker's own total on Boarding
+  // Action, and reused as a "compute my total" helper on Repel Boarders (the GM then types
+  // the result into the attacker's DEFENDER TOTAL field). No skill check either way — CRB
+  // p.175 is 2D + modifiers on both sides, full stop. // Trav2022 CRB p.175
+  const [boardingRollMods,       setBoardingRollMods]       = useState(0)
+  const [boardingRollTotal,      setBoardingRollTotal]      = useState(null)
+  const [boardingRollManual,     setBoardingRollManual]     = useState(false)
   const [boardingDefenderTotal,  setBoardingDefenderTotal]  = useState('')
   const [boardingHullDamage,     setBoardingHullDamage]     = useState(null)
   const [commandRole,            setCommandRole]            = useState(COMMAND_TARGET_ROLES[0])
@@ -90,15 +97,26 @@ export function ActionModal({ payload, onClose }) {
     ? Math.max(0, leadershipSkill - issuedCommands.length)
     : null
 
-  // Boarding result derived from attacker roll + defender manual total
+  // Boarding result derived from flat attacker total + defender manual total — no skill
+  // check involved, CRB p.175 is 2D + modifiers on both sides. // Trav2022 CRB p.175
   const boardingResult = useMemo(() => {
     if (selectedAction !== 'boarding_action') return null
-    if (!rollResult || !boardingDefenderTotal) return null
-    const attackerTotal  = rollResult.total
-    const defenderTotal  = Number(boardingDefenderTotal)
+    if (boardingRollTotal === null || !boardingDefenderTotal) return null
+    const defenderTotal = Number(boardingDefenderTotal)
     if (!Number.isFinite(defenderTotal)) return null
-    return getBoardingResult(attackerTotal - defenderTotal)
-  }, [selectedAction, rollResult, boardingDefenderTotal])
+    return getBoardingResult(boardingRollTotal - defenderTotal)
+  }, [selectedAction, boardingRollTotal, boardingDefenderTotal])
+
+  function rollBoardingFlat() {
+    const dice = roll2D6()
+    setBoardingRollTotal(dice[0] + dice[1] + boardingRollMods)
+    setBoardingHullDamage(null)
+  }
+
+  function manualBoardingFlat({ total }) {
+    setBoardingRollTotal(total)
+    setBoardingHullDamage(null)
+  }
 
   function doRoll() {
     if (!action) return
@@ -183,7 +201,7 @@ export function ActionModal({ payload, onClose }) {
         grantExtraAction(shipId, issueOrderRole)
         break
 
-      case 'boarding_action': { // B3 p.55
+      case 'boarding_action': { // Trav2022 CRB p.175 — flat 2D+mods opposed roll, no skill check
         if (!boardingResult) break
         const hullDmg = boardingHullDamage ?? (boardingResult.hullDice > 0 ? rollBoardingHull(boardingResult) : 0)
         if (hullDmg > 0 && target) {
@@ -199,14 +217,10 @@ export function ActionModal({ payload, onClose }) {
         break
       }
 
-      case 'repel_boarders': { // B3 p.55 — defender's roll; stores carry-over DM
-        if (success && (ship?.boardingDmNextRound ?? 0) > 0) {
-          // Consume existing boarding DM carry-over on a successful defence
-          updateShip(shipId, { boardingDmNextRound: 0 })
-        }
-        break
-      }
-
+      // 'repel_boarders' has no check of its own (CRB p.175 is a single unified opposed
+      // roll) — it falls through to the default action-spend below, marking the defending
+      // marines as actively engaged this round. The actual resolution happens in the
+      // attacker's Boarding Action.
       default:
         break
     }
@@ -233,10 +247,10 @@ export function ActionModal({ payload, onClose }) {
   const canApply = action && roleBudget > 0 && (
     action.id !== 'commands' || commandsRemaining > 0
   ) && (
+    action.id === 'boarding_action' ? !!boardingResult :
     action.difficulty === 0 ||
     rollResult?.success ||
-    HAS_FAILURE_EFFECT.has(action.id) && rollResult ||
-    (action.id === 'boarding_action' && boardingResult)
+    HAS_FAILURE_EFFECT.has(action.id) && rollResult
   )
 
   return (
@@ -258,7 +272,15 @@ export function ActionModal({ payload, onClose }) {
                   ${selectedAction === a.id
                     ? 'border-emerald-600 bg-emerald-900/20 text-emerald-300'
                     : 'border-gunmetal-800 bg-gunmetal-800/30 hover:border-gunmetal-600 text-gunmetal-300'}`}
-                onClick={() => { setSelectedAction(a.id); setRollResult(null); setBoardingHullDamage(null) }}
+                onClick={() => {
+                  setSelectedAction(a.id)
+                  setRollResult(null)
+                  setBoardingHullDamage(null)
+                  setBoardingRollTotal(null)
+                  setBoardingRollMods(0)
+                  setBoardingRollManual(false)
+                  setBoardingDefenderTotal('')
+                }}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-mono">{a.label}</span>
@@ -366,14 +388,35 @@ export function ActionModal({ payload, onClose }) {
             </div>
           )}
 
-          {/* Boarding Action — defender total input + result table */}
+          {/* Boarding Action — flat 2D+mods both sides, no skill check // Trav2022 CRB p.175 */}
           {action.id === 'boarding_action' && (
-            <div className="space-y-2">
-              <p className="text-[10px] font-display text-gunmetal-500 tracking-widest">DEFENDER TOTAL (2D + mods)</p>
-              <input type="number" min={2} max={24} value={boardingDefenderTotal}
-                onChange={(e) => { setBoardingDefenderTotal(e.target.value); setBoardingHullDamage(null) }}
-                placeholder="enter defender's 2D+mods total"
-                className="w-full bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-sm rounded px-2 py-1.5 focus:border-bronze-400 outline-none" />
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-display text-gunmetal-500 tracking-widest">ATTACKER — 2D6 + MODIFIERS</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono text-gunmetal-500">net mods</span>
+                  <input type="number" value={boardingRollMods}
+                    onChange={(e) => setBoardingRollMods(Number(e.target.value) || 0)}
+                    className="w-16 bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-sm rounded px-2 py-1 focus:border-bronze-400 outline-none" />
+                </div>
+                <div className="flex items-center gap-3">
+                  <button className="px-4 py-2 text-xs font-display tracking-widest text-emerald-400 border border-emerald-800 hover:bg-emerald-900/20 rounded" onClick={rollBoardingFlat}>ROLL 2D6</button>
+                  <button className="text-xs font-mono text-gunmetal-400 underline" onClick={() => setBoardingRollManual((m) => !m)}>manual</button>
+                  {boardingRollTotal !== null && (
+                    <span className="text-xs font-mono text-bronze-300 font-bold">= {boardingRollTotal}</span>
+                  )}
+                </div>
+                {boardingRollManual && <DiceInput dm={boardingRollMods} onChange={manualBoardingFlat} />}
+              </div>
+
+              <div className="space-y-1.5 border-t border-gunmetal-800 pt-2">
+                <p className="text-[10px] font-display text-gunmetal-500 tracking-widest">DEFENDER TOTAL (2D + mods)</p>
+                <input type="number" min={2} max={24} value={boardingDefenderTotal}
+                  onChange={(e) => { setBoardingDefenderTotal(e.target.value); setBoardingHullDamage(null) }}
+                  placeholder="enter defender's 2D+mods total (Repel Boarders)"
+                  className="w-full bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-sm rounded px-2 py-1.5 focus:border-bronze-400 outline-none" />
+              </div>
+
               {boardingResult && (
                 <div className={`rounded p-3 border space-y-1 ${
                   boardingResult.label.includes('SUCCEEDED') || boardingResult.label.includes('IMMEDIATE')
@@ -402,13 +445,40 @@ export function ActionModal({ payload, onClose }) {
             </div>
           )}
 
+          {/* Repel Boarders — no independent check; same flat 2D6+mods helper as the
+              attacker's roll above, just for the defender's own total. The GM copies the
+              result into the attacker's Boarding Action modal as DEFENDER TOTAL. // Trav2022 CRB p.175 */}
+          {action.id === 'repel_boarders' && (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-display text-gunmetal-500 tracking-widest">DEFENDER — 2D6 + MODIFIERS</p>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono text-gunmetal-500">net mods</span>
+                <input type="number" value={boardingRollMods}
+                  onChange={(e) => setBoardingRollMods(Number(e.target.value) || 0)}
+                  className="w-16 bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-sm rounded px-2 py-1 focus:border-bronze-400 outline-none" />
+              </div>
+              <div className="flex items-center gap-3">
+                <button className="px-4 py-2 text-xs font-display tracking-widest text-emerald-400 border border-emerald-800 hover:bg-emerald-900/20 rounded" onClick={rollBoardingFlat}>ROLL 2D6</button>
+                <button className="text-xs font-mono text-gunmetal-400 underline" onClick={() => setBoardingRollManual((m) => !m)}>manual</button>
+                {boardingRollTotal !== null && (
+                  <span className="text-xs font-mono text-bronze-300 font-bold">= {boardingRollTotal}</span>
+                )}
+              </div>
+              {boardingRollManual && <DiceInput dm={boardingRollMods} onChange={manualBoardingFlat} />}
+              <p className="text-[10px] font-mono text-gunmetal-500">
+                Copy this total into the attacker's Boarding Action as DEFENDER TOTAL.
+              </p>
+            </div>
+          )}
+
           {roleBudget <= 0 && (
             <p className="text-[10px] font-mono text-red-400">
               {CREW_SKILLS[ACTION_ROLE[action.id]] ?? ACTION_ROLE[action.id]} ({ACTION_ROLE[action.id]}) has no actions left this round.
             </p>
           )}
 
-          {/* Standard skill roll block (all actions with difficulty > 0, except boarding which has its own) */}
+          {/* Standard skill roll block — self-hides for Boarding Action / Repel Boarders,
+              both difficulty 0 now that they have no skill check (CRB p.175, issue #29) */}
           {action.difficulty > 0 && (
             <>
               <div>
@@ -441,9 +511,6 @@ export function ActionModal({ payload, onClose }) {
                   ? <span className="text-emerald-400">SUCCESS — Effect {rollResult.effect}</span>
                   : <span className="text-red-400">FAILURE — Effect {rollResult.effect}</span>}
               </p>
-              {action.id === 'boarding_action' && rollResult && (
-                <p className="text-[10px] font-mono text-gunmetal-400 mt-0.5">Attacker total: {rollResult.total} — enter defender total above</p>
-              )}
             </div>
           )}
         </div>
