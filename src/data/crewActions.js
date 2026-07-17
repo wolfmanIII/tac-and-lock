@@ -82,6 +82,17 @@ export const CREW_ACTIONS = {
       requiresTarget: false,
     },
     {
+      id: 'boost_power_output',
+      label: 'Boost Power Output',
+      phase: 'actions',
+      reaction: false,
+      skill: 'Engineer (power)',
+      difficulty: 10,
+      difficultyLabel: 'Difficult (10+)',
+      description: 'Push power plant output past rated limits. Difficult (10+) Engineer (power) EDU, repeated every round it\'s used. Success: Effect is the percentage increase in available Power — no Power resource is tracked in this engine, informational only, GM narrates the effect (e.g. temporarily buying back a system offline from a Power Plant/Radiator critical). Effect −5 or worse: the ship suffers a critical hit to the Power Plant from the stress, applied automatically. Distinct from Overload Stutterwarp (Boost Tac Speed), which has no failure consequence. // 2300AD B3 p.54',
+      requiresTarget: false,
+    },
+    {
       id: 'emergency_repair',
       label: 'Emergency Repair',
       phase: 'actions',

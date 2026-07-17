@@ -666,6 +666,98 @@ test.describe('Overload Stutterwarp — no fabricated failure crit', () => {
   })
 })
 
+// === Boost Power Output — Engineer // 2300AD B3 p.54, issue #37 ==============
+// Distinct from Overload Stutterwarp: B3 gives Boost Power Output its own
+// failure clause — Effect -5 or worse inflicts a critical hit to the Power
+// Plant. The success side (% increase in available Power) is narrative only,
+// since no Power resource is tracked in this engine.
+
+test.describe('Boost Power Output — Engineer', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  test('ActionModal lists Boost Power Output as Difficult (10+) Engineer (power)', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId: id })
+    }, id0)
+    await page.getByText('Boost Power Output', { exact: true }).click()
+    await expect(page.getByText('SKILL LEVEL — Engineer (power) (Difficult (10+))')).toBeVisible()
+  })
+
+  test('a mild failure (Effect > -5) applies no critical hit to the Power Plant', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    const before = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((sh) => sh.id === id).criticalTracks.powerPlant
+    , id0)
+
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId: id })
+    }, id0)
+    await page.getByText('Boost Power Output', { exact: true }).click()
+    await page.getByText('manual', { exact: true }).click()
+    const numberInputs = page.locator('input[type="number"]')
+    await numberInputs.nth(0).fill('4')
+    await numberInputs.nth(1).fill('4')
+    await expect(page.getByText('FAILURE — Effect -1', { exact: false })).toBeVisible()
+    await expect(page.getByText('Stress from the overload', { exact: false })).not.toBeVisible()
+    await page.getByText('APPLY RESULT', { exact: true }).click()
+
+    const after = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((sh) => sh.id === id).criticalTracks.powerPlant
+    , id0)
+    expect(after).toEqual(before)
+  })
+
+  test('a severe failure (Effect <= -5) shows the crit warning and applies a critical hit to the Power Plant on APPLY', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId: id })
+    }, id0)
+    await page.getByText('Boost Power Output', { exact: true }).click()
+    await page.getByText('manual', { exact: true }).click()
+    const numberInputs = page.locator('input[type="number"]')
+    await numberInputs.nth(0).fill('1')
+    await numberInputs.nth(1).fill('1')
+    await expect(page.getByText('FAILURE — Effect -7', { exact: false })).toBeVisible()
+    await expect(page.getByText('Stress from the overload', { exact: false })).toBeVisible()
+    await page.getByText('APPLY RESULT', { exact: true }).click()
+
+    const after = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((sh) => sh.id === id).criticalTracks.powerPlant
+    , id0)
+    expect(after).toBe(1)
+  })
+
+  test('a successful roll is narrative only — no state mutation', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    const before = await page.evaluate((id) => {
+      const s = window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((sh) => sh.id === id)
+      return { tacSpeed: s.currentTacSpeed, crit: s.criticalTracks.powerPlant, hull: s.currentHull }
+    }, id0)
+
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId: id })
+    }, id0)
+    await page.getByText('Boost Power Output', { exact: true }).click()
+    await page.getByText('manual', { exact: true }).click()
+    const numberInputs = page.locator('input[type="number"]')
+    await numberInputs.nth(0).fill('6')
+    await numberInputs.nth(1).fill('6')
+    await expect(page.getByText('SUCCESS — Effect', { exact: false })).toBeVisible()
+    await page.getByText('APPLY RESULT', { exact: true }).click()
+
+    const after = await page.evaluate((id) => {
+      const s = window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((sh) => sh.id === id)
+      return { tacSpeed: s.currentTacSpeed, crit: s.criticalTracks.powerPlant, hull: s.currentHull }
+    }, id0)
+    expect(after).toEqual(before)
+  })
+})
+
 // === Scan Target / Improve Critical — Sensor Operator // 2300AD B3 p.54 =====
 
 test.describe('Scan Target / Improve Critical', () => {

@@ -16,7 +16,7 @@ const ACTION_ROLE = Object.fromEntries(
 )
 
 /** Actions that show APPLY on failure too (have a failure-path store effect). */
-const HAS_FAILURE_EFFECT = new Set(['electronic_warfare'])
+const HAS_FAILURE_EFFECT = new Set(['electronic_warfare', 'boost_power_output'])
 
 /** Boarding result table — diff = attacker_total − defender_total. // B3 p.55 */
 function getBoardingResult(diff) {
@@ -48,6 +48,7 @@ export function ActionModal({ payload, onClose }) {
   const applyDamage          = useBattleStore((s) => s.applyDamage)
   const spendCrewAction      = useBattleStore((s) => s.spendCrewAction)
   const grantExtraAction     = useBattleStore((s) => s.grantExtraAction)
+  const addCriticalHit       = useBattleStore((s) => s.addCriticalHit)
 
   const ship    = ships.find((s) => s.id === shipId)
   const targets = ships.filter((s) => s.id !== shipId && !s.isDestroyed)
@@ -178,6 +179,12 @@ export function ActionModal({ payload, onClose }) {
           if (ship) updateShip(shipId, {
             currentTacSpeed: ship.currentTacSpeed + (effect >= 5 ? 2 : 1),
           })
+        }
+        break
+
+      case 'boost_power_output': // B3 p.54 — % Power increase is narrative (no Power resource tracked); Effect ≤−5 → automatic crit to Power Plant
+        if (!success && effect <= -5) {
+          addCriticalHit(shipId, 'powerPlant', effect)
         }
         break
 
@@ -511,6 +518,11 @@ export function ActionModal({ payload, onClose }) {
                   ? <span className="text-emerald-400">SUCCESS — Effect {rollResult.effect}</span>
                   : <span className="text-red-400">FAILURE — Effect {rollResult.effect}</span>}
               </p>
+              {action.id === 'boost_power_output' && !rollResult.success && rollResult.effect <= -5 && (
+                <p className="text-[10px] font-mono text-red-400 mt-1">
+                  Stress from the overload will apply a critical hit to the Power Plant on APPLY.
+                </p>
+              )}
             </div>
           )}
         </div>
