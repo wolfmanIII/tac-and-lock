@@ -528,8 +528,7 @@ a 3 step: droni/missili sono "troppo piccoli e veloci" per un target lock normal
 
 #### Reazione (intercettazione) — B3 p.55, rinforzato p.56
 
-**Difficult (10+) Gunner (DEX)**
-
+- **Difficult (10+) Gunner (DEX)**
 - DM−2 per missili e droni sotto 10 tonnellate (arma non PDC)
 - PDC (es. Quinn Type 17): DM+4 invece di DM−2 (confermato indipendentemente su p.55 e p.56)
 - Colpisce **un drone/missile alla volta** — non un intero salvo con un tiro (B3 non descrive un concetto di "salvo"; vedi §13). Una PDC può tentare fino a TL−4 intercettazioni distinte per round (p.56)
