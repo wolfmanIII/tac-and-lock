@@ -591,6 +591,82 @@ test.describe('Boarding Action — flat 2D6+mods, no skill check (issue #29)', (
   })
 })
 
+// === Boarding modifier checkboxes — CRB p.175 (issue #48) ===================
+// Attacker's Boarding Action roll and defender's Repel Boarders roll both get checkboxes
+// for the CRB p.175 modifier list (Superior Armour/Weaponry/Skills&Tactics/Numbers) instead
+// of requiring the GM to sum them by hand into a free-typed field. "Defender has no Marines
+// on duty" (-2) is defender-only — it must not appear on the attacker's own roll.
+
+test.describe('Boarding modifier checkboxes (issue #48)', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  test('Boarding Action shows the CRB p.175 checkboxes for the attacker, without the defender-only No Marines option', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((shipId) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId })
+    }, id0)
+    await page.getByText('Boarding Action', { exact: true }).click()
+
+    await expect(page.getByRole('checkbox', { name: 'Superior Armour (+1)' })).toBeVisible()
+    await expect(page.getByRole('checkbox', { name: 'Superior Weaponry (+1)' })).toBeVisible()
+    await expect(page.getByRole('checkbox', { name: 'Superior Skills & Tactics (+2)', exact: false })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'None' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Superior Numbers (+1)' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Vastly Superior (+3)' })).toBeVisible()
+    await expect(page.getByRole('checkbox', { name: 'No Marines on duty (−2)', exact: false })).not.toBeVisible()
+  })
+
+  test('Repel Boarders shows the defender-only No Marines on duty checkbox', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((shipId) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId })
+    }, id0)
+    await page.getByText('Repel Boarders', { exact: true }).click()
+    await expect(page.getByRole('checkbox', { name: 'No Marines on duty (−2)', exact: false })).toBeVisible()
+  })
+
+  test('checking Armour + Weaponry + Skills&Tactics + Vastly Superior sums to net +7 and feeds the roll', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((shipId) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId })
+    }, id0)
+    await page.getByText('Boarding Action', { exact: true }).click()
+
+    await page.getByRole('checkbox', { name: 'Superior Armour (+1)' }).check()
+    await page.getByRole('checkbox', { name: 'Superior Weaponry (+1)' }).check()
+    await page.getByRole('checkbox', { name: 'Superior Skills & Tactics (+2)', exact: false }).check()
+    await page.getByRole('button', { name: 'Vastly Superior (+3)' }).click()
+    await expect(page.getByText('net +7')).toBeVisible()
+
+    // Feeds the roll: 2D6 (3+4=7) + net +7 modifiers = 14
+    await page.getByText('manual', { exact: true }).click()
+    const numberInputs = page.locator('input[type="number"]')
+    await numberInputs.nth(1).fill('3')
+    await numberInputs.nth(2).fill('4')
+    await expect(page.getByText('= 14').first()).toBeVisible()
+  })
+
+  test('checkbox and Numbers selections reset when switching to a different action and back', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((shipId) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId })
+    }, id0)
+    await page.getByText('Boarding Action', { exact: true }).click()
+    await page.getByRole('checkbox', { name: 'Superior Armour (+1)' }).check()
+    await page.getByRole('button', { name: 'Vastly Superior (+3)' }).click()
+
+    await page.getByText('Scan Target', { exact: true }).click()
+    await page.getByText('Boarding Action', { exact: true }).click()
+
+    await expect(page.getByRole('checkbox', { name: 'Superior Armour (+1)' })).not.toBeChecked()
+    await expect(page.getByRole('button', { name: 'None' })).toHaveClass(/border-emerald-500/)
+    await expect(page.getByText('net +0')).toBeVisible()
+  })
+})
+
 // Sensor Lock removed — it was never a 2300AD B3 action (only exists in the
 // Traveller 2022 CRB, outside this project's declared CRB-fallback scope).
 

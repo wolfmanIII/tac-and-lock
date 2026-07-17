@@ -35,6 +35,64 @@ function roll(n) {
   return total
 }
 
+/** CRB p.175 Boarding Actions modifier list — Numbers is a single mutually-exclusive tier. */
+const BOARDING_NUMBERS_DM = { none: 0, superior: 1, vastlySuperior: 3 }
+const BOARDING_NUMBERS_OPTIONS = [
+  ['none',           'None'],
+  ['superior',       'Superior Numbers (+1)'],
+  ['vastlySuperior', 'Vastly Superior (+3)'],
+]
+
+/** Sum of the CRB p.175 checkbox modifiers — added to the free-typed "other mods" override. */
+function boardingChecklistDm({ armour, weaponry, skillsTactics, numbers, noMarines }) {
+  return (armour ? 1 : 0) + (weaponry ? 1 : 0) + (skillsTactics ? 2 : 0)
+    + BOARDING_NUMBERS_DM[numbers] + (noMarines ? -2 : 0)
+}
+
+/**
+ * CRB p.175 Boarding Actions modifier checkboxes — shared by the attacker's Boarding Action
+ * roll and the defender's Repel Boarders roll. "Defender has no Marines on duty" is a
+ * defender-only modifier (`showNoMarines`) — it does not apply to the attacker's own roll.
+ */
+function BoardingModifierChecks({
+  armour, setArmour, weaponry, setWeaponry, skillsTactics, setSkillsTactics,
+  numbers, setNumbers, noMarines, setNoMarines, showNoMarines,
+}) {
+  return (
+    <div className="space-y-1.5">
+      <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+        <label className="flex items-center gap-1.5 text-[10px] font-mono text-gunmetal-400">
+          <input type="checkbox" checked={armour} onChange={(e) => setArmour(e.target.checked)} />
+          Superior Armour (+1)
+        </label>
+        <label className="flex items-center gap-1.5 text-[10px] font-mono text-gunmetal-400">
+          <input type="checkbox" checked={weaponry} onChange={(e) => setWeaponry(e.target.checked)} />
+          Superior Weaponry (+1)
+        </label>
+        <label className="flex items-center gap-1.5 text-[10px] font-mono text-gunmetal-400 col-span-2">
+          <input type="checkbox" checked={skillsTactics} onChange={(e) => setSkillsTactics(e.target.checked)} />
+          Superior Skills &amp; Tactics (+2)
+        </label>
+        {showNoMarines && (
+          <label className="flex items-center gap-1.5 text-[10px] font-mono text-red-400 col-span-2">
+            <input type="checkbox" checked={noMarines} onChange={(e) => setNoMarines(e.target.checked)} />
+            No Marines on duty (−2)
+          </label>
+        )}
+      </div>
+      <div className="flex gap-1">
+        {BOARDING_NUMBERS_OPTIONS.map(([id, label]) => (
+          <button key={id} type="button" onClick={() => setNumbers(id)}
+            className={`flex-1 py-1 text-[9px] font-mono border rounded transition-colors
+              ${numbers === id ? 'border-emerald-500 text-emerald-300 bg-emerald-900/30' : 'border-gunmetal-700 text-gunmetal-400'}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function ActionModal({ payload, onClose }) {
   const { shipId } = payload ?? {}
 
@@ -75,7 +133,14 @@ export function ActionModal({ payload, onClose }) {
   // Action, and reused as a "compute my total" helper on Repel Boarders (the GM then types
   // the result into the attacker's DEFENDER TOTAL field). No skill check either way — CRB
   // p.175 is 2D + modifiers on both sides, full stop. // Trav2022 CRB p.175
+  // boardingRollMods is now a free-typed override/extra on top of the CRB p.175 checkbox
+  // modifiers below (house-ruled situational DMs not on the CRB list) — issue #48.
   const [boardingRollMods,       setBoardingRollMods]       = useState(0)
+  const [boardingArmour,         setBoardingArmour]         = useState(false)
+  const [boardingWeaponry,       setBoardingWeaponry]       = useState(false)
+  const [boardingSkillsTactics,  setBoardingSkillsTactics]  = useState(false)
+  const [boardingNumbers,        setBoardingNumbers]        = useState('none')
+  const [boardingNoMarines,      setBoardingNoMarines]      = useState(false) // defender-only // issue #48
   const [boardingRollTotal,      setBoardingRollTotal]      = useState(null)
   const [boardingRollManual,     setBoardingRollManual]     = useState(false)
   const [boardingDefenderTotal,  setBoardingDefenderTotal]  = useState('')
@@ -111,9 +176,16 @@ export function ActionModal({ payload, onClose }) {
     return getBoardingResult(boardingRollTotal - defenderTotal)
   }, [selectedAction, boardingRollTotal, boardingDefenderTotal])
 
+  // CRB p.175 checkbox modifiers + the free-typed override, combined into one net DM
+  // applied to the flat 2D6 roll below. // issue #48
+  const boardingTotalMods = boardingChecklistDm({
+    armour: boardingArmour, weaponry: boardingWeaponry, skillsTactics: boardingSkillsTactics,
+    numbers: boardingNumbers, noMarines: boardingNoMarines,
+  }) + boardingRollMods
+
   function rollBoardingFlat() {
     const dice = roll2D6()
-    setBoardingRollTotal(dice[0] + dice[1] + boardingRollMods)
+    setBoardingRollTotal(dice[0] + dice[1] + boardingTotalMods)
     setBoardingHullDamage(null)
   }
 
@@ -288,6 +360,11 @@ export function ActionModal({ payload, onClose }) {
                   setBoardingHullDamage(null)
                   setBoardingRollTotal(null)
                   setBoardingRollMods(0)
+                  setBoardingArmour(false)
+                  setBoardingWeaponry(false)
+                  setBoardingSkillsTactics(false)
+                  setBoardingNumbers('none')
+                  setBoardingNoMarines(false)
                   setBoardingRollManual(false)
                   setBoardingDefenderTotal('')
                 }}
@@ -421,12 +498,21 @@ export function ActionModal({ payload, onClose }) {
           {action.id === 'boarding_action' && (
             <div className="space-y-3">
               <div className="space-y-1.5">
-                <p className="text-[10px] font-display text-gunmetal-500 tracking-widest">ATTACKER — 2D6 + MODIFIERS</p>
+                <p className="text-[10px] font-display text-gunmetal-500 tracking-widest">ATTACKER — 2D6 + MODIFIERS // CRB p.175</p>
+                <BoardingModifierChecks
+                  armour={boardingArmour} setArmour={setBoardingArmour}
+                  weaponry={boardingWeaponry} setWeaponry={setBoardingWeaponry}
+                  skillsTactics={boardingSkillsTactics} setSkillsTactics={setBoardingSkillsTactics}
+                  numbers={boardingNumbers} setNumbers={setBoardingNumbers}
+                  noMarines={boardingNoMarines} setNoMarines={setBoardingNoMarines}
+                  showNoMarines={false}
+                />
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-mono text-gunmetal-500">net mods</span>
+                  <span className="text-[10px] font-mono text-gunmetal-500">other mods (not on CRB list)</span>
                   <input type="number" value={boardingRollMods}
                     onChange={(e) => setBoardingRollMods(Number(e.target.value) || 0)}
                     className="w-16 bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-sm rounded px-2 py-1 focus:border-bronze-400 outline-none" />
+                  <span className="text-[10px] font-mono text-gunmetal-500 ml-auto">net {boardingTotalMods >= 0 ? '+' : ''}{boardingTotalMods}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <button className="px-4 py-2 text-xs font-display tracking-widest text-emerald-400 border border-emerald-800 hover:bg-emerald-900/20 rounded" onClick={rollBoardingFlat}>ROLL 2D6</button>
@@ -435,7 +521,7 @@ export function ActionModal({ payload, onClose }) {
                     <span className="text-xs font-mono text-bronze-300 font-bold">= {boardingRollTotal}</span>
                   )}
                 </div>
-                {boardingRollManual && <DiceInput dm={boardingRollMods} onChange={manualBoardingFlat} />}
+                {boardingRollManual && <DiceInput dm={boardingTotalMods} onChange={manualBoardingFlat} />}
               </div>
 
               <div className="space-y-1.5 border-t border-gunmetal-800 pt-2">
@@ -479,12 +565,21 @@ export function ActionModal({ payload, onClose }) {
               result into the attacker's Boarding Action modal as DEFENDER TOTAL. // Trav2022 CRB p.175 */}
           {action.id === 'repel_boarders' && (
             <div className="space-y-1.5">
-              <p className="text-[10px] font-display text-gunmetal-500 tracking-widest">DEFENDER — 2D6 + MODIFIERS</p>
+              <p className="text-[10px] font-display text-gunmetal-500 tracking-widest">DEFENDER — 2D6 + MODIFIERS // CRB p.175</p>
+              <BoardingModifierChecks
+                armour={boardingArmour} setArmour={setBoardingArmour}
+                weaponry={boardingWeaponry} setWeaponry={setBoardingWeaponry}
+                skillsTactics={boardingSkillsTactics} setSkillsTactics={setBoardingSkillsTactics}
+                numbers={boardingNumbers} setNumbers={setBoardingNumbers}
+                noMarines={boardingNoMarines} setNoMarines={setBoardingNoMarines}
+                showNoMarines={true}
+              />
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono text-gunmetal-500">net mods</span>
+                <span className="text-[10px] font-mono text-gunmetal-500">other mods (not on CRB list)</span>
                 <input type="number" value={boardingRollMods}
                   onChange={(e) => setBoardingRollMods(Number(e.target.value) || 0)}
                   className="w-16 bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-sm rounded px-2 py-1 focus:border-bronze-400 outline-none" />
+                <span className="text-[10px] font-mono text-gunmetal-500 ml-auto">net {boardingTotalMods >= 0 ? '+' : ''}{boardingTotalMods}</span>
               </div>
               <div className="flex items-center gap-3">
                 <button className="px-4 py-2 text-xs font-display tracking-widest text-emerald-400 border border-emerald-800 hover:bg-emerald-900/20 rounded" onClick={rollBoardingFlat}>ROLL 2D6</button>
@@ -493,7 +588,7 @@ export function ActionModal({ payload, onClose }) {
                   <span className="text-xs font-mono text-bronze-300 font-bold">= {boardingRollTotal}</span>
                 )}
               </div>
-              {boardingRollManual && <DiceInput dm={boardingRollMods} onChange={manualBoardingFlat} />}
+              {boardingRollManual && <DiceInput dm={boardingTotalMods} onChange={manualBoardingFlat} />}
               <p className="text-[10px] font-mono text-gunmetal-500">
                 Copy this total into the attacker's Boarding Action as DEFENDER TOTAL.
               </p>
