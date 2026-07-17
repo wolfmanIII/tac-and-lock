@@ -821,6 +821,141 @@ test.describe('AttackModal — Gunnery action budget (one use per round)', () =>
   })
 })
 
+// === Multi-battery — Turret and Bay Gunner fire independently // issue #45 ===
+// Previously AttackModal always hardcoded gunner_turret regardless of which weapon
+// slot was selected, so a ship could never actually fire two batteries in one round.
+// Now a weapon slot's `mount` ('turret' | 'bay') determines which Gunner role's
+// skill/budget/commandBonus the Firing Solution draws from.
+
+async function openMultiBatteryAttack(page) {
+  await page.evaluate(() => {
+    const store = window.__ZUSTAND_BATTLE_STORE__
+    store.getState().addShip(
+      {
+        name: 'ISV-2 Trilon', class: 'Test class', hullPoints: 20, armour: 3,
+        tacSpeed: 4, signature: 2,
+        sensors: { type: 'Basic Military', dm: 0 },
+        computer: { model: 'TL-10', bandwidth: 20 },
+        // Same reliable-damage weapon (2D, not the weak 1D-1 Obsolete ll88) in both mounts —
+        // damage magnitude isn't what this suite tests, and a weak weapon's roll can
+        // legitimately net 0 after Armour, which would make a hull-decrease assertion flaky.
+        weapons: [
+          { weaponId: 'll98', count: 1, label: 'Forward Turret', targetingSystem: 'light_tta', mount: 'turret' },
+          { weaponId: 'll98', count: 1, label: 'Ventral Bay',    targetingSystem: 'light_tta', mount: 'bay' },
+        ],
+        software: ['fire_control_1'],
+        crew: [{
+          id: 'crew-full', name: 'Full Crew', role: null,
+          skills: { pilot: 4, tactics: 4, engineer: 4, gunner: 4, sensors: 4, countermeasures: 4, leadership: 4, mechanic: 4, gunCombat: 4, melee: 4, remoteOps: 4 },
+          characteristics: { STR: 7, DEX: 7, END: 7, INT: 7, EDU: 7, SOC: 7 },
+        }],
+        crewAssignments: {
+          pilot: 'crew-full', captain: 'crew-full', engineer: 'crew-full', sensor_operator: 'crew-full',
+          gunner_turret: 'crew-full', gunner_bay: 'crew-full', marine: 'crew-full', remote_pilot: 'crew-full',
+        },
+      },
+      'players', 'Close',
+    )
+    store.getState().addShip(
+      // Armour 0 — with ll98's 2D damage (min roll 2), net damage is always > 0, so hull
+      // strictly decreases on every hit with no dice-roll flakiness in this suite.
+      { name: 'Target Hulk', class: 'Test class', hullPoints: 20, armour: 0, tacSpeed: 4, signature: 2,
+        sensors: { type: 'Basic Military', dm: 0 }, computer: { model: 'TL-10', bandwidth: 20 },
+        weapons: [], software: [], crew: [], crewAssignments: {} },
+      'npc', 'Close',
+    )
+    const ships = store.getState().ships
+    window.__ZUSTAND_UI_STORE__.getState().openModal('attack', { attackerId: ships[0].id })
+  })
+  await expect(page.getByText('FIRING SOLUTION', { exact: true })).toBeVisible()
+}
+
+/** Drives a Firing Solution to a guaranteed hit (6+6 on every roll) for the currently selected weapon. */
+async function fireGuaranteedHit(page) {
+  await page.getByText('BEGIN FIRING SOLUTION →').click()
+  await page.getByText('enter manually').last().click()
+  await page.locator('input[type="number"]').nth(0).fill('6')
+  await page.locator('input[type="number"]').nth(1).fill('6')
+  await page.getByText('NEXT → PILOT').click()
+  await page.getByText('enter manually').last().click()
+  await page.locator('input[type="number"]').nth(0).fill('6')
+  await page.locator('input[type="number"]').nth(1).fill('6')
+  await page.getByText('NEXT → GUNNER').click()
+  await page.getByText('enter manually').last().click()
+  await page.locator('input[type="number"]').nth(0).fill('6')
+  await page.locator('input[type="number"]').nth(1).fill('6')
+}
+
+test.describe('AttackModal — multi-battery Gunner routing (Turret vs Bay)', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  test('SETUP weapon dropdown shows the mount for each slot', async ({ page }) => {
+    await openMultiBatteryAttack(page)
+    // select[0] = TARGET, select[1] = WEAPON, select[2] = weapon count
+    const optionTexts = await page.locator('select').nth(1).locator('option').allTextContents()
+    expect(optionTexts[0]).toContain('(Turret)')
+    expect(optionTexts[1]).toContain('(Bay)')
+  })
+
+  test('firing the bay-mounted weapon spends gunner_bay, leaving gunner_turret untouched', async ({ page }) => {
+    await openMultiBatteryAttack(page)
+    await page.locator('select').nth(1).selectOption('1') // weaponIdx 1 — the bay weapon
+    await fireGuaranteedHit(page)
+    await expect(page.getByText('Difficult (10+) · Bay Gunner', { exact: false })).toBeVisible()
+    await page.getByText('APPLY DAMAGE', { exact: true }).click()
+
+    const id0 = await page.evaluate(() => window.__ZUSTAND_BATTLE_STORE__.getState().ships[0].id)
+    const budget = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id).actionsRemaining
+    , id0)
+    expect(budget.gunner_bay).toBe(0)
+    expect(budget.gunner_turret).toBe(1)
+  })
+
+  test('a ship can fire both the turret weapon and the bay weapon in the same round', async ({ page }) => {
+    await openMultiBatteryAttack(page)
+    const { id0, id1 } = await page.evaluate(() => {
+      const ships = window.__ZUSTAND_BATTLE_STORE__.getState().ships
+      return { id0: ships[0].id, id1: ships[1].id }
+    })
+
+    // Turret weapon (weaponIdx 0, default selection) first.
+    await fireGuaranteedHit(page)
+    await expect(page.getByText('Difficult (10+) · Turret Gunner', { exact: false })).toBeVisible()
+    await page.getByText('APPLY DAMAGE', { exact: true }).click()
+
+    let attacker = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
+    , id0)
+    expect(attacker.actionsRemaining.gunner_turret).toBe(0)
+    expect(attacker.actionsRemaining.gunner_bay).toBe(1)
+    const targetHullAfterFirstShot = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id).currentHull
+    , id1)
+    expect(targetHullAfterFirstShot).toBeLessThan(20)
+
+    // Bay weapon (weaponIdx 1) next, same round — must not be blocked by the Turret's spent budget.
+    await page.evaluate((id) => window.__ZUSTAND_UI_STORE__.getState().openModal('attack', { attackerId: id }), id0)
+    await page.locator('select').nth(1).selectOption('1') // weaponIdx 1 — the bay weapon
+    await fireGuaranteedHit(page)
+    await expect(page.getByText('Difficult (10+) · Bay Gunner', { exact: false })).toBeVisible()
+    await page.getByText('APPLY DAMAGE', { exact: true }).click()
+
+    attacker = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
+    , id0)
+    expect(attacker.actionsRemaining.gunner_turret).toBe(0)
+    expect(attacker.actionsRemaining.gunner_bay).toBe(0)
+    const targetHullAfterSecondShot = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id).currentHull
+    , id1)
+    expect(targetHullAfterSecondShot).toBeLessThan(targetHullAfterFirstShot)
+  })
+})
+
 // === Auto X fire mode — Single/Burst/Full Auto selector // 2300AD B3 p.59, Trav2022 CRB p.78 (#11) ===
 
 test.describe('AttackModal — Auto X fire mode', () => {

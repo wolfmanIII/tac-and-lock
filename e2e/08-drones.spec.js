@@ -336,6 +336,35 @@ test.describe('Drone attack — Point Defence and Firing Solution', () => {
     row = page.locator('div').filter({ hasText: 'Point Defence' }).last()
     await expect(row).toContainText('+4')
   })
+
+  test('a bay-mounted intercepting weapon spends gunner_bay, not gunner_turret // issue #45', async ({ page }) => {
+    await page.evaluate(() => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const target = store.getState().ships[1]
+      store.getState().updateShip(target.id, {
+        weapons: [
+          { weaponId: 'anti_missile_laser', count: 1, label: 'Bay PDC', mount: 'bay' },
+        ],
+      })
+    })
+    const droneId = await injectDrone(page, { band: 'Close' })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await expect(page.getByText(/— POINT DEFENCE ·/)).toBeVisible()
+    await expect(page.getByText('Bay Gunner', { exact: false })).toBeVisible()
+
+    await page.getByText('enter manually').last().click()
+    await page.locator('input[type="number"]').nth(0).fill('6')
+    await page.locator('input[type="number"]').nth(1).fill('6')
+
+    const target = await page.evaluate(() => window.__ZUSTAND_BATTLE_STORE__.getState().ships[1])
+    const budget = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id).actionsRemaining
+    , target.id)
+    expect(budget.gunner_bay).toBe(0)
+    expect(budget.gunner_turret).toBe(1)
+  })
 })
 
 // === Ship-only Firing Solution DMs ported to the drone modal — issues #31-#34 ===

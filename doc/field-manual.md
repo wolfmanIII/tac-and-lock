@@ -184,8 +184,10 @@ multiple manoeuvre attempts in the same round, unlike Gunner which is always cap
 ## 7. Attack — Firing Solution
 
 Any ship whose turn it is may attack, once per weapon mount per round (Gunnery is hard-capped at
-1 action/round regardless of skill). The attack is a **3-step task chain** — each step's positive
-Effect carries forward as a DM to the next step. // B3 p.56
+1 action/round regardless of skill, independently for Turret and Bay Gunner — issue #45). Each
+weapon slot's `mount` field (`Turret`/`Bay` in the profile editor) picks which Gunner role's
+skill and action budget the Firing Solution draws from. The attack is a **3-step task chain** —
+each step's positive Effect carries forward as a DM to the next step. // B3 p.56
 
 Right-click a ship → **Attack…**
 

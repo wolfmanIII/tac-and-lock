@@ -16,6 +16,13 @@ import { REACTION_DRIVE_TYPES, SCREEN_RATINGS, TARGETING_SYSTEMS } from '../../u
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
+// Which Gunner role's action budget/skill fires this weapon slot — Turret Gunner or Bay
+// Gunner, each with an independent per-round action budget. // 2300AD B3 p.53, issue #45
+const WEAPON_MOUNTS = [
+  { id: 'turret', label: 'Turret' },
+  { id: 'bay',    label: 'Bay' },
+]
+
 // Short option labels for the per-weapon Targeting System selector // 2300AD B3 p.62
 const TARGETING_SYSTEM_SHORT_LABELS = {
   none:             'None',
@@ -177,7 +184,7 @@ export function ShipProfileForm({ profileId, onSave, onCancel }) {
   const setNested = (parent, key, value) => setForm((f) => ({ ...f, [parent]: { ...f[parent], [key]: value } }))
 
   // weapons
-  const addWeapon = () => setForm((f) => ({ ...f, weapons: [...f.weapons, { weaponId: WEAPON_IDS[0], count: 1, label: '', targetingSystem: 'none' }] }))
+  const addWeapon = () => setForm((f) => ({ ...f, weapons: [...f.weapons, { weaponId: WEAPON_IDS[0], count: 1, label: '', targetingSystem: 'none', mount: 'turret' }] }))
   const updateWeapon = (i, key, value) => setForm((f) => ({ ...f, weapons: f.weapons.map((w, idx) => idx === i ? { ...w, [key]: value } : w) }))
   const removeWeapon = (i) => setForm((f) => ({ ...f, weapons: f.weapons.filter((_, idx) => idx !== i) }))
 
@@ -315,6 +322,11 @@ export function ShipProfileForm({ profileId, onSave, onCancel }) {
                   title="Targeting System (Light TTA/TTA/UTES) — separate, stackable DM from Fire Control software // B3 p.62"
                   className="w-28 bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-xs rounded px-1 py-1 focus:outline-none focus:border-bronze-400/60">
                   {TARGETING_SYSTEMS.map((t) => <option key={t.id} value={t.id}>{TARGETING_SYSTEM_SHORT_LABELS[t.id]}</option>)}
+                </select>
+                <select value={w.mount ?? 'turret'} onChange={(e) => updateWeapon(i, 'mount', e.target.value)}
+                  title="Which Gunner role fires this weapon — Turret or Bay, each with its own action budget // 2300AD B3 p.53, issue #45"
+                  className="w-20 bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-xs rounded px-1 py-1 focus:outline-none focus:border-bronze-400/60">
+                  {WEAPON_MOUNTS.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
                 </select>
                 <button type="button" onClick={() => removeWeapon(i)} className="text-gunmetal-400 hover:text-red-400 font-mono text-sm transition-colors px-1">✕</button>
               </div>

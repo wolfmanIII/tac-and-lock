@@ -194,6 +194,11 @@ export function AttackModal({ payload, onClose }) {
   const weaponId    = weaponSlot.weaponId
   const weapon      = WEAPONS[weaponId]
   const weaponTargetingSystem = weaponSlot.targetingSystem ?? 'none'
+  // Which Gunner role's skill/action budget fires this weapon slot — Turret or Bay, each
+  // independent (both hard-capped at 1 action/round — Gunnery, B3 p.53). Defaults to
+  // 'turret' for slots with no mount set (backward compat). // issue #45
+  const gunnerRole  = weaponSlot.mount === 'bay' ? 'gunner_bay' : 'gunner_turret'
+  const gunnerLabel = weaponSlot.mount === 'bay' ? 'Bay Gunner' : 'Turret Gunner'
 
   // ── DM calculations ────────────────────────────────────────────────────────
 
@@ -281,10 +286,10 @@ export function AttackModal({ payload, onClose }) {
   const hasUtesSolution = attacker?.utesSolutionSlotIdx === weaponIdx && attacker?.utesSolutionDm != null
   const utesDevDms = useMemo(() => {
     if (!attacker) return { skill: 0, eduDm: 0, total: 0 }
-    const skill = getAssignedSkill('gunner_turret', attacker.crewAssignments, attacker.crew)
-    const eduDm = getCharDM(getAssignedCharacteristic('gunner_turret', attacker.crewAssignments, attacker.crew, 'EDU'))
+    const skill = getAssignedSkill(gunnerRole, attacker.crewAssignments, attacker.crew)
+    const eduDm = getCharDM(getAssignedCharacteristic(gunnerRole, attacker.crewAssignments, attacker.crew, 'EDU'))
     return { skill, eduDm, total: skill + eduDm }
-  }, [attacker])
+  }, [attacker, gunnerRole])
   const [utesDevResult, setUtesDevResult] = useState(null)
 
   function rollUtesDev() {
@@ -300,7 +305,7 @@ export function AttackModal({ payload, onClose }) {
 
   function confirmUtesDev() {
     if (!utesDevResult) return
-    spendCrewAction(attacker.id, 'gunner_turret')
+    spendCrewAction(attacker.id, gunnerRole)
     if (utesDevResult.total >= 12) {
       updateShip(attacker.id, { utesSolutionDm: utesDevResult.effect >= 6 ? 2 : 1, utesSolutionSlotIdx: weaponIdx })
     }
@@ -309,8 +314,8 @@ export function AttackModal({ payload, onClose }) {
 
   const step3Dms = useMemo(() => {
     if (!attacker || !weapon) return { rows: [], total: 0 }
-    const gunnerSkill    = getAssignedSkill('gunner_turret', attacker.crewAssignments, attacker.crew)
-    const intChar        = getAssignedCharacteristic('gunner_turret', attacker.crewAssignments, attacker.crew)
+    const gunnerSkill    = getAssignedSkill(gunnerRole, attacker.crewAssignments, attacker.crew)
+    const intChar        = getAssignedCharacteristic(gunnerRole, attacker.crewAssignments, attacker.crew)
     const intDm          = getCharDM(intChar)
     const fireControlDm  = getFireControlDm(attacker.software)
     const rangeDm        = getRangeDM(weaponId, band)
@@ -318,8 +323,8 @@ export function AttackModal({ payload, onClose }) {
     // EW penalty: find any ship currently jamming the attacker // B3 p.55
     const jammer = ships.find((s) => s.ewTarget === attacker.id)
     const jammerPenalty = jammer?.ewEffect ?? 0 // already negative
-    // Captain's Command from a previous round, if it targeted this ship's gunner // B3 p.54
-    const commandDm = (attacker.commandBonus ?? []).find((cb) => cb.role === 'gunner_turret')?.dm ?? 0
+    // Captain's Command from a previous round, if it targeted this weapon's Gunner role // B3 p.54
+    const commandDm = (attacker.commandBonus ?? []).find((cb) => cb.role === gunnerRole)?.dm ?? 0
     // Stationary or reaction-drive target — Firing Solution is trivial // B3 p.56
     const easyTargetDm = getEasyTargetAttackDm(target)
     // Planetary surface / atmospheric flight range modifiers, and Ortillery vs. surface targets // B3 p.56, p.59
@@ -355,7 +360,7 @@ export function AttackModal({ payload, onClose }) {
       ],
       total,
     }
-  }, [attacker, weaponId, weaponIdx, weaponTargetingSystem, band, step2CarryEffect, evasionDm, weapon, ships, captainAssistDm, target])
+  }, [attacker, weaponId, weaponIdx, weaponTargetingSystem, gunnerRole, band, step2CarryEffect, evasionDm, weapon, ships, captainAssistDm, target])
 
   // ── Roll handlers ──────────────────────────────────────────────────────────
 
@@ -446,7 +451,7 @@ export function AttackModal({ payload, onClose }) {
     const total  = base + step3Dms.total
     const effect = total - 10  // Difficult
     setStep3Result({ dice, base, total, effect })
-    spendOnce('gunner_turret')
+    spendOnce(gunnerRole)
     if (total >= 10) {
       setDamageResult(resolveDamage())
     }
@@ -455,7 +460,7 @@ export function AttackModal({ payload, onClose }) {
   function manualStep3({ dice, total }) {
     const effect = total - 10
     setStep3Result({ dice, base: dice[0] + dice[1], total, effect })
-    spendOnce('gunner_turret')
+    spendOnce(gunnerRole)
     if (total >= 10) {
       const dmgResult = resolveDamage()
       setDamageResult(dmgResult)
@@ -541,6 +546,7 @@ export function AttackModal({ payload, onClose }) {
                   <option key={i} value={i}>
                     {WEAPONS[w.weaponId]?.name ?? w.weaponId}
                     {w.label ? ` — ${w.label}` : ''}
+                    {` (${w.mount === 'bay' ? 'Bay' : 'Turret'})`}
                   </option>
                 ))}
               </select>
@@ -592,7 +598,10 @@ export function AttackModal({ payload, onClose }) {
           </div>
         )}
 
-        {/* Defensive Screens — Gunner Action, alternative to firing this round // B3 p.55, p.62 */}
+        {/* Defensive Screens — Gunner Action, alternative to firing this round // B3 p.55, p.62.
+            Ship-wide, not tied to a specific weapon mount — deliberately always drawn from
+            gunner_turret's budget regardless of the weaponIdx selected above, unlike the
+            Firing Solution and Operate UTES Array below (both routed via gunnerRole). // issue #45 */}
         {attacker.screenRating > 0 && (
           <div className="bg-bronze-950/20 border border-bronze-900/50 rounded p-3 space-y-2">
             <p className="font-mono text-[10px] text-bronze-400 tracking-widest uppercase">
@@ -657,8 +666,8 @@ export function AttackModal({ payload, onClose }) {
               Very Difficult (12+) · Gunner · EDU — success applies DM+1 (Effect 1–4) or DM+2
               (Effect 5–6) to this weapon's Gunner check next round.
             </p>
-            {budget.gunner_turret <= 0 && (
-              <p className="font-mono text-[10px] text-red-400">Gunner has no actions left this round (Gunnery cap — B3 p.53).</p>
+            {budget[gunnerRole] <= 0 && (
+              <p className="font-mono text-[10px] text-red-400">{gunnerLabel} has no actions left this round (Gunnery cap — B3 p.53).</p>
             )}
             <RollBlock
               dm={utesDevDms.total}
@@ -666,7 +675,7 @@ export function AttackModal({ payload, onClose }) {
               onManual={manualUtesDev}
               result={utesDevResult}
               target={12}
-              disabled={budget.gunner_turret <= 0}
+              disabled={budget[gunnerRole] <= 0}
             />
             {utesDevResult && (
               <button
@@ -825,14 +834,14 @@ export function AttackModal({ payload, onClose }) {
           </button>
           <button
             onClick={() => setStep(STEP_GUNNER)}
-            disabled={!step2Result || budget.gunner_turret <= 0}
-            title={budget.gunner_turret <= 0 ? 'Gunner has no actions left this round' : undefined}
+            disabled={!step2Result || budget[gunnerRole] <= 0}
+            title={budget[gunnerRole] <= 0 ? `${gunnerLabel} has no actions left this round` : undefined}
             className="flex-1 py-2 text-xs font-display tracking-widest text-bronze-400 border border-bronze-400/40 hover:bg-bronze-400/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
             NEXT → GUNNER
           </button>
         </div>
-        {step2Result && budget.gunner_turret <= 0 && (
-          <p className="font-mono text-[10px] text-red-400">Gunner has no actions left this round (Gunnery cap) — Firing Solution can't continue.</p>
+        {step2Result && budget[gunnerRole] <= 0 && (
+          <p className="font-mono text-[10px] text-red-400">{gunnerLabel} has no actions left this round (Gunnery cap) — Firing Solution can't continue.</p>
         )}
       </div>
     )
@@ -851,7 +860,7 @@ export function AttackModal({ payload, onClose }) {
         <div>
           <p className="font-display text-xs text-gunmetal-500 tracking-widest uppercase">{STEP_LABELS[STEP_GUNNER]}</p>
           <p className="font-mono text-[10px] text-gunmetal-500 mt-0.5">
-            Difficult (10+) · Gunner · INT · {weapon?.name ?? weaponId} // 2300AD B3 p.56
+            Difficult (10+) · {gunnerLabel} · INT · {weapon?.name ?? weaponId} // 2300AD B3 p.56
           </p>
         </div>
 

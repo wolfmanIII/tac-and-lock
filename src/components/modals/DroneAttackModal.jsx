@@ -56,6 +56,7 @@ function InterceptWeaponPicker({ weapons, value, onChange }) {
         {weapons.map((w, i) => (
           <option key={i} value={i}>
             {WEAPONS[w.weaponId]?.name ?? w.weaponId}{w.label ? ` — ${w.label}` : ''}
+            {` (${w.mount === 'bay' ? 'Bay' : 'Turret'})`}
           </option>
         ))}
       </select>
@@ -143,6 +144,11 @@ export function DroneAttackModal({ payload, onClose }) {
   const [interceptWeaponIdx, setInterceptWeaponIdx] = useState(0)
   const interceptWeaponSlot = targetWeapons[interceptWeaponIdx] ?? null
   const interceptWeapon     = interceptWeaponSlot ? WEAPONS[interceptWeaponSlot.weaponId] : null
+  // Which Gunner role's skill/action budget the intercepting weapon draws from — Turret or
+  // Bay, matching the mount on the selected weapon slot. Defaults to 'turret' for slots with
+  // no mount set (backward compat). // issue #45
+  const interceptGunnerRole  = interceptWeaponSlot?.mount === 'bay' ? 'gunner_bay' : 'gunner_turret'
+  const interceptGunnerLabel = interceptWeaponSlot?.mount === 'bay' ? 'Bay Gunner' : 'Turret Gunner'
 
   const [step, setStep] = useState(mode === 'engage' ? STEP_ENGAGE : STEP_PD)
   const [sensorMode, setSensorMode] = useState('handoff') // 'handoff' | 'self'
@@ -175,8 +181,8 @@ export function DroneAttackModal({ payload, onClose }) {
   // Type 17 PDC), not the incoming drone's warhead — issue #24 fix.
   const pdDms = useMemo(() => {
     if (!target) return { rows: [], total: 0 }
-    const gunnerSkill = getAssignedSkill('gunner_turret', target.crewAssignments, target.crew)
-    const dexDm       = getCharDM(getAssignedCharacteristic('gunner_turret', target.crewAssignments, target.crew, 'DEX'))
+    const gunnerSkill = getAssignedSkill(interceptGunnerRole, target.crewAssignments, target.crew)
+    const dexDm       = getCharDM(getAssignedCharacteristic(interceptGunnerRole, target.crewAssignments, target.crew, 'DEX'))
     const pdDm        = getPointDefenceDm(interceptWeapon?.traits)
     // Fire Control software (+1/+2/+3, or 0) applies to all attack rolls, including
     // point defence // B3 p.44. The DM-8 "no fire control" penalty is a separate,
@@ -185,17 +191,17 @@ export function DroneAttackModal({ payload, onClose }) {
     const targetingSystemDm = getTargetingSystemDm(interceptWeaponSlot)
     const total = gunnerSkill + dexDm + pdDm + fireControlDm + targetingSystemDm
     return { rows: [['Gunner skill', gunnerSkill], ['DEX DM', dexDm], ['Point Defence', pdDm], ['Fire Control', fireControlDm], ['Targeting System', targetingSystemDm]], total }
-  }, [target, interceptWeapon, interceptWeaponSlot])
+  }, [target, interceptWeapon, interceptWeaponSlot, interceptGunnerRole])
 
   function rollPd() {
     const dice = roll2D6()
     const total = dice[0] + dice[1] + pdDms.total
     setPdResult({ dice, total, effect: total - 10, success: total >= 10 })
-    if (target) spendOnce(target.id, 'gunner_turret', 'pd')
+    if (target) spendOnce(target.id, interceptGunnerRole, 'pd')
   }
   function manualPd({ dice, total }) {
     setPdResult({ dice, total, effect: total - 10, success: total >= 10 })
-    if (target) spendOnce(target.id, 'gunner_turret', 'pd')
+    if (target) spendOnce(target.id, interceptGunnerRole, 'pd')
   }
   function applyIntercept() {
     interceptDrone(droneId)
@@ -208,24 +214,24 @@ export function DroneAttackModal({ payload, onClose }) {
   const [engageResult, setEngageResult] = useState(null)
   const engageDms = useMemo(() => {
     if (!target) return { rows: [], total: 0 }
-    const gunnerSkill = getAssignedSkill('gunner_turret', target.crewAssignments, target.crew)
-    const dexDm       = getCharDM(getAssignedCharacteristic('gunner_turret', target.crewAssignments, target.crew, 'DEX'))
+    const gunnerSkill = getAssignedSkill(interceptGunnerRole, target.crewAssignments, target.crew)
+    const dexDm       = getCharDM(getAssignedCharacteristic(interceptGunnerRole, target.crewAssignments, target.crew, 'DEX'))
     const fireControlDm = getFireControlDm(target.software)
     const targetingSystemDm = getTargetingSystemDm(interceptWeaponSlot)
     const pdTraitDm = getPointDefenceTraitAttackDm(interceptWeapon?.traits, drone?.currentBand)
     const total = gunnerSkill + dexDm + fireControlDm + targetingSystemDm + pdTraitDm
     return { rows: [['Gunner skill', gunnerSkill], ['DEX DM', dexDm], ['Fire Control', fireControlDm], ['Targeting System', targetingSystemDm], ['Point Defence trait', pdTraitDm]], total }
-  }, [target, interceptWeapon, interceptWeaponSlot, drone])
+  }, [target, interceptWeapon, interceptWeaponSlot, interceptGunnerRole, drone])
 
   function rollEngage() {
     const dice = roll2D6()
     const total = dice[0] + dice[1] + engageDms.total
     setEngageResult({ dice, total, effect: total - 10, success: total >= 10 })
-    if (target) spendOnce(target.id, 'gunner_turret', 'engage')
+    if (target) spendOnce(target.id, interceptGunnerRole, 'engage')
   }
   function manualEngage({ dice, total }) {
     setEngageResult({ dice, total, effect: total - 10, success: total >= 10 })
-    if (target) spendOnce(target.id, 'gunner_turret', 'engage')
+    if (target) spendOnce(target.id, interceptGunnerRole, 'engage')
   }
   function applyEngage() {
     if (engageResult?.success) interceptDrone(droneId)
@@ -487,14 +493,14 @@ export function DroneAttackModal({ payload, onClose }) {
 
         <div className="bg-bronze-950/20 border border-bronze-900/50 rounded p-3 space-y-2">
           <p className="text-[10px] font-display text-bronze-400 tracking-widest uppercase">
-            {target.profile?.name} — POINT DEFENCE · Gunner (turret) DEX · Difficult (10+) // B3 p.55–56
+            {target.profile?.name} — POINT DEFENCE · {interceptGunnerLabel} DEX · Difficult (10+) // B3 p.55–56
           </p>
-          {targetBudget.gunner_turret <= 0 && (
-            <p className="font-mono text-[10px] text-red-400">{target.profile?.name}'s Gunner has no actions left this round (Gunnery cap — B3 p.53).</p>
+          {targetBudget[interceptGunnerRole] <= 0 && (
+            <p className="font-mono text-[10px] text-red-400">{target.profile?.name}'s {interceptGunnerLabel} has no actions left this round (Gunnery cap — B3 p.53).</p>
           )}
           <InterceptWeaponPicker weapons={targetWeapons} value={interceptWeaponIdx} onChange={setInterceptWeaponIdx} />
           <DmBreakdown rows={pdDms.rows} total={pdDms.total} />
-          <RollBlock dm={pdDms.total} onRoll={rollPd} onManual={manualPd} result={pdResult} target={10} disabled={targetBudget.gunner_turret <= 0} />
+          <RollBlock dm={pdDms.total} onRoll={rollPd} onManual={manualPd} result={pdResult} target={10} disabled={targetBudget[interceptGunnerRole] <= 0} />
         </div>
 
         <div className="flex gap-2 pt-1">
@@ -526,18 +532,18 @@ export function DroneAttackModal({ payload, onClose }) {
 
         <div className="bg-bronze-950/20 border border-bronze-900/50 rounded p-3 space-y-2">
           <p className="text-[10px] font-display text-bronze-400 tracking-widest uppercase">
-            {target.profile?.name} — GUNNER (TURRET) DEX · Difficult (10+) // B3 p.59
+            {target.profile?.name} — {interceptGunnerLabel.toUpperCase()} DEX · Difficult (10+) // B3 p.59
           </p>
           {drone.currentBand !== 'Close' && (
             <p className="font-mono text-[10px] text-red-400">Point Defence trait's DM+2 only applies at Close range — this drone is at {drone.currentBand}.</p>
           )}
-          {targetBudget.gunner_turret <= 0 && (
-            <p className="font-mono text-[10px] text-red-400">{target.profile?.name}'s Gunner has no actions left this round (Gunnery cap — B3 p.53).</p>
+          {targetBudget[interceptGunnerRole] <= 0 && (
+            <p className="font-mono text-[10px] text-red-400">{target.profile?.name}'s {interceptGunnerLabel} has no actions left this round (Gunnery cap — B3 p.53).</p>
           )}
           <InterceptWeaponPicker weapons={targetWeapons} value={interceptWeaponIdx} onChange={setInterceptWeaponIdx} />
           <DmBreakdown rows={engageDms.rows} total={engageDms.total} />
           <RollBlock dm={engageDms.total} onRoll={rollEngage} onManual={manualEngage} result={engageResult} target={10}
-            disabled={targetBudget.gunner_turret <= 0 || drone.currentBand !== 'Close'} />
+            disabled={targetBudget[interceptGunnerRole] <= 0 || drone.currentBand !== 'Close'} />
         </div>
 
         <div className="flex gap-2 pt-1">

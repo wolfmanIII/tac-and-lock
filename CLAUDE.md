@@ -121,13 +121,14 @@ L'attacco in 2300AD è una catena di check interdipendenti. Ogni Effect positivo
 1. **Sensor Operator** — Very Difficult (12+) Electronics (sensors) INT
    - DM positivi: +Signature del bersaglio; qualità sensori (Basic Military +0, Improved +1, Advanced +2); Sensor Time-lag (tabella sopra, negativo a distanza)
    - Engineer assist opzionale: Routine (8+) Engineer (power) INT — successo → Effect grezzo (min 0) come DM a questo check, stesso pattern del Captain assist allo Step 3 (B3 non dà una tabella a bande per questo assist, issue #26)
-   - **Multi-battery sensor sharing** (B3 p.56, issue #40): "a sensor operator can provide the firing solution for a number of targets equal to their Electronics (sensors) skill level" — verificato, **già modellato** dal budget azioni generico (`sensor_operator` non è cappato a 1 come Gunnery, `Math.max(0, skill)` in `buildActionBudget`), quindi ogni Step 1 rieseguito da zero consuma una delle N azioni del Sensor Operator, N = suo skill level, senza bisogno di banking del risultato. La clausola "più di un sensor operator" non è rappresentabile (`crewAssignments` ha un solo slot `sensor_operator` per nave) — comunque non raggiungibile in pratica per un motivo a monte: `gunner_bay` non è mai cablato in `AttackModal.jsx` (sempre `gunner_turret` hardcoded), quindi una nave non può mai sparare da due batterie nello stesso round. Tracciato come issue separata.
+   - **Multi-battery sensor sharing** (B3 p.56, issue #40): "a sensor operator can provide the firing solution for a number of targets equal to their Electronics (sensors) skill level" — verificato, **già modellato** dal budget azioni generico (`sensor_operator` non è cappato a 1 come Gunnery, `Math.max(0, skill)` in `buildActionBudget`), quindi ogni Step 1 rieseguito da zero consuma una delle N azioni del Sensor Operator, N = suo skill level, senza bisogno di banking del risultato. La clausola "più di un sensor operator" non è rappresentabile (`crewAssignments` ha un solo slot `sensor_operator` per nave). Il gap a monte che rendeva lo scenario multi-batteria irraggiungibile (`gunner_bay` mai cablato in `AttackModal.jsx`) è stato risolto — issue #45, vedi sotto.
 2. **Pilot** — Difficult (10+) Pilot DEX
    - DM positivi: +TAC Speed della nave
    - Engineer assist opzionale: Routine (8+) Engineer (power) INT — successo → DM a bande sul TAC Speed di *questo solo check* (Effect 1–4 → +1, Effect 5–6 → +2, B3 rimanda esplicitamente alla tabella di "Boost Tac Speed" p.54 — ma è un check **diverso**: Engineer (power) Routine 8+, non Engineer (stutterwarp) Difficult 10+ dell'azione crew standalone `overload_stutterwarp`; quell'azione, se già usata questo round, si somma comunque qui gratis via `attacker.currentTacSpeed`, issue #26)
 3. **Gunner** — Difficult (10+) Gunner INT — bersaglio **10+**
    - DM: +Fire Control software rating (DM+1/livello)
    - Captain assist opzionale: Difficult (10+) Tactics (naval) INT
+   - **Turret vs Bay routing** (issue #45): quale ruolo Gunner (`gunner_turret` o `gunner_bay`) fornisce skill/characteristic/action budget/`commandBonus` per questo Step 3 dipende da `weaponSlot.mount` (`'turret'` default, o `'bay'`) — `gunnerRole` derivato in `AttackModal.jsx`, editabile per weapon slot in `ShipProfileForm.jsx`. Prima del fix `gunner_turret` era hardcoded ovunque indipendentemente dal weapon slot selezionato, quindi una nave non poteva mai sparare da due batterie nello stesso round. Il Point Defence in `DroneAttackModal.jsx` (sia la reazione di intercettazione che l'azione proattiva `engage`) instrada allo stesso modo, derivando `interceptGunnerRole` dal mount del weapon slot scelto in `InterceptWeaponPicker`. Deploy/Recharge Screens resta **deliberatamente** legato a `gunner_turret` — azione ship-wide, non specifica per weapon slot.
 
 ### Signature — 2300AD B3 p.57
 
@@ -335,7 +336,7 @@ Nubi ablative/campi elettromagnetici che disperdono **fasci laser in arrivo** (n
 
 ### Ship Profile Fields (combat-relevant)
 
-`name`, `class`, `hullPoints`, `currentHull`, `armour`, `tacSpeed`, `signature` (base value), `sensors` (type + DM), `computer` (model + bandwidth), `weapons[]` (`{ weaponId, count, label, targetingSystem? }` — B3 p.62), `software[]`, `criticalTracks` (11 track × 6 livelli di severità)
+`name`, `class`, `hullPoints`, `currentHull`, `armour`, `tacSpeed`, `signature` (base value), `sensors` (type + DM), `computer` (model + bandwidth), `weapons[]` (`{ weaponId, count, label, targetingSystem?, mount? }` — `targetingSystem` B3 p.62; `mount: 'turret' | 'bay'`, default `'turret'`, seleziona quale ruolo Gunner spara quello slot — issue #45), `software[]`, `criticalTracks` (11 track × 6 livelli di severità)
 
 ### Ruoli Crew & Skill — 2300AD B3 p.53
 
