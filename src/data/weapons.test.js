@@ -120,6 +120,26 @@ describe('2300AD canonical weapons', () => {
     expect(WEAPONS.darlan_g2.rangeDm.Close).toBe(-20)
   })
 
+  // aero12/kingfisher/missile_rack previously had a flat rangeDm: 0 at every band, unlike
+  // every other weapon in this file — reuses particle_barbette's graduated shape, the same
+  // optimalRange ('Long'), matching this file's existing convention for weapons that share
+  // an optimalRange. // issue #47
+  it.each(['aero12', 'kingfisher', 'missile_rack'])(
+    '%s — reuses particle_barbette\'s graduated rangeDm shape (same optimalRange) // issue #47',
+    (id) => {
+      expect(WEAPONS[id].optimalRange).toBe('Long')
+      expect(WEAPONS[id].rangeDm).toEqual(WEAPONS.particle_barbette.rangeDm)
+    },
+  )
+
+  it.each(['aero12', 'kingfisher', 'missile_rack'])(
+    '%s — no longer has a flat 0 rangeDm at every band // issue #47',
+    (id) => {
+      const values = Object.values(WEAPONS[id].rangeDm)
+      expect(new Set(values).size).toBeGreaterThan(1)
+    },
+  )
+
   it('anti_missile_laser — damage is 1D // B3 p.60', () => {
     expect(WEAPONS.anti_missile_laser.damage).toBe('1D')
   })

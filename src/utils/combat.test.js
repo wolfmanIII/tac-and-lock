@@ -107,10 +107,15 @@ describe('getRangeDM', () => {
     expect(getRangeDM('grumbler', 'Medium')).toBe(-20)
   })
 
-  it('missile_rack has 0 DM at all bands (smart guidance)', () => {
-    for (const band of ['Adjacent', 'Close', 'Short', 'Medium', 'Long', 'VeryLong', 'Distant']) {
-      expect(getRangeDM('missile_rack', band)).toBe(0)
-    }
+  // The flat-0-at-every-band this test used to assert was an unsourced placeholder — no B3
+  // text supports missiles ignoring the Range Modifiers table ("smart guidance" was never a
+  // cited mechanic). missile_rack now reuses particle_barbette's graduated rangeDm shape,
+  // matching the file's convention for weapons sharing an optimalRange. // issue #47
+  it('missile_rack — graduated rangeDm matching its optimalRange (Long), not a flat 0', () => {
+    expect(getRangeDM('missile_rack', 'Medium')).toBe(0)
+    expect(getRangeDM('missile_rack', 'Long')).toBe(0)
+    expect(getRangeDM('missile_rack', 'Adjacent')).toBe(-3)
+    expect(getRangeDM('missile_rack', 'Distant')).toBe(-3)
   })
 
   it('unknown weapon falls back to default range DM', () => {

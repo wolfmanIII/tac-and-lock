@@ -84,14 +84,18 @@ export const WEAPONS = {
     damage: '4D',   // per missile on impact // Trav2022 CRB p.168
     damageBonus: 0, // missiles do not gain the multi-weapon bonus // Trav2022 CRB p.167
     optimalRange: 'Long',
+    // Same optimalRange as particle_barbette — reuses its rangeDm shape, this file's existing
+    // convention for weapons sharing an optimalRange (e.g. ea1000/autocannon_25mm, both
+    // 'Close'). Previously a placeholder flat 0 at every band, unlike every other weapon in
+    // this file. // issue #47
     rangeDm: {
-      Adjacent:  0,
-      Close:     0,
-      Short:     0,
+      Adjacent: -3,
+      Close:    -2,
+      Short:    -1,
       Medium:    0,
       Long:      0,
-      VeryLong:  0,
-      Distant:   0,
+      VeryLong: -1,
+      Distant:  -3,
     },
     traits: ['AP5'],
     launchable: true, // tracked as an individual unit via DroneLaunchModal, not a "Smart" B3 trait
@@ -238,14 +242,17 @@ export const WEAPONS = {
     damage: '4D',
     damageBonus: 0,
     optimalRange: 'Long',
+    // Same optimalRange as particle_barbette — reuses its rangeDm shape, this file's existing
+    // convention for weapons sharing an optimalRange. Previously a placeholder flat 0 at every
+    // band, unlike every other weapon in this file. // issue #47
     rangeDm: {
-      Adjacent: 0,
-      Close:    0,
-      Short:    0,
-      Medium:   0,
-      Long:     0,
-      VeryLong: 0,
-      Distant:  0,
+      Adjacent: -3,
+      Close:    -2,
+      Short:    -1,
+      Medium:    0,
+      Long:      0,
+      VeryLong: -1,
+      Distant:  -3,
     },
     traits: ['AP5'],
     launchable: true, // tracked as an individual unit via DroneLaunchModal, not a "Smart" B3 trait
@@ -451,14 +458,17 @@ export const WEAPONS = {
     damage: '8D',
     damageBonus: 0,
     optimalRange: 'Long',
+    // Same optimalRange as particle_barbette — reuses its rangeDm shape, this file's existing
+    // convention for weapons sharing an optimalRange. Previously a placeholder flat 0 at every
+    // band, unlike every other weapon in this file. // issue #47
     rangeDm: {
-      Adjacent: 0,
-      Close:    0,
-      Short:    0,
-      Medium:   0,
-      Long:     0,
-      VeryLong: 0,
-      Distant:  0,
+      Adjacent: -3,
+      Close:    -2,
+      Short:    -1,
+      Medium:    0,
+      Long:      0,
+      VeryLong: -1,
+      Distant:  -3,
     },
     traits: ['AP16', 'One Use'],
     launchable: true, // tracked as an individual unit via DroneLaunchModal, not a "Smart" B3 trait
