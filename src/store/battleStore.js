@@ -100,7 +100,6 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     screenCurrentRating:     0,     // active Rating right now (0 until deployed, depletes on hits taken)
     initiative:              0,
     initiativeBreakdown:     null,
-    initiativeBonusNextRound: 0,
     // Per-role action budget for this round — replaces the old single hasActedThisPhase
     // boolean. Recomputed at the start of every round (buildNextRoundState) and whenever
     // crew/crewAssignments change (updateShip). // 2300AD B3 p.53
@@ -178,41 +177,26 @@ export const useBattleStore = create((set, get) => {
       !(s.drones[i].currentBand === 'Close' || s.drones[i].currentBand === 'Adjacent'),
     )
 
-    // Apply captain leadership bonuses, reset per-round ship state. // 2300AD B3 p.53
-    const anyBonus = s.ships.some((sh) => (sh.initiativeBonusNextRound ?? 0) !== 0)
-    const ships = s.ships.map((sh) => {
-      const bonus = sh.initiativeBonusNextRound ?? 0
-      return {
-        ...sh,
-        evasionDm:                0,
-        ewTarget:                 null,
-        ewEffect:                 0,
-        boardingDmNextRound:      0,
-        // Recompute every role's action budget for the new round — crew/skills may
-        // have changed since the last round started. // 2300AD B3 p.53
-        actionsRemaining:         buildActionBudget(sh.crewAssignments, sh.crew),
-        initiative:               sh.initiative + bonus,
-        initiativeBonusNextRound: 0,
-        // Commands and Improve Critical both apply immediately, "for that combat
-        // round" / "next shot this round" (B3 p.53-54, literal) — cleared here so
-        // they don't carry over into the new round unless re-declared.
-        commandBonus:             [],
-        improveCriticalThreshold: null,
-        // An Operate UTES Array solution not consumed by firing that weapon expires
-        // at the round boundary, same as Improve Critical. // 2300AD B3 p.53
-        utesSolutionDm:           null,
-        utesSolutionSlotIdx:      null,
-      }
-    })
-
-    // Re-sort initiative if any captain used "Improve Initiative" last round. // 2300AD B3 p.53
-    const newInitiativeOrder = anyBonus && s.initiativeOrder.length > 0
-      ? [...s.initiativeOrder].sort((a, b) => {
-          const ia = ships.find((sh) => sh.id === a)?.initiative ?? 0
-          const ib = ships.find((sh) => sh.id === b)?.initiative ?? 0
-          return ib - ia
-        })
-      : s.initiativeOrder
+    // Reset per-round ship state. // 2300AD B3 p.53
+    const ships = s.ships.map((sh) => ({
+      ...sh,
+      evasionDm:                0,
+      ewTarget:                 null,
+      ewEffect:                 0,
+      boardingDmNextRound:      0,
+      // Recompute every role's action budget for the new round — crew/skills may
+      // have changed since the last round started. // 2300AD B3 p.53
+      actionsRemaining:         buildActionBudget(sh.crewAssignments, sh.crew),
+      // Commands and Improve Critical both apply immediately, "for that combat
+      // round" / "next shot this round" (B3 p.53-54, literal) — cleared here so
+      // they don't carry over into the new round unless re-declared.
+      commandBonus:             [],
+      improveCriticalThreshold: null,
+      // An Operate UTES Array solution not consumed by firing that weapon expires
+      // at the round boundary, same as Improve Critical. // 2300AD B3 p.53
+      utesSolutionDm:           null,
+      utesSolutionSlotIdx:      null,
+    }))
 
     const log = [
       ...s.log,
@@ -237,7 +221,6 @@ export const useBattleStore = create((set, get) => {
       phase:                 'initiative',
       currentActorIndex:     0,
       ships,
-      initiativeOrder:       newInitiativeOrder,
       drones:                advancedDrones,
       log,
     }
@@ -390,12 +373,6 @@ export const useBattleStore = create((set, get) => {
       }))
     }),
 
-    /**
-     * Add a one-time initiative bonus to a ship (Captain Leadership action). // 2300AD B3 p.53
-     * Applied at the start of the next round via buildNextRoundState.
-     * @param {string} shipId
-     * @param {number} bonus
-     */
     /** Set initiative order from the modal after GM rolls. // 2300AD B3 p.54 */
     setInitiativeOrder: wh((orderedIds) => {
       set((s) => ({
@@ -407,17 +384,6 @@ export const useBattleStore = create((set, get) => {
         log: [...s.log, makeLogEntry(get(), 'initiative', `Initiative order set: ${orderedIds.map((id) => get().ships.find((sh) => sh.id === id)?.profile?.name ?? id).join(' → ')}`)],
       }))
     }),
-
-    addInitiativeBonus: (shipId, bonus) => {
-      set((s) => ({
-        ships: s.ships.map((sh) =>
-          sh.id !== shipId ? sh : {
-            ...sh,
-            initiativeBonusNextRound: (sh.initiativeBonusNextRound ?? 0) + bonus,
-          },
-        ),
-      }))
-    },
 
     // === STAGE / TURN ===
 
