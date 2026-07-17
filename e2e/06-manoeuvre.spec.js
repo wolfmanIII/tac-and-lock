@@ -96,3 +96,114 @@ test.describe('ManoeuvreModal', () => {
     await expect(page.getByText('Evasion DM:').first()).toBeVisible()
   })
 })
+
+/**
+ * Distant pursuit — "combat ends one round after the range becomes Distant, if the
+ * pursuing ship cannot successfully close" // 2300AD B3 p.54, issue #46
+ * Store manipulation via page.evaluate (mirrors 09-crew-actions.spec.js) — the countdown
+ * spans a full round transition, which is faster and more deterministic to drive directly
+ * than through the ROLL 🎲 UI.
+ */
+test.describe('Distant pursuit — combat ends one round after Distant (issue #46)', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+    await addShipsToStore(page)
+  })
+
+  test('a resolved Open to Distant, followed by a round advance, flags the pair ended and logs it', async ({ page }) => {
+    const result = await page.evaluate(() => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const [a, b] = store.getState().ships
+      // Injected ships start at Long — 2 bands farther reaches Distant (Long → VeryLong → Distant).
+      store.getState().manoeuvre(a.id, b.id, a.id, 'farther', 2)
+      const key = [a.id, b.id].sort().join('::')
+      const beforeRound = store.getState().distantPursuit[key]
+      store.getState().startNextRound()
+      const afterRound = store.getState().distantPursuit[key]
+      const logMsg = store.getState().log.at(-1).message
+      return { beforeRound, afterRound, logMsg }
+    })
+    expect(result.beforeRound.ended).toBe(false)
+    expect(result.afterRound.ended).toBe(true)
+    expect(result.logMsg).toContain('combat ends')
+  })
+
+  test('does not flag ended in the same round Distant is reached', async ({ page }) => {
+    const result = await page.evaluate(() => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const [a, b] = store.getState().ships
+      store.getState().manoeuvre(a.id, b.id, a.id, 'farther', 2)
+      const key = [a.id, b.id].sort().join('::')
+      return store.getState().distantPursuit[key]
+    })
+    expect(result.ended).toBe(false)
+  })
+
+  test('closing back out of Distant before the round boundary clears the pending pursuit', async ({ page }) => {
+    const result = await page.evaluate(() => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const [a, b] = store.getState().ships
+      store.getState().manoeuvre(a.id, b.id, a.id, 'farther', 2) // Long → Distant
+      store.getState().manoeuvre(a.id, b.id, b.id, 'closer', 1)  // Distant → VeryLong
+      const key = [a.id, b.id].sort().join('::')
+      return store.getState().distantPursuit[key]
+    })
+    expect(result).toBeUndefined()
+  })
+
+  test('a GM override to Distant does not start a pursuit countdown', async ({ page }) => {
+    const result = await page.evaluate(() => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const [a, b] = store.getState().ships
+      store.getState().setRangeBand(a.id, b.id, 'Distant')
+      store.getState().startNextRound()
+      const key = [a.id, b.id].sort().join('::')
+      return store.getState().distantPursuit[key]
+    })
+    expect(result).toBeUndefined()
+  })
+
+  test('a GM override away from Distant clears an already-ended pursuit flag', async ({ page }) => {
+    const result = await page.evaluate(() => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const [a, b] = store.getState().ships
+      store.getState().manoeuvre(a.id, b.id, a.id, 'farther', 2)
+      store.getState().startNextRound()
+      store.getState().setRangeBand(a.id, b.id, 'Short')
+      const key = [a.id, b.id].sort().join('::')
+      return store.getState().distantPursuit[key]
+    })
+    expect(result).toBeUndefined()
+  })
+
+  test('COMBAT ENDED badge appears on the DISTANCES row once the pursuit has ended', async ({ page }) => {
+    await page.evaluate(() => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const [a, b] = store.getState().ships
+      store.getState().manoeuvre(a.id, b.id, a.id, 'farther', 2)
+      store.getState().startNextRound()
+    })
+    await expect(page.getByText('COMBAT ENDED').first()).toBeVisible()
+  })
+
+  test('no COMBAT ENDED badge for a pair still short of the round boundary', async ({ page }) => {
+    await page.evaluate(() => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const [a, b] = store.getState().ships
+      store.getState().manoeuvre(a.id, b.id, a.id, 'farther', 2)
+    })
+    await expect(page.getByText('COMBAT ENDED')).not.toBeVisible()
+  })
+
+  test('ManoeuvreModal shows the ended-pursuit banner for that pair', async ({ page }) => {
+    await page.evaluate(() => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const [a, b] = store.getState().ships
+      store.getState().manoeuvre(a.id, b.id, a.id, 'farther', 2)
+      store.getState().startNextRound()
+    })
+    await openManoeuvre(page)
+    await expect(page.getByText('Range held at Distant, pursuer could not close.', { exact: false })).toBeVisible()
+  })
+})

@@ -26,6 +26,7 @@ export function ManoeuvreModal({ payload, onClose }) {
   const { shipAId, shipBId, shipId } = payload ?? {}
   const ships      = useBattleStore((s) => s.ships)
   const rangeBands = useBattleStore((s) => s.rangeBands)
+  const distantPursuit = useBattleStore((s) => s.distantPursuit)
   const manoeuvre    = useBattleStore((s) => s.manoeuvre)
   const setRangeBand = useBattleStore((s) => s.setRangeBand)
   const setEvasionDm = useBattleStore((s) => s.setEvasionDm)
@@ -75,6 +76,7 @@ export function ManoeuvreModal({ payload, onClose }) {
   const bandDef = RANGE_BANDS.find((bd) => bd.id === current)
   const closer  = getCloserBand(current)
   const farther = getFartherBand(current)
+  const pursuitEnded = !!distantPursuit[key]?.ended
 
   const actingShip = actingShipId ? (actingShipId === a.id ? a : b) : null
   const otherShip   = actingShipId ? (actingShipId === a.id ? b : a) : null
@@ -177,6 +179,18 @@ export function ManoeuvreModal({ payload, onClose }) {
         <p className="text-xl font-display text-bronze-300">{bandDef?.label ?? current}</p>
         <p className="text-xs font-mono text-gunmetal-500">{bandDef?.distance}</p>
       </div>
+
+      {pursuitEnded && (
+        <div className="bg-red-950/30 border border-red-800/50 rounded px-3 py-2 text-center">
+          <p className="font-display text-xs tracking-widest text-red-400">⚑ COMBAT ENDED</p>
+          <p className="text-[10px] font-mono text-gunmetal-400 mt-0.5">
+            Range held at Distant, pursuer could not close. // 2300AD B3 p.54
+          </p>
+          <p className="text-[9px] font-mono text-gunmetal-600 mt-0.5">
+            Use GM OVERRIDE below to re-engage this pair.
+          </p>
+        </div>
+      )}
 
       {/* Manoeuvre — opposed Pilot check // 2300AD B3 p.54 */}
       <div>

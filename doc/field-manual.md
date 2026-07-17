@@ -179,6 +179,12 @@ Right-click a ship → **Manoeuvre…**
 TAC Speed is a **fixed DM**, never spent or depleted. Pilot's action budget (skill level) can allow
 multiple manoeuvre attempts in the same round, unlike Gunner which is always capped at 1. // 2300AD B3 p.53–54
 
+**Combat ends one round after Distant**: if a ship pair is still at Distant range at the start of
+the round after a successful Open put them there, a **COMBAT ENDED** badge appears on that pair's
+DISTANCES row and in the Manoeuvre modal — informational only (doesn't force anything), citing
+the pursuer's failure to close in time. Use **GM SET** to re-engage the pair and clear it.
+// 2300AD B3 p.54, issue #46
+
 ---
 
 ## 7. Attack — Firing Solution

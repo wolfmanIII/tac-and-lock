@@ -11,6 +11,7 @@ import {
   getFartherBand,
   moveBands,
   isDogfightRange,
+  computeEndedPursuits,
   RANGE_BAND_ORDER,
 } from './rangeBands.js'
 import { SENSOR_TIME_LAG_DM } from '../data/rangeBands.js'
@@ -142,6 +143,49 @@ describe('moveBands', () => {
   it('already at edge, moving further that way — stays put', () => {
     expect(moveBands('Distant', 'farther', 3)).toBe('Distant')
     expect(moveBands('Adjacent', 'closer', 3)).toBe('Adjacent')
+  })
+})
+
+// === computeEndedPursuits ===
+// "Combat ends one round after the range becomes Distant, if the pursuing ship cannot
+// successfully close." // 2300AD B3 p.54
+
+describe('computeEndedPursuits', () => {
+  it('does not fire the same round Distant is reached', () => {
+    const distantPursuit = { 'a::b': { since: 3, ended: false } }
+    const rangeBands      = { 'a::b': 'Distant' }
+    expect(computeEndedPursuits(distantPursuit, rangeBands, 3)).toEqual([])
+  })
+
+  it('fires at the start of the round after Distant was reached', () => {
+    const distantPursuit = { 'a::b': { since: 3, ended: false } }
+    const rangeBands      = { 'a::b': 'Distant' }
+    expect(computeEndedPursuits(distantPursuit, rangeBands, 4)).toEqual(['a::b'])
+  })
+
+  it('skips a pair that closed back out of Distant', () => {
+    const distantPursuit = { 'a::b': { since: 3, ended: false } }
+    const rangeBands      = { 'a::b': 'VeryLong' }
+    expect(computeEndedPursuits(distantPursuit, rangeBands, 4)).toEqual([])
+  })
+
+  it('does not re-fire a pair already flagged ended', () => {
+    const distantPursuit = { 'a::b': { since: 3, ended: true } }
+    const rangeBands      = { 'a::b': 'Distant' }
+    expect(computeEndedPursuits(distantPursuit, rangeBands, 5)).toEqual([])
+  })
+
+  it('handles multiple tracked pairs independently', () => {
+    const distantPursuit = {
+      'a::b': { since: 3, ended: false }, // still Distant, one round elapsed → ends
+      'c::d': { since: 4, ended: false }, // reached Distant this round → not yet
+    }
+    const rangeBands = { 'a::b': 'Distant', 'c::d': 'Distant' }
+    expect(computeEndedPursuits(distantPursuit, rangeBands, 4)).toEqual(['a::b'])
+  })
+
+  it('empty distantPursuit → empty result', () => {
+    expect(computeEndedPursuits({}, {}, 5)).toEqual([])
   })
 })
 

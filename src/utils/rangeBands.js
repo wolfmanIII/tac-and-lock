@@ -71,3 +71,26 @@ export function moveBands(currentBand, direction, count) {
 export function isDogfightRange(bandId) {
   return bandId === 'Adjacent' || bandId === 'Close'
 }
+
+/**
+ * Which pending pursuits (tracked in `distantPursuit`, keyed by pairKey) flip to "ended"
+ * at the start of `nextRound` — "Combat ends one round after the range becomes Distant, if
+ * the pursuing ship cannot successfully close." // 2300AD B3 p.54
+ *
+ * Literal timing: a pair reaches Distant during round R (`since: R`); if it is still
+ * Distant at the start of round R+1 (`nextRound > since`), combat ends for that pair. Skips
+ * pairs no longer at Distant (successfully closed) and pairs already flagged `ended`.
+ * @param {Record<string, { since: number, ended: boolean }>} distantPursuit
+ * @param {Record<string, string>} rangeBands — pairKey → current band id
+ * @param {number} nextRound — the round about to begin
+ * @returns {string[]} pairKeys that newly end this round
+ */
+export function computeEndedPursuits(distantPursuit, rangeBands, nextRound) {
+  return Object.entries(distantPursuit)
+    .filter(([key, entry]) =>
+      !entry.ended &&
+      rangeBands[key] === 'Distant' &&
+      nextRound > entry.since,
+    )
+    .map(([key]) => key)
+}

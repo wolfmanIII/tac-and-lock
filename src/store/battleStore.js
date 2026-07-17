@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { v7 as uuidv7 } from 'uuid'
-import { pairKey, getCloserBand, moveBands } from '../utils/rangeBands.js'
+import { pairKey, getCloserBand, moveBands, computeEndedPursuits } from '../utils/rangeBands.js'
 import { FACTION_COLOR } from '../data/factions.js'
 import { WEAPONS } from '../data/weapons.js'
 import { exportBattle, importBattle } from '../utils/io.js'
@@ -38,6 +38,7 @@ function snapshot(s) {
     ships:                 structuredClone(s.ships),
     drones:                structuredClone(s.drones),
     rangeBands:            structuredClone(s.rangeBands),
+    distantPursuit:        structuredClone(s.distantPursuit),
     initiativeOrder:       [...s.initiativeOrder],
     currentActorIndex:     s.currentActorIndex,
     round:                 s.round,
@@ -198,6 +199,14 @@ export const useBattleStore = create((set, get) => {
       utesSolutionSlotIdx:      null,
     }))
 
+    // Pairs whose range has held at Distant for a full round with no successful Close —
+    // "combat ends one round after the range becomes Distant". // 2300AD B3 p.54
+    const endedPursuitKeys = computeEndedPursuits(s.distantPursuit, s.rangeBands, nextRound)
+    const distantPursuit = { ...s.distantPursuit }
+    for (const key of endedPursuitKeys) {
+      distantPursuit[key] = { ...distantPursuit[key], ended: true }
+    }
+
     const log = [
       ...s.log,
       makeLogEntry({
@@ -214,6 +223,17 @@ export const useBattleStore = create((set, get) => {
             message: `⚠ ${newlyInRange.length} drone(s) closed to engagement range.`,
           })]
         : []),
+      ...endedPursuitKeys.map((key) => {
+        const [idA, idB] = key.split('::')
+        const nameA = s.ships.find((sh) => sh.id === idA)?.profile.name ?? idA
+        const nameB = s.ships.find((sh) => sh.id === idB)?.profile.name ?? idB
+        return makeLogEntry({
+          round: nextRound,
+          phase: 'initiative',
+          type:  'system',
+          message: `⚑ ${nameA} ↔ ${nameB}: combat ends — range held at Distant, pursuer could not close. // B3 p.54`,
+        })
+      }),
     ]
 
     return {
@@ -222,6 +242,7 @@ export const useBattleStore = create((set, get) => {
       currentActorIndex:     0,
       ships,
       drones:                advancedDrones,
+      distantPursuit,
       log,
     }
   }
@@ -238,6 +259,9 @@ export const useBattleStore = create((set, get) => {
     ships:                 [],
     drones:                [], // launched combat drones/missiles // 2300AD B3 p.61
     rangeBands:            {},   // pairKey → band id
+    // pairKey → { since: round, ended: boolean } — Open/Close pursuit tracking for the
+    // "combat ends one round after Distant" rule. // 2300AD B3 p.54
+    distantPursuit:        {},
     log:                   [],
     undoStack:             [],
     redoStack:             [],
@@ -504,27 +528,49 @@ export const useBattleStore = create((set, get) => {
         const actor = get().ships.find((s) => s.id === actingShipId)
         const other = get().ships.find((s) => s.id === (actingShipId === shipAId ? shipBId : shipAId))
 
-        set((s) => ({
-          rangeBands: { ...s.rangeBands, [key]: newBand },
-          log: [...s.log, makeLogEntry({
-            round, phase, type: 'manoeuvre',
-            message: `${actor?.profile.name} ↔ ${other?.profile.name}: ${currentBand} → ${newBand} (Pilot Effect ${bandsChanged})`,
-          })],
-        }))
+        set((s) => {
+          // Pursuit tracking for "combat ends one round after Distant" // 2300AD B3 p.54.
+          // Countdown starts only via a resolved Open/Close Pilot check (this action) —
+          // not a GM override (setRangeBand) — and clears the moment the pair leaves
+          // Distant again (re-engaged).
+          const distantPursuit = { ...s.distantPursuit }
+          if (currentBand !== 'Distant' && newBand === 'Distant') {
+            distantPursuit[key] = { since: round, ended: false }
+          } else if (newBand !== 'Distant') {
+            delete distantPursuit[key]
+          }
+
+          return {
+            rangeBands: { ...s.rangeBands, [key]: newBand },
+            distantPursuit,
+            log: [...s.log, makeLogEntry({
+              round, phase, type: 'manoeuvre',
+              message: `${actor?.profile.name} ↔ ${other?.profile.name}: ${currentBand} → ${newBand} (Pilot Effect ${bandsChanged})`,
+            })],
+          }
+        })
       },
     ),
 
     /**
      * Set the range band between two ships directly (GM override).
+     * A GM override never starts a Distant-pursuit countdown (that's tied to a resolved
+     * Open/Close Pilot check, see `manoeuvre`) but does clear one if it takes the pair out
+     * of Distant — the GM has manually re-engaged them. // 2300AD B3 p.54
      * @param {string} shipAId
      * @param {string} shipBId
      * @param {string} band
      */
     setRangeBand: wh((shipAId, shipBId, band) => {
       const key = pairKey(shipAId, shipBId)
-      set((s) => ({
-        rangeBands: { ...s.rangeBands, [key]: band },
-      }))
+      set((s) => {
+        const distantPursuit = { ...s.distantPursuit }
+        if (band !== 'Distant') delete distantPursuit[key]
+        return {
+          rangeBands: { ...s.rangeBands, [key]: band },
+          distantPursuit,
+        }
+      })
     }),
 
     /**
@@ -1120,6 +1166,7 @@ export const useBattleStore = create((set, get) => {
       ships:                 [],
       drones:                [],
       rangeBands:            {},
+      distantPursuit:        {},
       log:                   [],
       undoStack:             [],
       redoStack:             [],
@@ -1128,11 +1175,11 @@ export const useBattleStore = create((set, get) => {
     exportBattleState: () => {
       const {
         id, name, round, phase, initiativeOrder, currentActorIndex,
-        ships, drones, rangeBands, log,
+        ships, drones, rangeBands, distantPursuit, log,
       } = get()
       exportBattle({
         id, name, round, phase, initiativeOrder, currentActorIndex,
-        ships, drones, rangeBands, log,
+        ships, drones, rangeBands, distantPursuit, log,
         savedAt: new Date().toISOString(),
       })
     },
@@ -1149,6 +1196,7 @@ export const useBattleStore = create((set, get) => {
         ships:                 battle.ships ?? [],
         drones:                battle.drones ?? [],
         rangeBands:            battle.rangeBands ?? {},
+        distantPursuit:        battle.distantPursuit ?? {},
         log:                   battle.log ?? [],
         undoStack:             [],
         redoStack:             [],

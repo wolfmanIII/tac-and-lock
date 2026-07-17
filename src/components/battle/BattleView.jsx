@@ -42,9 +42,9 @@ const BAND_VALUE_COLOR = {
 // ── RangeBandRow ──────────────────────────────────────────────────────────────
 
 /**
- * @param {{ ship1: object, ship2: object, band: string, onSet: (band: string) => void, onMnv: () => void }} props
+ * @param {{ ship1: object, ship2: object, band: string, ended: boolean, onSet: (band: string) => void, onMnv: () => void }} props
  */
-function RangeBandRow({ ship1, ship2, band, onSet, onMnv }) {
+function RangeBandRow({ ship1, ship2, band, ended, onSet, onMnv }) {
   const idx = RANGE_BAND_ORDER.indexOf(band)
 
   return (
@@ -54,6 +54,15 @@ function RangeBandRow({ ship1, ship2, band, onSet, onMnv }) {
       <span className="text-gunmetal-500 mx-0.5">↔</span>
       <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: ship2.color ?? FACTION_COLOR[ship2.faction] ?? '#94a3b8' }} />
       <span className="font-mono text-xs text-gunmetal-300 truncate max-w-24">{ship2.profile?.name ?? ship2.id}</span>
+
+      {ended && (
+        <span
+          className="font-display text-[9px] tracking-widest text-red-400 border border-red-800 rounded px-1 py-0.5 shrink-0"
+          title="Combat ends one round after Distant, if the pursuer cannot close // 2300AD B3 p.54"
+        >
+          COMBAT ENDED
+        </span>
+      )}
 
       <button
         onClick={onMnv}
@@ -89,6 +98,7 @@ export default function BattleView() {
   const ships           = useBattleStore((s) => s.ships)
   const drones          = useBattleStore((s) => s.drones)
   const rangeBands      = useBattleStore((s) => s.rangeBands)
+  const distantPursuit  = useBattleStore((s) => s.distantPursuit)
   const setRangeBand    = useBattleStore((s) => s.setRangeBand)
   const { openModal, showContextMenu } = useUIStore()
 
@@ -167,6 +177,7 @@ export default function BattleView() {
                   ship1={s1}
                   ship2={s2}
                   band={band}
+                  ended={!!distantPursuit[key]?.ended}
                   onSet={(newBand) => setRangeBand(s1.id, s2.id, newBand)}
                   onMnv={() => openModal('manoeuvre', { shipAId: s1.id, shipBId: s2.id })}
                 />

@@ -127,6 +127,28 @@ Ogni nave (in ordine di Iniziativa) distribuisce il suo **TAC Speed** tra:
 2. Combat manoeuvring
 3. **Evade** — azione separata (vedi §11); non è "TAC Speed rimanente" come nel CRB
 
+### Combat ends one round after Distant — 2300AD B3 p.54, issue #46
+
+> *"Combat ends one round after the range becomes Distant, if the pursuing ship cannot successfully close."* — sotto **Open** (fuga).
+
+Tracciato per coppia nave in `distantPursuit` (`pairKey → { since: round, ended: boolean }`),
+popolato **solo** da un check Open/Close risolto (`manoeuvre()` in `battleStore.js`) quando la
+fascia transita a Distant — non da un GM override diretto (`setRangeBand`), che invece azzera
+l'entry se porta la coppia fuori da Distant (re-ingaggio manuale).
+
+**Interpretazione del timing** (letterale, scelta esplicita): se la coppia è ancora a Distant
+all'inizio del round successivo a quello in cui l'ha raggiunta, il combattimento tra quella
+coppia finisce — l'unica finestra per l'inseguitore è chiudere con le proprie azioni residue
+nel round in cui Distant è stata raggiunta, non un round di grazia intero. Calcolato in
+`computeEndedPursuits(distantPursuit, rangeBands, nextRound)` (`utils/rangeBands.js`), applicato
+in `buildNextRoundState`.
+
+**Puramente informativo**, stesso pattern di `scan_target`/`re_route_power`: non termina
+automaticamente la battaglia, non blocca gli attacchi tra la coppia (a Distant nessuna arma
+canonica è comunque efficace). Si manifesta come voce di log, badge "COMBAT ENDED" nella riga
+DISTANCES di `BattleView.jsx`, e banner in `ManoeuvreModal.jsx`. Il GM può sempre riaprire
+l'ingaggio via GM OVERRIDE.
+
 ---
 
 ## 6. Firing Solution (Attacco)
