@@ -9,6 +9,104 @@ ___
 
 ___
 
+## [1.5.0] — 2026-07-17
+
+Rules-fidelity fixes and features from closed GitHub issues #28–#43 and #45–#49 — the second
+full audit pass against 2300AD B3 p.52–62, plus four "flag-only" findings individually
+re-verified against the source PDF before being filed and fixed.
+
+### Added
+
+- **[#37](https://github.com/wolfmanIII/tac-and-lock/issues/37)** — Implemented **Boost Power
+  Output** as a distinct Engineer action (Difficult 10+, Engineer (power) EDU): a % Power
+  increase, informational since no Power resource is tracked, but with a real failure
+  consequence B3 gives it and not Overload Stutterwarp — Effect ≤−5 applies an automatic
+  critical hit to the Power Plant.
+- **[#39](https://github.com/wolfmanIII/tac-and-lock/issues/39)** — Implemented the "disobey
+  order" DM−1 penalty (B3 p.53–54): a new Crew Discipline control marks a crew member as having
+  disobeyed the Captain's Command — no check, no action spent, and it doesn't count against the
+  Captain's per-round Leadership cap.
+- **[#45](https://github.com/wolfmanIII/tac-and-lock/issues/45)** — `gunner_bay` was assignable
+  as a crew role but never actually wired into attack resolution — `AttackModal.jsx` hardcoded
+  `gunner_turret` everywhere regardless of which weapon slot was firing, so no ship could ever
+  fire two batteries in the same round. Added a `mount: 'turret' | 'bay'` field per weapon slot
+  (editable in the profile form) and routed every skill/budget/Command lookup through it,
+  including Point Defence intercept/engage.
+- **[#46](https://github.com/wolfmanIII/tac-and-lock/issues/46)** — Implemented "combat ends one
+  round after the range becomes Distant, if the pursuing ship cannot successfully close" (B3
+  p.54, under Open). Tracked per ship-pair; informational only (log entry, a COMBAT ENDED badge
+  on the DISTANCES row, and a ManoeuvreModal banner) — doesn't auto-end the battle or block
+  attacks, and a GM Override always re-engages the pair.
+- **[#48](https://github.com/wolfmanIII/tac-and-lock/issues/48)** — Boarding Action and Repel
+  Boarders gained checkboxes for the CRB p.175 modifier list (Superior Armour/Weaponry/Skills &
+  Tactics, a mutually-exclusive Numbers tier, and a defender-only "no Marines on duty"), summed
+  automatically into the flat 2D6 roll instead of requiring the GM to add them up by hand.
+- **[#49](https://github.com/wolfmanIII/tac-and-lock/issues/49)** — Implemented drone lightspeed
+  lag (B3 p.55): a flat DM−1 to a drone's own self-generated Sensor check, Position Vessel, and
+  Gunner rolls once it's Long range or farther from its **owner/controller** — distinct from the
+  already-implemented Sensor Time-Lag, which is range-to-**target**. A Sensor hand-off is exempt,
+  per B3's own text. New `drone.ownerBand` field grows one band per round in parallel with the
+  drone closing on its target.
+
+### Changed
+
+- **[#28](https://github.com/wolfmanIII/tac-and-lock/issues/28)** — Captain's Commands are now
+  capped at one per round per **Leadership** skill level (B3 p.54), not by the Tactics
+  (naval)-based action budget they were incorrectly keyed to.
+
+### Removed
+
+- **[#38](https://github.com/wolfmanIII/tac-and-lock/issues/38)** — Removed "EW Countermeasures",
+  an invented counter-jam action using a non-existent "Electronics (countermeasures)"
+  specialization — B3's Electronic Warfare rules (p.53, p.56) name only Electronics (comms) for
+  jamming and Electronics (sensors) for other EW tasks; no action to cancel an active jam exists
+  in B3 p.52–62.
+- **[#43](https://github.com/wolfmanIII/tac-and-lock/issues/43)** — Removed the dead "Improve
+  Initiative" mechanic, which re-sorted the fixed initiative order — B3 p.54 states initiative
+  order is "for the duration of the combat"; no re-sort mechanic exists in the source.
+
+### Fixed
+
+- **[#29](https://github.com/wolfmanIII/tac-and-lock/issues/29)** — Boarding Action was modeled
+  as an Average (8+) Gun Combat/Melee opposed skill check. Trav2022 CRB p.175 ("Resolving a
+  Boarding Action", referenced by B3 p.57) has no skill, no characteristic DM, and no difficulty
+  threshold — it's a flat 2D + modifiers roll on both sides. Replaced the skill-check UI with a
+  flat roll for both the attacker and, via Repel Boarders, the defender.
+- **[#30](https://github.com/wolfmanIII/tac-and-lock/issues/30)** — Darlan G2 and Quinn Type 17
+  PDC (both Range: Adjacent) fired normally at Close range instead of being out of range —
+  `rangeDm.Close` corrected from 0 to −20.
+- **[#31](https://github.com/wolfmanIII/tac-and-lock/issues/31)**,
+  **[#32](https://github.com/wolfmanIII/tac-and-lock/issues/32)**,
+  **[#33](https://github.com/wolfmanIII/tac-and-lock/issues/33)**,
+  **[#34](https://github.com/wolfmanIII/tac-and-lock/issues/34)** — `DroneAttackModal` was
+  missing four DM sources `AttackModal` already had, despite B3 p.55 saying drones/fighters "use
+  the same Firing Solution process": the Captain's Tactics assist at Step 3, the Engineer (power)
+  assist at Steps 1 and 2, the Captain's Command bonus for `remote_pilot`, and the target's
+  Evasion DM at Step 1 (Step 3 already had it). Ported verbatim from `AttackModal`'s existing
+  formulas.
+- **[#35](https://github.com/wolfmanIII/tac-and-lock/issues/35)** — Surface Fixture Damage had a
+  fabricated 3rd-hit "destroyed" tier for Fire Control, Sensors, and Weapon — B3's table only
+  defines two hit tiers for those systems. Corrected to "no further effect", matching the pattern
+  already used for Discharge Vanes and Other System.
+- **[#36](https://github.com/wolfmanIII/tac-and-lock/issues/36)** — Documentation fix: Commands'
+  difficulty was mislabeled "Average (8+)" instead of B3's actual "Routine (8+)" in Help and
+  `doc/space-combat-rules.md`.
+- **[#40](https://github.com/wolfmanIII/tac-and-lock/issues/40)** — Verified multi-battery
+  single-sensor-check sharing (B3 p.56) is already correctly modeled by the existing per-role
+  action budget (`sensor_operator` isn't capped at 1 action/round like Gunnery); documentation
+  only, no code change. Uncovered the real blocker instead: see #45 above.
+- **[#41](https://github.com/wolfmanIII/tac-and-lock/issues/41)** — Documentation fix: Evasion
+  was widely cited as B3 p.55; the actual rule (opposed Pilot check, banded DM table) is on p.54.
+- **[#42](https://github.com/wolfmanIII/tac-and-lock/issues/42)** — Documentation fix: Auto X /
+  Blast X trait definitions were cited as CRB p.75 (copied from B3's own incorrect
+  cross-reference); direct PDF extraction confirms the real "Weapon Traits" section is p.78.
+- **[#47](https://github.com/wolfmanIII/tac-and-lock/issues/47)** — `aero12`, `kingfisher`, and
+  `missile_rack` had a flat `rangeDm: 0` at every band, including Distant, unlike every other
+  weapon in the file. Gave all three a graduated table matching `particle_barbette` (same
+  `optimalRange: 'Long'`), the file's existing convention for weapons sharing an optimal range.
+
+___
+
 ## [1.4.0] — 2026-07-14
 
 ### Changed

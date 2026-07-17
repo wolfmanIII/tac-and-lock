@@ -1,6 +1,6 @@
 # Tac & Lock — Field Manual
 
-**Version 1.4.0** · 2300AD Space Combat Simulator
+**Version 1.5.0** · 2300AD Space Combat Simulator
 
 ---
 
