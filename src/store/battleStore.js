@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { v7 as uuidv7 } from 'uuid'
-import { pairKey, getCloserBand, moveBands, computeEndedPursuits } from '../utils/rangeBands.js'
+import { pairKey, getCloserBand, getFartherBand, moveBands, computeEndedPursuits } from '../utils/rangeBands.js'
 import { FACTION_COLOR } from '../data/factions.js'
 import { WEAPONS } from '../data/weapons.js'
 import { exportBattle, importBattle } from '../utils/io.js'
@@ -146,6 +146,11 @@ export const useBattleStore = create((set, get) => {
    * (like a ship's own movement, simplified to "always closes at max
    * TAC Speed" — see doc/drone-combat-redesign-spec.md §2.3), or mark it
    * detonated (gone inert) once its Endurance is exceeded. // 2300AD B3 p.61
+   *
+   * `ownerBand` (distance from the drone to its owner/controller, distinct from
+   * `currentBand`'s distance to its target — used by the B3 p.55 lightspeed lag DM, issue
+   * #49) grows one band farther in parallel, for as long as the drone is still actively
+   * closing on its target — it stops growing the same round `currentBand` starts holding.
    * @param {object} drone
    * @returns {object}
    */
@@ -158,7 +163,12 @@ export const useBattleStore = create((set, get) => {
     if (drone.currentBand === 'Adjacent' || drone.currentBand === 'Close') {
       return { ...drone, roundsElapsed } // already within engagement range — holds position
     }
-    return { ...drone, roundsElapsed, currentBand: getCloserBand(drone.currentBand) ?? drone.currentBand }
+    return {
+      ...drone,
+      roundsElapsed,
+      currentBand: getCloserBand(drone.currentBand) ?? drone.currentBand,
+      ownerBand:   getFartherBand(drone.ownerBand) ?? drone.ownerBand,
+    }
   }
 
   /**
@@ -1069,6 +1079,7 @@ export const useBattleStore = create((set, get) => {
           targetId,
           weaponId,
           currentBand:      launchBand,
+          ownerBand:        'Adjacent', // distance from owner — grows each round via advanceDroneOneRound, B3 p.55 lightspeed lag, issue #49
           roundsElapsed:    0,
           enduranceRounds:  weapon?.enduranceRounds ?? 10,
           destroyed:        false,

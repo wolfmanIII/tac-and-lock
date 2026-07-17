@@ -24,7 +24,7 @@ import { useState, useMemo } from 'react'
 import { useBattleStore } from '../../store/battleStore.js'
 import { useUIStore }     from '../../store/uiStore.js'
 import { WEAPONS }        from '../../data/weapons.js'
-import { SENSOR_TIME_LAG_DM } from '../../data/rangeBands.js'
+import { SENSOR_TIME_LAG_DM, getDroneLightspeedLagDm } from '../../data/rangeBands.js'
 import { getAssignedSkill, getAssignedCharacteristic } from '../../utils/crew.js'
 import { getCharDM, roll2D6 } from '../../utils/dice.js'
 import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, computeEffectiveSignature, getPointDefenceDm, getPointDefenceTraitAttackDm, getEasyTargetAttackDm, getEasyTargetDamageMultiplier, getAtmosphericTargetDm, getOrtilleryDm, getFireControlDm, getTargetingSystemDm, getScreenDm, getWeaponTraitAttackDm } from '../../utils/combat.js'
@@ -256,6 +256,12 @@ export function DroneAttackModal({ payload, onClose }) {
     ? (pilotAssistResult.effect >= 5 ? 2 : pilotAssistResult.effect >= 1 ? 1 : 0)
     : 0
 
+  // Owner↔drone lightspeed lag — distinct from the target-relative SENSOR_TIME_LAG_DM
+  // above. Flat DM-1 at Long/VeryLong/Distant `ownerBand`, exempted for a Sensor hand-off
+  // per B3's own text ("some functions, like using sensors, can be handed off... Drones at
+  // Long range have..."). // 2300AD B3 p.55, issue #49
+  const lightspeedLagDm = getDroneLightspeedLagDm(drone?.ownerBand)
+
   // ── Step 1: Sensor (hand-off, no penalty) or self-generated (Piloting, DM-2) // B3 p.55 ──
   const step1Dms = useMemo(() => {
     if (!owner || !target) return { rows: [], total: 0 }
@@ -278,18 +284,21 @@ export function DroneAttackModal({ payload, onClose }) {
       }
     }
     // Self-generated — Remote Pilot's Piloting action, DEX, DM-2 // B3 p.55
+    // Lightspeed lag applies here (self-generated is routed through the drone's own remote
+    // link) but not to a hand-off above, per B3's own exemption. // issue #49
     const skill = getAssignedSkill('remote_pilot', owner.crewAssignments, owner.crew)
     const dexDm = getCharDM(getAssignedCharacteristic('remote_pilot', owner.crewAssignments, owner.crew, 'DEX'))
-    const total = skill + dexDm + sig.effective + timeLagDm - 2 + evasionDm + sensorAssistDm
+    const total = skill + dexDm + sig.effective + timeLagDm - 2 + evasionDm + sensorAssistDm + lightspeedLagDm
     return {
       rows: [
         ['Remote Pilot skill', skill], ['DEX DM', dexDm], ['Target Signature', sig.effective],
         ['Time-lag', timeLagDm], ['Self-generated', -2], ['Target evasion', evasionDm],
         ...(sensorAssistDm !== 0 ? [['Engineer assist', sensorAssistDm]] : []),
+        ['Lightspeed lag', lightspeedLagDm],
       ],
       total,
     }
-  }, [owner, target, sensorMode, drone, sensorAssistDm])
+  }, [owner, target, sensorMode, drone, sensorAssistDm, lightspeedLagDm])
 
   const step1CarryEffect = step1Result ? Math.max(0, step1Result.effect) : 0
 
@@ -324,16 +333,17 @@ export function DroneAttackModal({ payload, onClose }) {
     const dexDm = getCharDM(getAssignedCharacteristic('remote_pilot', owner.crewAssignments, owner.crew, 'DEX'))
     const tacSpeed = weapon?.tacSpeed ?? 0
     const droneDm = 2
-    const total = skill + dexDm + tacSpeed + droneDm + step1CarryEffect + pilotAssistDm
+    const total = skill + dexDm + tacSpeed + droneDm + step1CarryEffect + pilotAssistDm + lightspeedLagDm
     return {
       rows: [
         ['Remote Pilot skill', skill], ['DEX DM', dexDm], ['Drone TAC Speed', tacSpeed],
         ['Drone Pilot bonus', droneDm], ['Carry (Step 1)', step1CarryEffect],
         ...(pilotAssistDm !== 0 ? [['Engineer assist (TAC Speed)', pilotAssistDm]] : []),
+        ['Lightspeed lag', lightspeedLagDm], // always Remote Pilot — no hand-off exemption here // B3 p.55, issue #49
       ],
       total,
     }
-  }, [owner, weapon, step1CarryEffect, pilotAssistDm])
+  }, [owner, weapon, step1CarryEffect, pilotAssistDm, lightspeedLagDm])
 
   const step2CarryEffect = step2Result ? Math.max(0, step2Result.effect) : 0
 
@@ -392,7 +402,7 @@ export function DroneAttackModal({ payload, onClose }) {
     const screenDm = getScreenDm(target, weapon)
     // Weapon traits — Accurate +1, Slow −2 // B3 p.59
     const weaponTraitDm = getWeaponTraitAttackDm(weapon.traits)
-    const total = remotePilotSkill + remotePilotDexDm + fireControlDm + rangeDm + step2CarryEffect + evasionDm + jammerPenalty + commandDm + captainAssistDm + easyTargetDm + atmosphericDm + ortilleryDm + screenDm + weaponTraitDm
+    const total = remotePilotSkill + remotePilotDexDm + fireControlDm + rangeDm + step2CarryEffect + evasionDm + jammerPenalty + commandDm + captainAssistDm + easyTargetDm + atmosphericDm + ortilleryDm + screenDm + weaponTraitDm + lightspeedLagDm
     return {
       rows: [
         ['Remote Pilot skill', remotePilotSkill],
@@ -409,10 +419,12 @@ export function DroneAttackModal({ payload, onClose }) {
         ...(atmosphericDm !== 0 ? [['Planetary/atmospheric condition', atmosphericDm]] : []),
         ...(ortilleryDm !== 0 ? [['Ortillery', ortilleryDm]] : []),
         ...(screenDm !== 0 ? [['Defensive Screens', screenDm]] : []),
+        // Always Remote Pilot — no hand-off exemption here // B3 p.55, issue #49
+        ['Lightspeed lag', lightspeedLagDm],
       ],
       total,
     }
-  }, [owner, target, weapon, drone, ships, step2CarryEffect, captainAssistDm])
+  }, [owner, target, weapon, drone, ships, step2CarryEffect, captainAssistDm, lightspeedLagDm])
 
   const damageOverride = detonationMode && weapon.detonationMode ? weapon.detonationMode : null
 

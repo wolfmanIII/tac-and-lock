@@ -34,9 +34,13 @@ async function launchDrones(page, count = 1) {
   await expect(page.getByText('LAUNCH DRONE')).not.toBeVisible()
 }
 
-/** Inject a drone directly into the store, already at the given band. */
-async function injectDrone(page, { band = 'Close', weaponId = 'ritage1' } = {}) {
-  return page.evaluate(({ band, weaponId }) => {
+/**
+ * Inject a drone directly into the store, already at the given band. `ownerBand` defaults to
+ * 'Adjacent' (matching real launchDrone) — distance from the drone's owner/controller, used
+ * by the B3 p.55 lightspeed lag DM, distinct from `band` (distance from its target). // issue #49
+ */
+async function injectDrone(page, { band = 'Close', ownerBand = 'Adjacent', weaponId = 'ritage1' } = {}) {
+  return page.evaluate(({ band, ownerBand, weaponId }) => {
     const store = window.__ZUSTAND_BATTLE_STORE__
     const ships = store.getState().ships
     const drone = {
@@ -45,6 +49,7 @@ async function injectDrone(page, { band = 'Close', weaponId = 'ritage1' } = {}) 
       targetId: ships[1].id,
       weaponId,
       currentBand: band,
+      ownerBand,
       roundsElapsed: 0,
       enduranceRounds: 60,
       destroyed: false,
@@ -54,7 +59,7 @@ async function injectDrone(page, { band = 'Close', weaponId = 'ritage1' } = {}) 
     }
     store.setState((s) => ({ drones: [...s.drones, drone] }))
     return drone.id
-  }, { band, weaponId })
+  }, { band, ownerBand, weaponId })
 }
 
 test.describe('Drone launch', () => {
@@ -464,6 +469,106 @@ test.describe('Drone attack — ported ship-only Firing Solution DMs (issues #31
 
     const row = page.locator('div').filter({ hasText: 'Target evasion' }).last()
     await expect(row).toContainText('-2')
+  })
+})
+
+// === Drone lightspeed lag — owner↔drone distance, distinct from Sensor Time-Lag (issue #49) ===
+// // 2300AD B3 p.55 — "Drones at Long range have a DM-1 to all actions due to lightspeed
+// lag." Depends on drone.ownerBand (distance from owner/controller), not drone.currentBand
+// (distance from target, already covered by the #31-#34 tests above).
+
+test.describe('Drone attack — lightspeed lag (issue #49)', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+    await addShipsToStore(page, SHIPS_WITH_DRONES)
+  })
+
+  test('Step 1 self-generated shows Lightspeed lag -1 when ownerBand is Long', async ({ page }) => {
+    const droneId = await injectDrone(page, { band: 'Close', ownerBand: 'Long' })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await page.getByText('NO INTERCEPT → FIRING SOLUTION').click()
+    await page.getByText('Self-Generated (DM−2)').click()
+    const row = page.locator('div').filter({ hasText: 'Lightspeed lag' }).last()
+    await expect(row).toContainText('-1')
+  })
+
+  test('Step 1 hand-off does not show Lightspeed lag, even at Long ownerBand (B3 exemption)', async ({ page }) => {
+    const droneId = await injectDrone(page, { band: 'Close', ownerBand: 'Long' })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await page.getByText('NO INTERCEPT → FIRING SOLUTION').click()
+    // Hand-off is the default sensorMode — no need to click it.
+    await expect(page.getByText('Lightspeed lag')).not.toBeVisible()
+  })
+
+  test('Step 2 shows Lightspeed lag -1 when ownerBand is Long (always Remote Pilot, no hand-off)', async ({ page }) => {
+    const droneId = await injectDrone(page, { band: 'Close', ownerBand: 'Long' })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await page.getByText('NO INTERCEPT → FIRING SOLUTION').click()
+    await page.getByText('ROLL 2D6').last().click() // Step 1 main roll (hand-off, no lag)
+    await page.getByText('NEXT → PILOT').click()
+    const row = page.locator('div').filter({ hasText: 'Lightspeed lag' }).last()
+    await expect(row).toContainText('-1')
+  })
+
+  test('Step 3 shows Lightspeed lag -1 when ownerBand is Long', async ({ page }) => {
+    const droneId = await injectDrone(page, { band: 'Close', ownerBand: 'Long' })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await page.getByText('NO INTERCEPT → FIRING SOLUTION').click()
+    await page.getByText('ROLL 2D6').last().click()
+    await page.getByText('NEXT → PILOT').click()
+    await page.getByText('ROLL 2D6').last().click()
+    await page.getByText('NEXT → GUNNER').click()
+    const row = page.locator('div').filter({ hasText: 'Lightspeed lag' }).last()
+    await expect(row).toContainText('-1')
+  })
+
+  test('no Lightspeed lag row when ownerBand is under Long', async ({ page }) => {
+    const droneId = await injectDrone(page, { band: 'Close', ownerBand: 'Short' })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await page.getByText('NO INTERCEPT → FIRING SOLUTION').click()
+    await page.getByText('Self-Generated (DM−2)').click()
+    await expect(page.getByText('Lightspeed lag')).not.toBeVisible()
+  })
+
+  test('ownerBand starts at Adjacent on launch and grows one band farther per round while still closing on target', async ({ page }) => {
+    const result = await page.evaluate(() => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const ships = store.getState().ships
+      store.getState().launchDrone(ships[0].id, ships[1].id, 'ritage1')
+      const before = store.getState().drones.at(-1)
+      store.getState().startNextRound()
+      const after = store.getState().drones.find((d) => d.id === before.id)
+      return {
+        beforeOwnerBand: before.ownerBand, beforeCurrentBand: before.currentBand,
+        afterOwnerBand: after.ownerBand, afterCurrentBand: after.currentBand,
+      }
+    })
+    expect(result.beforeOwnerBand).toBe('Adjacent')
+    expect(result.beforeCurrentBand).toBe('Long') // default launch band for injected ships
+    expect(result.afterOwnerBand).toBe('Close')   // one band farther from owner
+    expect(result.afterCurrentBand).toBe('Medium') // one band closer to target
+  })
+
+  test('ownerBand stops growing once the drone holds at Close/Adjacent to its target', async ({ page }) => {
+    const droneId = await injectDrone(page, { band: 'Close', ownerBand: 'Long' })
+    await page.evaluate(() => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().startNextRound()
+    })
+    const ownerBand = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().drones.find((d) => d.id === id)?.ownerBand
+    , droneId)
+    expect(ownerBand).toBe('Long') // unchanged — currentBand already held at Close
   })
 })
 

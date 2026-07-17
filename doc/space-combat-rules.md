@@ -710,12 +710,22 @@ attacchi. `mode: 'engage'` in `DroneAttackModal.jsx`, menu contestuale "Fire at 
 
 **Step 1 — Sensor/Firing Solution generation**: due opzioni —
 
-- **Hand-off** da un Sensor Operator di una nave/drone sensore vicino: nessuna penalità aggiuntiva; DM−1 se la piattaforma sensori è a Long range o oltre (lightspeed lag).
-- **Self-generated**: il Remote Pilot della nave lanciante usa un'azione di Piloting al posto di Electronics(sensors), **DM−2** al check. Stesso target 12+ in entrambi i casi.
+- **Hand-off** da un Sensor Operator di una nave/drone sensore vicino: nessuna penalità aggiuntiva — **esente** dal lightspeed lag sotto, per testo B3 esplicito ("some functions, like using sensors, can be handed off...").
+- **Self-generated**: il Remote Pilot della nave lanciante usa un'azione di Piloting al posto di Electronics(sensors), **DM−2** al check, **più** il lightspeed lag sotto se applicabile. Stesso target 12+ in entrambi i casi.
 
-**Step 2 — Position Vessel**: Remote Pilot, **Electronics (remote ops) DEX**, Difficult (10+), +TAC Speed del drone, +carry Effect Step 1. Droni hanno DM+2 fisso a questo check (subject to comms lag); caccia pilotati <100 ton hanno DM+1 (semplificazione: non ancora automatizzato).
+**Step 2 — Position Vessel**: Remote Pilot, **Electronics (remote ops) DEX**, Difficult (10+), +TAC Speed del drone, +carry Effect Step 1, +lightspeed lag sotto (sempre — nessuna alternativa hand-off a questo step). Droni hanno DM+2 fisso a questo check (subject to comms lag); caccia pilotati <100 ton hanno DM+1 (semplificazione: non ancora automatizzato).
 
-**Step 3 — Gunner**: Difficult (10+), +Fire Control della nave lanciante, +range DM alla fascia corrente del drone, +carry Effect Step 2, +DM reattivi del bersaglio (evasione, sensor lock, EW).
+**Step 3 — Gunner**: Difficult (10+), +Fire Control della nave lanciante, +range DM alla fascia corrente del drone, +carry Effect Step 2, +DM reattivi del bersaglio (evasione, sensor lock, EW), +lightspeed lag sotto (sempre).
+
+### Drone Lightspeed Lag — 2300AD B3 p.55, issue #49
+
+> *"Some functions, like using sensors, can be 'handed off' to another vessel. Drones at Long range have a DM-1 to all actions due to lightspeed lag."*
+
+Distinta dalla Sensor Time-lag (§8, B3 p.47) — quella dipende dalla distanza **drone↔bersaglio** (`drone.currentBand`), rilevamento sensori. Questa dipende dalla distanza **drone↔nave controllante** (`drone.ownerBand`, campo nuovo — nessun impatto su export/autosave, `drones[]` è già salvato per intero come array). DM piatto **−1**, non una tabella graduata (B3 non ne fornisce una per VeryLong/Distant): soglia interpretata come Long **e oltre** (Long/VeryLong/Distant), non il solo Long isolato — scelta esplicita dato che B3 non fornisce un valore più fine per le fasce oltre Long.
+
+`ownerBand` parte da `'Adjacent'` al lancio e cresce di una fascia per round in parallelo a `currentBand` che si avvicina al bersaglio (stessa cadenza di `advanceDroneOneRound` in `battleStore.js`), fermandosi lo stesso round in cui anche `currentBand` si ferma (drone arrivato a Close/Adjacent dal bersaglio). `getDroneLightspeedLagDm(ownerBand)` in `data/rangeBands.js`.
+
+**Non** si applica a Point Defence/Engage (§11/§12) — quelle sono azioni della nave bersaglio *contro* il drone, non un'azione del drone/Remote Pilot stesso.
 
 ### Contromisure
 

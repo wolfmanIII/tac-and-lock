@@ -14,7 +14,7 @@ import {
   computeEndedPursuits,
   RANGE_BAND_ORDER,
 } from './rangeBands.js'
-import { SENSOR_TIME_LAG_DM } from '../data/rangeBands.js'
+import { SENSOR_TIME_LAG_DM, getDroneLightspeedLagDm } from '../data/rangeBands.js'
 
 // === RANGE_BAND_ORDER ===
 
@@ -218,6 +218,33 @@ describe('SENSOR_TIME_LAG_DM', () => {
     const values = RANGE_BAND_ORDER.map((b) => SENSOR_TIME_LAG_DM[b])
     for (let i = 1; i < values.length; i++) {
       expect(values[i]).toBeLessThan(values[i - 1])
+    }
+  })
+})
+
+// === getDroneLightspeedLagDm ===
+// Distinct from SENSOR_TIME_LAG_DM above — depends on the drone's range from its own
+// owner/controller (drone.ownerBand), not from its target. Flat DM-1 threshold, not a
+// graduated scale — B3 gives no finer-grained table for VeryLong/Distant. // 2300AD B3 p.55
+
+describe('getDroneLightspeedLagDm', () => {
+  const EXPECTED = [
+    ['Adjacent',  0],
+    ['Close',     0],
+    ['Short',     0],
+    ['Medium',    0],
+    ['Long',     -1],
+    ['VeryLong', -1],
+    ['Distant',  -1],
+  ]
+
+  it.each(EXPECTED)('"%s" → DM %i // B3 p.55', (band, dm) => {
+    expect(getDroneLightspeedLagDm(band)).toBe(dm)
+  })
+
+  it('covers all 7 bands with no gaps', () => {
+    for (const band of RANGE_BAND_ORDER) {
+      expect(typeof getDroneLightspeedLagDm(band)).toBe('number')
     }
   })
 })

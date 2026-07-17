@@ -116,6 +116,14 @@ Usato per tutti i check Electronics (sensors), incluso lo step 1 della Firing So
 | Very Long | −4 |
 | Distant | −5 |
 
+### Drone Lightspeed Lag — 2300AD B3 p.55, issue #49
+
+> *"Some functions, like using sensors, can be 'handed off' to another vessel. Drones at Long range have a DM-1 to all actions due to lightspeed lag."*
+
+Distinta dalla Sensor Time-lag sopra: quella dipende dalla distanza **drone↔bersaglio** (`drone.currentBand`), sensori. Questa dipende dalla distanza **drone↔nave controllante** (`drone.ownerBand`, nuovo campo — nessun impatto su export/autosave, `drones[]` è già salvato per intero) — DM piatto −1, non una tabella graduata (B3 non ne fornisce una per VeryLong/Distant): soglia interpretata come Long **e oltre** (Long/VeryLong/Distant), non il solo Long isolato. `ownerBand` parte da `'Adjacent'` al lancio e cresce di una fascia/round in parallelo a `currentBand` che si avvicina al bersaglio (stessa cadenza di `advanceDroneOneRound` in `battleStore.js`), fermandosi quando anche `currentBand` si ferma (drone arrivato a Close/Adjacent dal bersaglio). `getDroneLightspeedLagDm(ownerBand)` in `data/rangeBands.js`.
+
+Si applica a: Step 1 **self-generated** (Remote Pilot's Piloting action) — non allo hand-off, esplicitamente esente per testo B3 ("can be handed off... Drones at Long range have..."); Step 2 (Position Vessel, sempre Remote Pilot); Step 3 (Gunner, sempre Remote Pilot). **Non** si applica a Point Defence/Engage — quelle sono azioni della nave bersaglio contro il drone, non un'azione del drone/Remote Pilot stesso.
+
 ### Firing Solution (Task Chain) — 2300AD B3 p.56
 
 L'attacco in 2300AD è una catena di check interdipendenti. Ogni Effect positivo si trasferisce come DM al check successivo.

@@ -393,9 +393,11 @@ Once a ship's own drone reaches Close/Adjacent range, right-click that ship → 
 
 | Step | Who | Check | DM |
 | ---- | --- | ----- | -- |
-| 1 — Sensor | Sensor hand-off (no penalty) or Remote Pilot self-generated (Piloting action, DM−2) | Very Difficult (12+) | +Signature, sensor quality, time-lag |
-| 2 — Position Vessel | Remote Pilot | Difficult (10+), Electronics(remote ops) DEX | +drone TAC Speed, +carry from Step 1 |
-| 3 — Gunner | — | Difficult (10+) | +Fire Control, +range DM at drone's current band, +carry from Step 2, +target's reactive DMs |
+| 1 — Sensor | Sensor hand-off (no penalty, no lag) or Remote Pilot self-generated (Piloting action, DM−2, plus lightspeed lag) | Very Difficult (12+) | +Signature, sensor quality, time-lag |
+| 2 — Position Vessel | Remote Pilot | Difficult (10+), Electronics(remote ops) DEX | +drone TAC Speed, +carry from Step 1, +lightspeed lag |
+| 3 — Gunner | — | Difficult (10+) | +Fire Control, +range DM at drone's current band, +carry from Step 2, +target's reactive DMs, +lightspeed lag |
+
+**Lightspeed lag** (B3 p.55, issue #49): DM−1 to a drone's own actions once it's Long range or farther from its *controlling ship* (not its target — that's the Step 1 time-lag above). A hand-off Sensor check is exempt (per B3's own text); self-generated Sensor, Position Vessel, and Gunner are not.
 
 ### Point Defence
 
