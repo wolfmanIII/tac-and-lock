@@ -286,7 +286,7 @@ Select the action type, choose applicable target/options, roll (if required), th
 
 | Action | Check | Effect |
 | ------ | ----- | ------ |
-| **Commands** | Routine (8+) Leadership INT/SOC | Order one crew role. Effect 1–4 → DM+1, Effect 5–6 → DM+2 to their actions. Active **immediately, this round** — the Captain acts first among the crew, so a Command issued early in the ship's turn is already available to that role's actions later the same round. Resets at the start of the next round if not re-issued. Auto-applied if targeting `gunner_turret` (Step 3 Gunner check) or `pilot` (Evade roll); for other roles the GM adds it manually. |
+| **Commands** | Routine (8+) Leadership INT/SOC | Order one crew role. Effect 1–4 → DM+1, Effect 5–6 → DM+2 to their actions. Active **immediately, this round** — the Captain acts first among the crew, so a Command issued early in the ship's turn is already available to that role's actions later the same round. Resets at the start of the next round if not re-issued. Auto-applied if targeting `gunner_turret` (Step 3 Gunner check) or `pilot` (Evade roll); for other roles the GM adds it manually. **Crew Discipline** (issue #39): mark a role as having disobeyed the order instead of receiving it — DM−1 to their actions this round, no check, doesn't consume the Captain's Leadership cap. // 2300AD B3 p.54 |
 | **Tactics Assist** | Difficult (10+) Tactics(naval) INT | Optional inline roll inside the Attack modal's Step 3 — adds its Effect to that single Gunner check only. Distinct from Commands, stacks with it. |
 
 ### Engineer

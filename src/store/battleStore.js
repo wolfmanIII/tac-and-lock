@@ -915,9 +915,15 @@ export const useBattleStore = create((set, get) => {
      * the Captain "always acts first among the crew" (B3 p.53), so a Command issued early in
      * a ship's turn is available to other roles' actions later that same round.
      * Re-issuing to a role already commanded this round replaces that role's DM.
+     *
+     * A negative dm (-1) represents a crew member disobeying the order instead — B3 p.54:
+     * "Crew members who disobey the order suffer DM-1 to their actions for that combat
+     * round." No check, no action spent (it's the disobeying crew member's own choice, not
+     * a Captain action) — set directly from ActionModal's markDisobeyed, bypassing the
+     * Leadership-roll UI. // issue #39
      * @param {string} shipId
      * @param {string} role — crew role receiving the order (pilot, gunner_turret, etc.)
-     * @param {number} dm — 1 or 2
+     * @param {number} dm — 1, 2, or -1 (disobeyed)
      */
     applyCommand: wh(
       (shipId) => !!get().ships.find((s) => s.id === shipId),
@@ -934,7 +940,9 @@ export const useBattleStore = create((set, get) => {
           }),
           log: [...s.log, makeLogEntry({
             round, phase, type: 'action', shipId,
-            message: `🎖 ${ship?.profile.name}: Command issued to ${role} — DM+${dm} this round.`,
+            message: dm < 0
+              ? `⚠ ${ship?.profile.name}: ${role} disobeyed the Captain's order — DM${dm} this round.`
+              : `🎖 ${ship?.profile.name}: Command issued to ${role} — DM+${dm} this round.`,
           })],
         }))
       },

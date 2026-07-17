@@ -56,7 +56,9 @@ export function ActionModal({ payload, onClose }) {
 
   // Commands issued so far this round on this ship — capped at one per Leadership level;
   // applies immediately this round (B3 p.53–54, literal "for that combat round"). // B3 p.54
-  const issuedCommands = ship?.commandBonus ?? []
+  // Excludes disobeyed-order entries (dm < 0, see markDisobeyed) — disobeying isn't itself a
+  // Command the Captain issued, so it must not eat into the Captain's Leadership cap. // issue #39
+  const issuedCommands = (ship?.commandBonus ?? []).filter((cb) => cb.dm > 0)
   const availableCommandRoles = COMMAND_TARGET_ROLES.filter(
     (r) => !issuedCommands.some((cb) => cb.role === r),
   )
@@ -80,6 +82,7 @@ export function ActionModal({ payload, onClose }) {
   const [boardingHullDamage,     setBoardingHullDamage]     = useState(null)
   const [commandRole,            setCommandRole]            = useState(COMMAND_TARGET_ROLES[0])
   const [issueOrderRole,         setIssueOrderRole]         = useState(COMMAND_TARGET_ROLES[0])
+  const [disobeyRole,            setDisobeyRole]            = useState(COMMAND_TARGET_ROLES[0])
 
   const action = ALL_ACTIONS.find((a) => a.id === selectedAction)
   const target = ships.find((s) => s.id === targetId)
@@ -133,6 +136,14 @@ export function ActionModal({ payload, onClose }) {
     const result = formatCheckResult(total, action.difficulty)
     setRollResult({ ...result, dice: [], total })
     setBoardingHullDamage(null)
+  }
+
+  // A crew member who acts against the Captain's issued Command suffers DM-1 to their
+  // actions this round — no check, no action spent (it's the disobeying crew member's own
+  // choice, not a Captain action). Reuses the same commandBonus[] slot as a normal Command,
+  // so it replaces any existing DM+1/+2 for that role. // 2300AD B3 p.54, issue #39
+  function markDisobeyed() {
+    applyCommand(shipId, disobeyRole, -1)
   }
 
   function rollBoardingHull(result) {
@@ -367,9 +378,28 @@ export function ActionModal({ payload, onClose }) {
               )}
               {issuedCommands.length > 0 && (
                 <p className="text-[10px] font-mono text-emerald-500 mt-1">
-                  Issued: {issuedCommands.map((cb) => `${cb.role} (+${cb.dm})`).join(', ')}
+                  Issued: {issuedCommands.map((cb) => `${cb.role} (${cb.dm > 0 ? '+' : ''}${cb.dm})`).join(', ')}
                 </p>
               )}
+
+              {/* Disobeyed Order — no check, no action spent (the crew member's own choice,
+                  not a Captain action). Reuses the same commandBonus slot, so marking a role
+                  disobedient replaces any DM+1/+2 they already have this round. // B3 p.54, issue #39 */}
+              <div className="border-t border-gunmetal-800 mt-3 pt-3">
+                <p className="text-[10px] font-display text-gunmetal-500 tracking-widest mb-1">
+                  CREW DISCIPLINE — disobeyed order (DM−1, no check)
+                </p>
+                <div className="flex gap-2">
+                  <select value={disobeyRole} onChange={(e) => setDisobeyRole(e.target.value)}
+                    className="flex-1 bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-sm rounded px-2 py-1 focus:border-bronze-400 outline-none">
+                    {COMMAND_TARGET_ROLES.map((r) => <option key={r} value={r}>{CREW_SKILLS[r]} ({r})</option>)}
+                  </select>
+                  <button onClick={markDisobeyed}
+                    className="px-3 py-1 text-xs font-display tracking-widest text-red-400 border border-red-800 hover:bg-red-900/20 rounded">
+                    MARK DISOBEYED
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

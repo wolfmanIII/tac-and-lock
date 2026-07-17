@@ -49,7 +49,7 @@ export const CREW_ACTIONS = {
       skill: 'Leadership',
       difficulty: 8,
       difficultyLabel: 'Routine (8+)',
-      description: 'Leadership (INT or SOC) Routine (8+). One command per Leadership skill level, each to a different crew member. Effect 1–4: DM+1 to their actions this round. Effect 5–6: DM+2. Applies immediately — the Captain acts first, so a Command issued early in the ship\'s turn is available to that role\'s actions later this same round. Draws from the Captain\'s shared action budget (actionsRemaining.captain), same pool as the Tactics assist and Issue Order. // 2300AD B3 p.53–54',
+      description: 'Leadership (INT or SOC) Routine (8+). One command per Leadership skill level, each to a different crew member. Effect 1–4: DM+1 to their actions this round. Effect 5–6: DM+2. Applies immediately — the Captain acts first, so a Command issued early in the ship\'s turn is available to that role\'s actions later this same round. Draws from the Captain\'s shared action budget (actionsRemaining.captain), same pool as the Tactics assist and Issue Order. A crew member who disobeys the order instead suffers DM−1 to their actions this round — no check, doesn\'t consume the Captain\'s Leadership cap (GM-marked via the Crew Discipline control, issue #39). // 2300AD B3 p.53–54',
       requiresTarget: false,
       targetsCrewRole: true, // picks a role of this ship's own crew, not an enemy ship
     },

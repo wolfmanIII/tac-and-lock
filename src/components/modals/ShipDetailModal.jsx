@@ -225,13 +225,14 @@ export function ShipDetailModal({ payload, onClose }) {
         </div>
       )}
 
-      {/* Captain's Command(s) — active this round, up to one per Leadership level // B3 p.54 */}
+      {/* Captain's Command(s) — active this round, up to one per Leadership level. A negative
+          dm means that role disobeyed the order instead (DM-1, no check) // B3 p.54, issue #39 */}
       {(ship.commandBonus ?? []).length > 0 && (
         <div className="bg-emerald-950/30 border border-emerald-800/50 rounded px-3 py-2 space-y-1">
           <p className="text-[10px] font-display text-gunmetal-500 tracking-widest mb-0.5">CAPTAIN'S COMMAND(S) ACTIVE</p>
           {ship.commandBonus.map((cb) => (
-            <p key={cb.role} className="text-sm font-mono font-bold text-emerald-400">
-              DM+{cb.dm} to {cb.role} this round
+            <p key={cb.role} className={`text-sm font-mono font-bold ${cb.dm < 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+              DM{cb.dm > 0 ? '+' : ''}{cb.dm} to {cb.role} this round{cb.dm < 0 ? ' — disobeyed order' : ''}
             </p>
           ))}
           <p className="text-[9px] font-mono text-gunmetal-600 mt-0.5">

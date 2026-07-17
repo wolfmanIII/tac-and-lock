@@ -158,6 +158,89 @@ test.describe('Commands — applyCommand', () => {
   })
 })
 
+// === Crew Discipline — disobeyed order (issue #39) ==========================
+// B3 p.53 and p.54 (identical text both times): "Crew members who disobey the
+// order suffer DM-1 to their actions for that combat round." Implemented as a
+// negative dm entry in the same commandBonus[] slot as a normal Command — no
+// check, no action spent (the crew member's own choice), and it must not
+// consume the Captain's per-round Leadership cap.
+
+test.describe('Crew Discipline — disobeyed order', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  test('MARK DISOBEYED sets a -1 commandBonus entry with no roll and no APPLY step', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId: id })
+    }, id0)
+    await page.getByText('Commands', { exact: true }).click()
+    await page.getByText('MARK DISOBEYED', { exact: true }).click()
+
+    const ship0 = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
+    , id0)
+    expect(ship0.commandBonus).toEqual([{ role: 'pilot', dm: -1 }])
+  })
+
+  test('marking a role disobedient does not consume the Captain\'s Leadership cap', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId: id })
+    }, id0)
+    await page.getByText('Commands', { exact: true }).click()
+    await expect(page.getByText('2 of 2 command(s) left this round')).toBeVisible()
+    await page.getByText('MARK DISOBEYED', { exact: true }).click()
+    // Leadership 2 in setupShips's fixture — still 2 of 2 left, disobedience is free.
+    await expect(page.getByText('2 of 2 command(s) left this round')).toBeVisible()
+  })
+
+  test('marking disobedient replaces an existing positive Command for that role', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().applyCommand(id, 'pilot', 2)
+    }, id0)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId: id })
+    }, id0)
+    await page.getByText('Commands', { exact: true }).click()
+    await page.getByText('MARK DISOBEYED', { exact: true }).click()
+
+    const ship0 = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
+    , id0)
+    expect(ship0.commandBonus).toEqual([{ role: 'pilot', dm: -1 }])
+  })
+
+  test('Ship Sheet shows a disobeyed entry in red, distinct from a normal Command', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      const s = window.__ZUSTAND_BATTLE_STORE__.getState()
+      s.applyCommand(id, 'gunner_turret', 2)
+      s.applyCommand(id, 'pilot', -1)
+    }, id0)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('ship-detail', { shipId: id })
+    }, id0)
+    await expect(page.getByText('DM+2 to gunner_turret this round')).toBeVisible()
+    await expect(page.getByText('DM-1 to pilot this round — disobeyed order')).toBeVisible()
+  })
+
+  test('AttackModal step 3 shows the disobeyed Command as a negative DM row, not a broken sign', async ({ page }) => {
+    const { id0, id1 } = await setupShips(page)
+    await page.evaluate((ids) => {
+      const s = window.__ZUSTAND_BATTLE_STORE__.getState()
+      s.applyCommand(ids.id0, 'gunner_turret', -1)
+      s.setInitiativeOrder([ids.id0, ids.id1])
+    }, { id0, id1 })
+    await reachStep3(page, id0)
+    await expect(page.getByText('Command (Captain)')).toBeVisible()
+    await expect(page.getByText('-1', { exact: true })).toBeVisible()
+  })
+})
+
 // === Commands cap — Leadership, not Tactics (naval) =========================
 // issue #28: the per-round Commands cap must track the Captain's Leadership skill,
 // independently from the Captain's general Tactics (naval)-based action budget
