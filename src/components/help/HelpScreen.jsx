@@ -354,12 +354,12 @@ export function HelpScreen({ onBack } = {}) {
           <Sub title="ENGINEER">
             <KV k="Re-route Power"       v="Average (8+) Engineer(power) EDU. Informational only — B3 gives no Effect table for this one (the book defers detailed radiator effects to a supplement not included here). GM narrates the outcome, e.g. temporarily restoring a system knocked offline by a Power Plant or Radiator critical." />
             <KV k="Overload Stutterwarp" v="Difficult (10+) Engineer(stutterwarp) INT. Success: Effect 1–4 → TAC Speed +1, Effect 5–6 → +2 this round. No failure consequence." />
+            <KV k="Boost Power Output"   v="Difficult (10+) Engineer(power) EDU, repeated every round. Success: Effect is the % Power increase — informational only, no Power resource tracked. Effect ≤−5: automatic critical hit to the Power Plant." />
             <KV k="Emergency Repair"     v="Difficult (10+) Mechanic INT/EDU. System mode: reduce one critical severity by 1. Hull mode: restore 5 Hull Points." />
           </Sub>
 
           <Sub title="SENSOR OPERATOR">
             <KV k="Electronic Warfare" v="Difficult (10+) Electronics(comms) INT. Effect 1–4: target suffers DM−1 to Gunner checks. Effect 5–6: DM−2. Effect ≤−5: jam backfires, target instead gains DM+1. Resets at round end." />
-            <KV k="EW Countermeasures" v="Average (8+) Electronics(countermeasures) INT. Success: clears an active EW jam on this ship." />
             <KV k="Active Sensors"    v="Easy (6+) Electronics(sensors). Signature +1 while active (toggle off in Ship Sheet)." />
             <KV k="Scan Target"       v="Routine (8+) Electronics(sensors) INT, DM−1 per range band. Informational only — read the Effect off the roll result and narrate (Trav CRB p.151)." />
             <KV k="Improve Critical"  v="Very Difficult (12+) Electronics(sensors) INT, DM−1 per range band. Success: this ship's next shot this round crits at Effect 5+ (or 4+ if this check scored Effect 6+) — consumed after one attempt, hit or miss. Shown as a banner in the Attack modal and Ship Sheet." />

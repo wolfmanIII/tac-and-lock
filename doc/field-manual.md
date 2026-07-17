@@ -294,6 +294,7 @@ Select the action type, choose applicable target/options, roll (if required), th
 | Action | Check | Effect |
 | ------ | ----- | ------ |
 | **Overload Stutterwarp** | Difficult (10+) Engineer(stutterwarp) INT | Success: Effect 1–4 → TAC Speed +1, Effect 5–6 → +2 this round. No failure consequence. |
+| **Boost Power Output** | Difficult (10+) Engineer(power) EDU | Repeated every round. Success: Effect is the % Power increase — informational only, no Power resource tracked. Effect ≤−5: automatic critical hit to the Power Plant. // 2300AD B3 p.54 |
 | **Emergency Repair** | Difficult (10+) Mechanic INT/EDU | *System mode*: reduce one critical hit severity by 1. *Hull mode*: restore 5 Hull Points. |
 
 ### Sensor Operator
@@ -301,7 +302,6 @@ Select the action type, choose applicable target/options, roll (if required), th
 | Action | Check | Effect |
 | ------ | ----- | ------ |
 | **Electronic Warfare** | Difficult (10+) Electronics(comms) INT | Effect 1–4: jammed ship suffers DM−1 to Gunner checks. Effect 5–6: DM−2. Effect ≤−5: jam backfires, jammed ship instead gains DM+1. Resets at round end. // 2300AD B3 p.54 |
-| **EW Countermeasures** | Average (8+) Electronics(countermeasures) INT | Clears an active EW jam on this ship. |
 | **Active Sensors** | Easy (6+) Electronics(sensors) | Activates active sensor sweep. Signature +1 while active (flag persists until toggled off in Ship Sheet). |
 
 ### Gunner

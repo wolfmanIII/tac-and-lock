@@ -155,14 +155,6 @@ export function ActionModal({ payload, onClose }) {
         if (target) applyEW(shipId, target.id, effect)
         break
 
-      case 'ew_countermeasure': {
-        if (success) {
-          const jammer = ships.find((s) => s.ewTarget === shipId)
-          if (jammer) updateShip(jammer.id, { ewTarget: null, ewEffect: 0 })
-        }
-        break
-      }
-
       case 'emergency_repair':
         if (success) {
           if (repairMode === 'hull') repairHull(shipId, 5)

@@ -29,6 +29,15 @@
 // concept (Scan Target's range-band reduction for the Firing Solution) is a
 // different mechanic and is not currently modeled either.
 
+// Note: "EW Countermeasures" (a counter-jam check using an invented
+// "Electronics (countermeasures)" skill) is not a 2300AD B3 mechanic —
+// verified by full-text search of the B3 PDF: the Electronic Warfare rules
+// (p.53 and p.56, identical text both times) name only Electronics (comms)
+// for the jamming check itself and Electronics (sensors) for "other
+// electronic warfare tasks". No specialization named "(countermeasures)"
+// and no action to cancel an active enemy jam appear anywhere in B3
+// p.52-62. Removed — issue #38.
+
 /** @type {Record<string, CrewAction[]>} */
 export const CREW_ACTIONS = {
   captain: [
@@ -142,17 +151,6 @@ export const CREW_ACTIONS = {
       difficulty: 10,
       difficultyLabel: 'Difficult (10+)',
       description: 'Disrupt a target ship\'s locks. Effect 1–4: target suffers DM−1 to Gunner checks this round. Effect 5–6: DM−2. Effect ≤−5: the target instead gains DM+1, having triangulated the jammer\'s emissions. // 2300AD B3 p.54',
-      requiresTarget: true,
-    },
-    {
-      id: 'ew_countermeasure',
-      label: 'EW Countermeasures',
-      phase: 'actions',
-      reaction: false,
-      skill: 'Electronics (countermeasures)',
-      difficulty: 8,
-      difficultyLabel: 'Average (8+)',
-      description: 'Counter incoming electronic warfare. Opposed Electronics (countermeasures) check vs attacker\'s EW roll; success negates their EW DM this round.',
       requiresTarget: true,
     },
     {

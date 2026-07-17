@@ -1,5 +1,5 @@
 /**
- * Crew actions — Commands, EW, EW countermeasures.
+ * Crew actions — Commands, EW.
  * // 2300AD B3 p.54–55 — Actions Phase crew actions
  */
 
@@ -333,51 +333,12 @@ test.describe('Electronic Warfare — applyEW + ewEffect', () => {
   })
 })
 
-// === EW Countermeasures =====================================================
-
-test.describe('EW Countermeasures — ew_countermeasure action', () => {
-  test.beforeEach(async ({ page }) => {
-    await clearAppState(page)
-    await gotoBattle(page)
-  })
-
-  test('successful countermeasure clears jammer ewTarget and ewEffect', async ({ page }) => {
-    const { id0, id1 } = await setupShips(page)
-    // id0 jams id1
-    await page.evaluate((ids) => {
-      window.__ZUSTAND_BATTLE_STORE__.getState().applyEW(ids.id0, ids.id1, 3)
-    }, { id0, id1 })
-
-    // id1 runs countermeasure — simulate what ActionModal does on success
-    await page.evaluate((ids) => {
-      const store = window.__ZUSTAND_BATTLE_STORE__.getState()
-      const ships = store.ships
-      const jammer = ships.find((s) => s.ewTarget === ids.id1)
-      if (jammer) store.updateShip(jammer.id, { ewTarget: null, ewEffect: 0 })
-    }, { id0, id1 })
-
-    const ship0 = await page.evaluate((id) =>
-      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
-    , id0)
-    expect(ship0.ewTarget).toBeNull()
-    expect(ship0.ewEffect).toBe(0)
-  })
-
-  test('after countermeasure, AttackModal step 3 shows no EW jamming row', async ({ page }) => {
-    const { id0, id1 } = await setupShips(page)
-    // id1 jams id0, then id0 counters
-    await page.evaluate((ids) => {
-      const store = window.__ZUSTAND_BATTLE_STORE__
-      store.getState().applyEW(ids.id1, ids.id0, 2)
-      // Re-read state after mutation (getState() returns stale slice if captured early)
-      const jammer = store.getState().ships.find((s) => s.ewTarget === ids.id0)
-      if (jammer) store.getState().updateShip(jammer.id, { ewTarget: null, ewEffect: 0 })
-    }, { id0, id1 })
-
-    await reachStep3(page, id0)
-    await expect(page.getByText('EW jamming')).not.toBeVisible()
-  })
-})
+// EW Countermeasures removed entirely — not a 2300AD B3 mechanic. Verified by
+// full-text search of the B3 PDF: the Electronic Warfare rules (p.53 and p.56,
+// identical text both times) name only Electronics (comms) for the jamming
+// check and Electronics (sensors) for "other electronic warfare tasks" — no
+// "(countermeasures)" specialization or counter-jam action anywhere in B3
+// p.52-62. // issue #38
 
 // Deploy Sand removed entirely — not a 2300AD B3 mechanic (zero occurrences in
 // the source PDF). Point Defence moved to a per-drone reaction inside
