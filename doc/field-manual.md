@@ -31,7 +31,7 @@
 It is GM-operated and designed for shared-screen play — one person drives, everyone watches.
 
 Rules source: **2300AD Core Book 3: Vehicles and Spacecraft** pp.52–62 (primary).
-**Traveller 2022 Core Rulebook** is used only for internal critical hit tables (p.158–159) and weapon traits (p.79).
+**Traveller 2022 Core Rulebook** is used only for internal critical hit tables (Location table p.169, Effects table p.170 in this project's specific CRB PDF — B3 p.58 itself cites "p.158–159", verified wrong by direct extraction, issue #23/#67) and weapon traits (p.79).
 Where B3 and CRB diverge, **B3 wins**.
 
 Combat uses **range bands** — no hex grid, no velocity vectors.
@@ -365,11 +365,11 @@ destroyed on the third hit. Checks that require a system that has been destroyed
 possible." Applies to Fire Control/Weapon/Sensors — Discharge Vanes/Other System already reach
 Destroyed at the 2nd hit; Radiator has its own 5-stage escalation instead.
 
-### Internal Critical Hits // B3 p.58 + CRB p.158–159
+### Internal Critical Hits // B3 p.58 (cites CRB "p.158–159" — actually p.169/p.170 in this PDF, issue #23/#67)
 
 Triggered when the attack Effect is ≥ 6, or when hull reaches 0.
 
-Roll 2D for location (CRB p.158). 2300AD substitutions:
+Roll 2D for location (CRB p.169); per-severity effects come from the Effects table (CRB p.170). 2300AD substitutions:
 - **J-Drive → Stutterwarp Drive** (severity reduces TAC Speed by −1 per severity level)
 - **M-Drive → Reaction Drive** (first crit: inoperable; second: destroyed)
 
