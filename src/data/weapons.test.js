@@ -140,6 +140,11 @@ describe('2300AD canonical weapons', () => {
     },
   )
 
+  it('aero12 — damage is 8D and traits include AP16/One Use/Overhead // B3 p.29, issue #50', () => {
+    expect(WEAPONS.aero12.damage).toBe('8D')
+    expect(WEAPONS.aero12.traits).toEqual(expect.arrayContaining(['AP16', 'One Use', 'Overhead']))
+  })
+
   it('anti_missile_laser — damage is 1D // B3 p.60', () => {
     expect(WEAPONS.anti_missile_laser.damage).toBe('1D')
   })

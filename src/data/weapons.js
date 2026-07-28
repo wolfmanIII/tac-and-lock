@@ -239,7 +239,7 @@ export const WEAPONS = {
     name: 'Aero-12 Missile',
     mount: 'turret',
     TL: 12,
-    damage: '4D',
+    damage: '8D', // was 4D — corrected against the printed stat block // issue #50
     damageBonus: 0,
     optimalRange: 'Long',
     // Same optimalRange as particle_barbette — reuses its rangeDm shape, this file's existing
@@ -254,9 +254,11 @@ export const WEAPONS = {
       VeryLong: -1,
       Distant:  -3,
     },
-    traits: ['AP5'],
+    // AP5 was wrong (should be AP16); Smart deferred to issue #51 (companion fix touching the
+    // same trait array plus weapons.test.js's blanket "no Smart" assumption). // issue #50
+    traits: ['AP16', 'One Use', 'Overhead'],
     launchable: true, // tracked as an individual unit via DroneLaunchModal, not a "Smart" B3 trait
-    notes: 'Homing anti-vehicle missile. Internal bay mount. // 2300AD B3 p.70',
+    notes: 'Homing anti-vehicle missile. Internal bay mount. // 2300AD B3 p.29',
   },
 
   anti_missile_laser: {
