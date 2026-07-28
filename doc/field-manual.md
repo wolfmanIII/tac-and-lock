@@ -399,7 +399,7 @@ Once a ship's own drone reaches Close/Adjacent range, right-click that ship → 
 
 | Step | Who | Check | DM |
 | ---- | --- | ----- | -- |
-| 1 — Sensor | Sensor hand-off (no penalty, no lag) or Remote Pilot self-generated (Piloting action, DM−2, plus lightspeed lag) | Very Difficult (12+) | +Signature, sensor quality, time-lag |
+| 1 — Sensor | Sensor hand-off (no penalty, no lag) or Remote Pilot self-generated (Piloting action, DM−2, plus the drone's own flat DM+2 Pilot bonus and lightspeed lag) | Very Difficult (12+) | +Signature, sensor quality, time-lag |
 | 2 — Position Vessel | Remote Pilot | Difficult (10+), Electronics(remote ops) DEX | +drone TAC Speed, +carry from Step 1, +lightspeed lag |
 | 3 — Gunner | — | Difficult (10+) | +Fire Control, +range DM at drone's current band, +carry from Step 2, +target's reactive DMs, +lightspeed lag |
 

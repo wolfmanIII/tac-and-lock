@@ -750,7 +750,7 @@ skill check a farli sparire.
 **Step 1 — Sensor/Firing Solution generation**: due opzioni —
 
 - **Hand-off** da un Sensor Operator di una nave/drone sensore vicino: nessuna penalità aggiuntiva — **esente** dal lightspeed lag sotto, per testo B3 esplicito ("some functions, like using sensors, can be handed off...").
-- **Self-generated**: il Remote Pilot della nave lanciante usa un'azione di Piloting al posto di Electronics(sensors), **DM−2** al check, **più** il lightspeed lag sotto se applicabile. Stesso target 12+ in entrambi i casi.
+- **Self-generated**: il Remote Pilot della nave lanciante usa un'azione di Piloting al posto di Electronics(sensors), **DM−2** al check, **più il flat DM+2** "to all Pilot checks" del drone (B3 p.55, non qualificato — questo step è esplicitamente un'azione di Piloting, quindi si applica anche qui, nettando a +0 — issue #61), **più** il lightspeed lag sotto se applicabile. Stesso target 12+ in entrambi i casi.
 
 **Step 2 — Position Vessel**: Remote Pilot, **Electronics (remote ops) DEX**, Difficult (10+), +TAC Speed del drone, +carry Effect Step 1, +lightspeed lag sotto (sempre — nessuna alternativa hand-off a questo step). Droni hanno DM+2 fisso a questo check (subject to comms lag); caccia pilotati <100 ton hanno DM+1 (semplificazione: non ancora automatizzato).
 

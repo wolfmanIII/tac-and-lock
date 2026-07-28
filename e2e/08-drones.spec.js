@@ -572,6 +572,42 @@ test.describe('Drone attack — lightspeed lag (issue #49)', () => {
   })
 })
 
+// === Step 1 self-generated drone Pilot bonus (issue #61) ===
+// // 2300AD B3 p.55: "Drones have DM+2 to all Pilot checks" (unqualified) and the
+// self-generated Step 1 is explicitly "a Piloting action... with DM-2 to the check" —
+// so the +2 applies here too, netting to +0 alongside the existing -2 term.
+
+test.describe('Drone attack — Step 1 self-generated Pilot bonus (issue #61)', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+    await addShipsToStore(page, SHIPS_WITH_DRONES)
+  })
+
+  test('Step 1 self-generated shows both Self-generated -2 and Drone Pilot bonus +2', async ({ page }) => {
+    const droneId = await injectDrone(page, { band: 'Close' })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await page.getByText('NO INTERCEPT → FIRING SOLUTION').click()
+    await page.getByText('Self-Generated (DM−2)').click()
+    const selfGenRow = page.locator('div').filter({ hasText: 'Self-generated' }).last()
+    await expect(selfGenRow).toContainText('-2')
+    const droneBonusRow = page.locator('div').filter({ hasText: 'Drone Pilot bonus' }).last()
+    await expect(droneBonusRow).toContainText('+2')
+  })
+
+  test('Step 1 hand-off does not show the Drone Pilot bonus row (not a Pilot check)', async ({ page }) => {
+    const droneId = await injectDrone(page, { band: 'Close' })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await page.getByText('NO INTERCEPT → FIRING SOLUTION').click()
+    // Hand-off is the default sensorMode — no need to click it.
+    await expect(page.getByText('Drone Pilot bonus')).not.toBeVisible()
+  })
+})
+
 // === Computer-run PDC intercept — up to TL-4 targets/round (issue #57) ===
 // // 2300AD B3 p.56: "The Ship's Computer can also use the Fire Control program to run
 // dedicated point-defence systems... up to a maximum number of targets equal to TL-4."

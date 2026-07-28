@@ -4,7 +4,9 @@
  * See doc/drone-combat-redesign-spec.md.
  *
  * Step 1: Sensor hand-off (Electronics(sensors) INT, no penalty) OR
- *         self-generated (Remote Pilot's Piloting action, DEX, DM-2).
+ *         self-generated (Remote Pilot's Piloting action, DEX, DM-2, +DM2 flat drone Pilot
+ *         bonus — this step is itself a Piloting action, so B3's unqualified "all Pilot
+ *         checks" bonus applies here too, netting to +0 — issue #61).
  * Step 2: Position Vessel — Remote Pilot, Electronics(remote ops) DEX, +drone TAC Speed,
  *         +DM2 flat drone Pilot bonus (crewed fighters <100t get +DM1 instead — not modeled).
  * Step 3: Gunner — Difficult (10+), Fire Control DM, range DM at drone's current band.
@@ -344,16 +346,20 @@ export function DroneAttackModal({ payload, onClose }) {
         total,
       }
     }
-    // Self-generated — Remote Pilot's Piloting action, DEX, DM-2 // B3 p.55
+    // Self-generated — Remote Pilot's Piloting action, DEX, DM-2, plus the drone's own
+    // flat DM+2 "to all Pilot checks" (B3 p.55, unqualified) since this step is itself
+    // explicitly a Piloting action — nets to +0, shown as two rows rather than omitted
+    // so the GM can see both terms. // issue #61
     // Lightspeed lag applies here (self-generated is routed through the drone's own remote
     // link) but not to a hand-off above, per B3's own exemption. // issue #49
     const skill = getAssignedSkill('remote_pilot', owner.crewAssignments, owner.crew)
     const dexDm = getCharDM(getAssignedCharacteristic('remote_pilot', owner.crewAssignments, owner.crew, 'DEX'))
-    const total = skill + dexDm + sig.effective + timeLagDm - 2 + evasionDm + sensorAssistDm + lightspeedLagDm
+    const droneDm = 2
+    const total = skill + dexDm + sig.effective + timeLagDm - 2 + droneDm + evasionDm + sensorAssistDm + lightspeedLagDm
     return {
       rows: [
         ['Remote Pilot skill', skill], ['DEX DM', dexDm], ['Target Signature', sig.effective],
-        ['Time-lag', timeLagDm], ['Self-generated', -2], ['Target evasion', evasionDm],
+        ['Time-lag', timeLagDm], ['Self-generated', -2], ['Drone Pilot bonus', droneDm], ['Target evasion', evasionDm],
         ...(sensorAssistDm !== 0 ? [['Engineer assist', sensorAssistDm]] : []),
         ['Lightspeed lag', lightspeedLagDm],
       ],
