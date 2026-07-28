@@ -349,6 +349,11 @@ Roll 2D on the Surface Fixture table:
 | 10–11 | Discharge Vanes | Disabled | Destroyed |
 | 12 | Other System | Disabled | Destroyed |
 
+**3rd hit**: B3 p.58 prose (separate from the table above): "All systems except radiators are
+destroyed on the third hit. Checks that require a system that has been destroyed are not
+possible." Applies to Fire Control/Weapon/Sensors — Discharge Vanes/Other System already reach
+Destroyed at the 2nd hit; Radiator has its own 5-stage escalation instead.
+
 ### Internal Critical Hits // B3 p.58 + CRB p.158–159
 
 Triggered when the attack Effect is ≥ 6, or when hull reaches 0.

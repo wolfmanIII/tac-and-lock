@@ -43,20 +43,27 @@ export const SURFACE_FIXTURE_SYSTEMS = [
  * @type {Record<string, Record<number, { label: string, mechanics: { type: string, value?: any }[] }>>}
  */
 export const SURFACE_FIXTURE_EFFECTS = {
+  // B3 p.58 prose (separate from the table below, easy to miss — issue #35 originally missed
+  // it, then issue #55 restored it after independent re-verification): "All systems except
+  // radiators are destroyed on the third hit. Checks that require a system that has been
+  // destroyed are not possible." Applies to every surface system here except Radiator (which
+  // has its own 5-stage escalation below) — Discharge Vanes/Other System already reach
+  // "Destroyed" at hit 2 per the table itself, so this only changes Fire Control/Weapon/
+  // Sensors' 3rd hit.
   fireControl: {
     1: { label: 'Fire Control — DM−2 to all attack rolls.', mechanics: [{ type: 'attack_dm', value: -2 }] },
     2: { label: 'Fire Control — no additional effect.', mechanics: [] },
-    3: { label: 'Fire Control — no further effect.', mechanics: [] },
+    3: { label: 'Fire Control destroyed — checks requiring Fire Control are no longer possible.', mechanics: [{ type: 'fire_control_destroyed' }] },
   },
   surfaceWeapon: {
     1: { label: 'Weapon — −1D Damage, DM−2 to attack rolls.', mechanics: [{ type: 'weapon_damage_dm', value: -1 }, { type: 'attack_dm', value: -2 }] },
     2: { label: 'Weapon disabled.', mechanics: [{ type: 'weapon_offline', value: 1 }] },
-    3: { label: 'Weapon — no further effect.', mechanics: [] },
+    3: { label: 'Weapon destroyed — checks requiring this weapon are no longer possible.', mechanics: [{ type: 'weapon_destroyed' }] },
   },
   surfaceSensors: {
     1: { label: 'Sensors — DM−2 to all Electronics (sensors) checks.', mechanics: [{ type: 'sensors_dm', value: -2 }] },
     2: { label: 'Sensors — no additional effect.', mechanics: [] },
-    3: { label: 'Sensors — no further effect.', mechanics: [] },
+    3: { label: 'Sensors destroyed — checks requiring Electronics (sensors) are no longer possible.', mechanics: [{ type: 'sensors_destroyed' }] },
   },
   radiator: {
     // B3 p.58: 1st and 2nd hits have no effect. 3rd hit: Signature +2.

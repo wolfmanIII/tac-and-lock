@@ -347,17 +347,22 @@ Quando il danno penetra l'armatura, seguire la tabella Internal Critical Hits (�
 
 Trigger: **Effect ≥ 3** su qualsiasi hit (anche non penetrante). Tirare 2D:
 
-B3 stampa solo colonne 1° Hit / 2° Hit per Fire Control, Weapon e Sensors — nessuna
-escalation a "Destroyed" al 3° hit nella fonte (issue #35). La colonna 3° Hit sotto è
-mostrata solo dove B3 la definisce davvero (Discharge Vanes, Other System).
+B3 stampa solo colonne 1° Hit / 2° Hit per Fire Control, Weapon e Sensors nella tabella —
+ma una frase in prosa separata, subito sopra la tabella nel PDF (facile da perdere: issue
+#35 l'aveva rimossa scambiandola per inventata, guardando solo la tabella; issue #55 l'ha
+ripristinata dopo riverifica diretta sul testo estratto) dice: *"All systems except radiators
+are destroyed on the third hit. Checks that require a system that has been destroyed are not
+possible."* Si applica quindi anche a Fire Control/Weapon/Sensors, non solo a Discharge
+Vanes/Other System (che raggiungono Destroyed già al 2° hit) — Radiator ha la propria scala
+a 5 stadi, sotto.
 
 | 2D | Sistema | 1° Hit | 2° Hit | 3° Hit |
 | --- | --- | --- | --- | --- |
-| 2 | Fire Control | DM−2 ai roll di attacco | — | — |
-| 3–4 | Weapon | −1D Damage, DM−2 ai roll di attacco | Disabled | — |
-| 5 | Sensors | DM−2 ai check Electronics (sensors) | — | — |
+| 2 | Fire Control | DM−2 ai roll di attacco | — | Destroyed |
+| 3–4 | Weapon | −1D Damage, DM−2 ai roll di attacco | Disabled | Destroyed |
+| 5 | Sensors | DM−2 ai check Electronics (sensors) | — | Destroyed |
 | 6–8 | Radiator | (vedi regole Radiator) | — | — |
-| 9 | Sensors | DM−2 ai check Electronics (sensors) | — | — |
+| 9 | Sensors | DM−2 ai check Electronics (sensors) | — | Destroyed |
 | 10–11 | Discharge Vanes (se presenti; altrimenti nessun effetto) | Disabled | Destroyed | — |
 | 12 | Other System | Disabled | Destroyed | — |
 

@@ -169,6 +169,8 @@ Qualsiasi hit con Effect ≥ 3 triggerizza questo roll (anche se non penetra l'a
 | 10–11 | Discharge Vanes | Disabled | Destroyed |
 | 12 | Other System | Disabled | Destroyed |
 
+> **3° Hit**: prosa separata dalla tabella sopra (facile da perdere — issue #35 l'aveva rimossa scambiandola per inventata, issue #55 l'ha ripristinata dopo riverifica diretta sul PDF): *"All systems except radiators are destroyed on the third hit. Checks that require a system that has been destroyed are not possible."* Si applica a Fire Control/Weapon/Sensors (Discharge Vanes/Other System sono già Destroyed al 2° hit; Radiator ha la propria scala a 5 stadi sotto).
+
 #### Internal Critical Hits
 
 Come Trav2022 CRB — B3 p.58 cita "p.158–159", ma in questo progetto (`doc/Traveller 2022 Core

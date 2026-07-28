@@ -41,6 +41,35 @@ test.describe('CriticalHitModal — Surface Fixture (regression)', () => {
     await openCriticalHit(page, { mode: 'surface', effect: 4 })
     await expect(page.getByText('SURFACE FIXTURE')).toBeVisible()
   })
+
+  // B3 p.58 prose (separate from the table): "All systems except radiators are destroyed on
+  // the third hit." Issue #35 removed this as fabricated (table-only reading); issue #55
+  // restored it after independent re-verification directly against the PDF text.
+  test('Fire Control 3rd hit is destroyed, not "no further effect" // issue #55', async ({ page }) => {
+    const shipId = await page.evaluate(({ crewInfo }) => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      store.getState().addShip(
+        {
+          name: 'ISV-2 Trilon', class: 'Test class', hullPoints: 20, armour: 3,
+          tacSpeed: 4, signature: 2,
+          sensors: { type: 'Basic Military', dm: 0 },
+          computer: { model: 'TL-10', bandwidth: 20 },
+          weapons: [], software: ['fire_control_1'],
+          surfaceFixtureTracks: { fireControl: 2 }, // already hit twice — next is the 3rd
+          ...crewInfo,
+        },
+        'players', 'Close',
+      )
+      return store.getState().ships[0].id
+    }, { crewInfo: fullCrew() })
+    await page.evaluate(({ shipId }) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('critical-hit', { shipId, mode: 'surface', effect: 4 })
+    }, { shipId })
+
+    await page.locator('input[type="number"]').first().fill('2') // Fire Control on the table
+    await expect(page.getByText('Fire Control destroyed', { exact: false })).toBeVisible()
+    await expect(page.getByText('No further effect.')).not.toBeVisible()
+  })
 })
 
 test.describe('CriticalHitModal — Internal Critical Hit', () => {

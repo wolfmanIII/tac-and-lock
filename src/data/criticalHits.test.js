@@ -116,13 +116,17 @@ describe('SURFACE_FIXTURE_EFFECTS', () => {
     expect(dm.value).toBe(-2)
   })
 
-  // B3 p.58 only prints 1st/2nd Hit columns for Fire Control, Weapon, and Sensors — there is
-  // no 3rd-hit escalation to "destroyed" in the source. // issue #35
-  it('fireControl/surfaceWeapon/surfaceSensors 3rd hit has no further effect (no fabricated destroyed tier)', () => {
+  // B3 p.58 prints only 1st/2nd Hit columns for Fire Control, Weapon, and Sensors in the
+  // Surface Fixture table itself — but a separate prose sentence right above the table (easy
+  // to miss, not caught until a second, more careful extraction) reads: "All systems except
+  // radiators are destroyed on the third hit." Issue #35 removed a fabricated destroyed tier
+  // based on the table alone, missing that prose — issue #55 restored it after independent
+  // re-verification directly against the PDF text.
+  it('fireControl/surfaceWeapon/surfaceSensors 3rd hit destroys the system // B3 p.58 prose, issue #55', () => {
     for (const system of ['fireControl', 'surfaceWeapon', 'surfaceSensors']) {
       const entry = SURFACE_FIXTURE_EFFECTS[system][3]
-      expect(entry.mechanics).toEqual([])
-      expect(entry.label.toLowerCase()).not.toContain('destroyed')
+      expect(entry.mechanics.length).toBeGreaterThan(0)
+      expect(entry.label.toLowerCase()).toContain('destroyed')
     }
   })
 })
