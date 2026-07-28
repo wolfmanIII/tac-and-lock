@@ -205,6 +205,33 @@ export function getPointDefenceTraitAttackDm(traits = [], rangeBand) {
   return traits.includes('Point Defence') && rangeBand === 'Close' ? 2 : 0
 }
 
+/**
+ * Computer-run PDC intercept cap — "Each incoming fighter or drone can be engaged by a Point
+ * Defence Cluster (PDC), up to a maximum number of targets equal to TL-4." // 2300AD B3 p.56,
+ * issue #57. Distinct from the Gunner-managed variant (getPointDefenceDm), which stays capped
+ * at 1/round like every other Gunnery action — this is the autonomous ship's-computer mode,
+ * independent of the crew action budget.
+ * @param {number | null | undefined} shipTL
+ * @returns {number} never negative — a ship below TL5 simply has no computer-run capacity
+ */
+export function getPdcComputerCap(shipTL) {
+  return Math.max(0, (shipTL ?? 0) - 4)
+}
+
+/**
+ * Computer-run PDC intercept DM — "This requires a Difficult (10+) Gunner check, adding the
+ * Fire Control score. Note that there is an additional DM+4 for a PDC." // 2300AD B3 p.56,
+ * issue #57. No crew skill/DEX term — the computer is acting, not a crew member. Targeting
+ * System hardware DM still applies (B3 p.62 explicitly: "including point defence"). The DM+4
+ * is unconditional here since this mode is only ever offered for a Point-Defence-trait weapon.
+ * @param {string[]} software — ship's installed software list
+ * @param {object} weaponSlot — the intercepting weapon slot (for getTargetingSystemDm)
+ * @returns {number}
+ */
+export function getPdcComputerDm(software, weaponSlot) {
+  return getFireControlDm(software) + getTargetingSystemDm(weaponSlot) + 4
+}
+
 export function computeAttackDMs({
   gunnerSkill,
   gunnerIntDm     = 0,

@@ -565,6 +565,30 @@ a 3 step: droni/missili sono "troppo piccoli e veloci" per un target lock normal
   un selettore (`InterceptWeaponPicker`, stato `interceptWeaponIdx`) sulle armi della nave
   bersaglio, usato per calcolare `getPointDefenceDm`.
 
+#### Modo operativo: Computer-run vs Gunner-managed — B3 p.56, issue #57
+
+> *"The Ship's Computer can also use the Fire Control program to run dedicated point-defence
+> systems, although they can also be managed by a human gunner. Each incoming fighter or drone
+> can be engaged by a Point Defence Cluster (PDC), up to a maximum number of targets equal to
+> TL-4. This requires a Difficult (10+) Gunner check, adding the Fire Control score. Note that
+> there is an additional DM+4 for a PDC."*
+
+Disponibile per **entrambe** le varianti sopra (reattiva e proattiva) quando l'arma intercettante
+ha il trait Point Defence — toggle `PdcModeToggle` in `DroneAttackModal.jsx`, visibile solo in
+quel caso:
+
+- **Gunner-managed** (default, invariato): skill Gunner + DEX del crew assegnato, cap 1/round
+  condiviso col budget Gunnery (`spendCrewAction`).
+- **Computer-run**: nessun DM skill/DEX — solo Fire Control software + Targeting System hardware
+  + DM+4 fisso PDC (`getPdcComputerDm`), Difficult (10+) invariato. Fino a **TL−4** intercettazioni
+  per round (`getPdcComputerCap(ship.TL)`), **indipendente dal budget Gunnery condiviso**
+  (`recordPdcIntercept` invece di `spendCrewAction`) — tracciato da `ship.pdcInterceptsUsed`,
+  azzerato a inizio round in `buildNextRoundState`.
+
+Richiedeva un campo `ship.TL` che non esisteva nel modello dati — aggiunto e verificato contro gli
+stat block B3 per tutte le 26 navi canoniche in `defaultProfiles.js`/`shipCatalog.js` (default 12
+per navi custom senza fonte, in `ShipProfileForm.jsx`).
+
 #### Proattiva (engage) — trait arma "Point Defence", B3 p.59
 
 **DM+2, solo Close range** — non è una reazione: è un'azione Gunner **proattiva**, disponibile
@@ -602,7 +626,7 @@ attaccare.
 - **Re-route Power** — Average (8+) Engineer (power) **EDU**. **Puramente informativo/narrativo** (stesso pattern di Scan Target): B3 non fornisce alcuna tabella Effect per questa azione — il libro rimanda esplicitamente all'"Aerospace Engineer's Handbook" (supplemento non presente in `doc/`) per gli effetti dettagliati sui radiator. Nessuna mutazione di stato: il GM narra la ridistribuzione di potenza (es. ripristino temporaneo di un sistema offline da un Power Plant/Radiator critical). // B3 p.54
 - **Boost Power Output**: Difficult (10+) Engineer (power) **EDU**. Successo: Effect% aumento Power. Effect −5 o peggio: critical hit Power Plant.
 
-> Nota: "Boost Power Output" è documentata qui ma **non implementata** in `crewActions.js`/`ActionModal.jsx` — gap trovato durante il lavoro sulla #18, non ancora tracciato in una issue dedicata. "Boost Tac Speed" (= `overload_stutterwarp`, riga sotto) invece **è implementata** — la nota qui sopra la includeva erroneamente, corretto durante la #27.
+> Nota: "Boost Power Output" è ora **implementata** (issue #37, chiusa 2026-07-17) — distinta da "Boost Tac Speed" (= `overload_stutterwarp`, riga sotto), che ha effetto diverso e nessuna conseguenza di fallimento (issue #27). Questa nota segnalava il gap prima della #37; lasciata come cronologia.
 
 - **Overload Stutterwarp** — Difficult (10+) Engineer (stutterwarp) **INT**: porta il motore oltre i limiti di sicurezza. Successo: Effect 1–4 → TAC Speed +1, Effect 5–6 → +2 questo round. Nessuna conseguenza in caso di fallimento. // B3 p.54
 - **Emergency Repair** ("Damage Control team") — Difficult (10+) **Mechanic** (1D minuti, INT): ripara un danno nella fase corrente. // B3 p.56–57

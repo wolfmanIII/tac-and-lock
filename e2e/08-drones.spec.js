@@ -572,6 +572,88 @@ test.describe('Drone attack — lightspeed lag (issue #49)', () => {
   })
 })
 
+// === Computer-run PDC intercept — up to TL-4 targets/round (issue #57) ===
+// // 2300AD B3 p.56: "The Ship's Computer can also use the Fire Control program to run
+// dedicated point-defence systems... up to a maximum number of targets equal to TL-4."
+// Distinct from the Gunner-managed mode (existing, still capped at 1/round via the shared
+// Gunnery action budget, exercised by every other test in this file).
+
+const SHIPS_PDC = [
+  { name: 'ISV-2 Trilon', faction: 'players', weapons: [{ weaponId: 'ritage1', count: 4, label: 'Drone bay', targetingSystem: 'light_tta' }] },
+  { name: 'Kaefer Geist', faction: 'npc', TL: 13, weapons: [
+    { weaponId: 'anti_missile_laser', count: 1, label: 'Quinn PDC', targetingSystem: 'light_tta' },
+    { weaponId: 'll88', count: 1, label: 'Non-PDC laser', targetingSystem: 'light_tta' },
+  ] },
+]
+
+test.describe('Drone attack — computer-run PDC (issue #57)', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+    await addShipsToStore(page, SHIPS_PDC)
+  })
+
+  test('mode toggle appears only for a Point-Defence-trait intercepting weapon', async ({ page }) => {
+    const droneId = await injectDrone(page, { band: 'Close' })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    // Weapon slot 0 (Quinn PDC) is selected by default — toggle should be visible.
+    await expect(page.getByText('Computer-run (PDC)')).toBeVisible()
+
+    // Switch to slot 1 (non-PDC laser) — toggle should disappear.
+    await page.locator('select').first().selectOption('1')
+    await expect(page.getByText('Computer-run (PDC)')).not.toBeVisible()
+  })
+
+  test('computer-run roll does not spend the Gunner action budget', async ({ page }) => {
+    const droneId = await injectDrone(page, { band: 'Close' })
+    const before = await page.evaluate(() =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships[1].actionsRemaining.gunner_turret,
+    )
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await page.getByText('Computer-run (PDC)').click()
+    await page.getByText('enter manually').click()
+    await page.locator('input[type="number"]').nth(0).fill('3')
+    await page.locator('input[type="number"]').nth(1).fill('4')
+    const after = await page.evaluate(() =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships[1].actionsRemaining.gunner_turret,
+    )
+    expect(after).toBe(before) // unchanged — computer mode bypasses the shared Gunnery budget
+    const pdcUsed = await page.evaluate(() => window.__ZUSTAND_BATTLE_STORE__.getState().ships[1].pdcInterceptsUsed)
+    expect(pdcUsed).toBe(1)
+  })
+
+  test('computer-run is disabled once pdcInterceptsUsed reaches the TL-4 cap', async ({ page }) => {
+    // Kaefer Geist is TL13 → cap 9. Pre-set usage to the cap.
+    await page.evaluate(() => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const target = store.getState().ships[1]
+      store.getState().updateShip(target.id, { pdcInterceptsUsed: 9 })
+    })
+    const droneId = await injectDrone(page, { band: 'Close' })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await page.getByText('Computer-run (PDC)').click()
+    await expect(page.getByText('used all its computer-run intercepts', { exact: false })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'ROLL 2D6' })).toBeDisabled()
+  })
+
+  test('pdcInterceptsUsed resets to 0 at the start of the next round', async ({ page }) => {
+    await page.evaluate(() => {
+      const store = window.__ZUSTAND_BATTLE_STORE__
+      const target = store.getState().ships[1]
+      store.getState().updateShip(target.id, { pdcInterceptsUsed: 5 })
+      store.getState().startNextRound()
+    })
+    const pdcUsed = await page.evaluate(() => window.__ZUSTAND_BATTLE_STORE__.getState().ships[1].pdcInterceptsUsed)
+    expect(pdcUsed).toBe(0)
+  })
+})
+
 // === Proactive "engage" action — Point Defence weapon trait DM+2 (issue #24) ===
 
 const SHIPS_ENGAGE = [

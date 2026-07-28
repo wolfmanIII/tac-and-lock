@@ -28,6 +28,8 @@ import {
   getOrtilleryDm,
   getPointDefenceDm,
   getPointDefenceTraitAttackDm,
+  getPdcComputerCap,
+  getPdcComputerDm,
   ATMOSPHERIC_CONDITIONS,
   getFireControlDm,
   getTargetingSystemDm,
@@ -512,6 +514,47 @@ describe('getPointDefenceTraitAttackDm', () => {
 
   it('no traits, no range → 0', () => {
     expect(getPointDefenceTraitAttackDm()).toBe(0)
+  })
+})
+
+// === getPdcComputerCap / getPdcComputerDm — computer-run PDC intercept, issue #57 ===
+// // 2300AD B3 p.56: "Each incoming fighter or drone can be engaged by a Point Defence
+// Cluster (PDC), up to a maximum number of targets equal to TL-4. This requires a Difficult
+// (10+) Gunner check, adding the Fire Control score. Note that there is an additional DM+4
+// for a PDC."
+
+describe('getPdcComputerCap', () => {
+  it.each([
+    [10, 6],
+    [11, 7],
+    [12, 8],
+    [13, 9],
+  ])('ship TL %i → cap %i (TL-4)', (tl, cap) => {
+    expect(getPdcComputerCap(tl)).toBe(cap)
+  })
+
+  it('TL at or below 4 → cap 0, never negative', () => {
+    expect(getPdcComputerCap(4)).toBe(0)
+    expect(getPdcComputerCap(1)).toBe(0)
+    expect(getPdcComputerCap(0)).toBe(0)
+  })
+
+  it('null/undefined TL → cap 0', () => {
+    expect(getPdcComputerCap(null)).toBe(0)
+    expect(getPdcComputerCap(undefined)).toBe(0)
+  })
+})
+
+describe('getPdcComputerDm', () => {
+  it('sums Fire Control + Targeting System + flat DM+4 PDC bonus', () => {
+    const dm = getPdcComputerDm(['fire_control_2'], { targetingSystem: 'utes' })
+    // fire_control_2 → +2, UTES → +1, PDC bonus → +4
+    expect(dm).toBe(7)
+  })
+
+  it('no software, no targeting system → just the DM+4 PDC bonus and the -8 no-fire-control penalty', () => {
+    const dm = getPdcComputerDm([], {})
+    expect(dm).toBe(0 - 8 + 4)
   })
 })
 

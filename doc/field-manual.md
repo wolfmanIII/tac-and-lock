@@ -278,7 +278,14 @@ Declared in the **Drone Attack** modal, against **one incoming drone/missile at 
 | Conventional mount | DM−2 |
 | PDC (e.g. Quinn Type 17) | DM+4 |
 
-Success destroys that specific drone before it can attack. A PDC-equipped ship can attempt up to TL−4 separate intercepts per round (GM-tracked, not enforced automatically).
+Success destroys that specific drone before it can attack.
+
+**Gunner-managed vs Computer-run** (issue #57): a PDC-equipped intercepting weapon shows a mode
+toggle. Gunner-managed (default) is the DM table above, capped at 1/round like every other
+Gunnery action. Computer-run drops the crew skill/DEX entirely — just Fire Control software +
+Targeting System hardware + a flat DM+4 — and can be used up to **TL−4** times per round
+(the ship's own Tech Level, now a real tracked field), independent of the shared Gunnery budget.
+Both share the same Difficult (10+) target and the same one-drone-at-a-time resolution.
 
 ---
 

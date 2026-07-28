@@ -43,6 +43,7 @@ function blankCrew() {
 function blankProfile() {
   return {
     name: '', class: '', tonnage: 100, faction: 'neutral',
+    TL: 12, // no source to verify for a custom ship — 2300AD's own general TL10-TL12 range // issue #57
     hullPoints: 20, currentHull: 20, armour: 0, tacSpeed: 1,
     signature: 2,   // base Signature for enemy Electronics(sensors) // 2300AD B3 p.57
     reactionDriveType: 'rocket', // rocket/thruster/nuclear — Signature DM while active // 2300AD B3 p.57
@@ -248,6 +249,7 @@ export function ShipProfileForm({ profileId, onSave, onCancel }) {
             <NumField label="ARMOUR"        value={form.armour}     onChange={(v) => set('armour', v)} />
             <NumField label="TAC SPEED"     value={form.tacSpeed}   onChange={(v) => set('tacSpeed', v)} min={1} max={12} />
             <NumField label="SIGNATURE"     value={form.signature ?? 2} onChange={(v) => set('signature', v)} min={0} max={10} />
+            <NumField label="TL"            value={form.TL ?? 12} onChange={(v) => set('TL', v)} min={1} max={16} />
           </div>
           <p className="font-mono text-[9px] text-gunmetal-500">SIGNATURE: DM applied to enemy Electronics (sensors) checks // 2300AD B3 p.57</p>
           <div>

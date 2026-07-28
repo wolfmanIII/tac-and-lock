@@ -4,7 +4,7 @@ import { pairKey, getCloserBand, getFartherBand, moveBands, computeEndedPursuits
 import { FACTION_COLOR } from '../data/factions.js'
 import { WEAPONS } from '../data/weapons.js'
 import { exportBattle, importBattle } from '../utils/io.js'
-import { rollInitiative } from '../utils/combat.js'
+import { rollInitiative, getPdcComputerCap } from '../utils/combat.js'
 import { buildActionBudget } from '../utils/crew.js'
 import { computeCriticalSeverity } from '../data/criticalHits.js'
 
@@ -63,6 +63,7 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     faction:            resolvedFaction,
     color:              color ?? FACTION_COLOR[resolvedFaction] ?? '#94a3b8',
     startBand,
+    TL:                 profile.TL ?? null, // 2300AD B3 ship stat block Tech Level — used by getPdcComputerCap (issue #57)
     hullPoints:         profile.hullPoints,
     currentHull:        profile.hullPoints,
     armour:             profile.armour,
@@ -84,6 +85,7 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     ewEffect:                0,   // negative DM this ship applies to its jammed target // B3 p.55
     hazards:                 [],  // active hazards [{ id, label }] — purely GM-managed, no skill check clears them (issue #53)
     boardingDmNextRound:     0,   // carry-over DM from boarding result table to next round // Trav2022 CRB p.175, issue #54
+    pdcInterceptsUsed:       0,   // computer-run PDC intercepts this round, capped at TL-4 // 2300AD B3 p.56, issue #57
     isDestroyed:             false,
     // Signature modifier toggles — GM-controlled // 2300AD B3 p.57
     radiatorsRetracted:      false,
@@ -195,6 +197,7 @@ export const useBattleStore = create((set, get) => {
       ewTarget:                 null,
       ewEffect:                 0,
       boardingDmNextRound:      0,
+      pdcInterceptsUsed:        0, // computer-run PDC uses reset every round // issue #57
       // Recompute every role's action budget for the new round — crew/skills may
       // have changed since the last round started. // 2300AD B3 p.53
       actionsRemaining:         buildActionBudget(sh.crewAssignments, sh.crew),
@@ -476,6 +479,29 @@ export const useBattleStore = create((set, get) => {
           ships: s.ships.map((sh) => sh.id !== shipId ? sh : {
             ...sh,
             actionsRemaining: { ...sh.actionsRemaining, [role]: Math.max(0, (sh.actionsRemaining[role] ?? 0) - 1) },
+          }),
+        }))
+      },
+    ),
+
+    /**
+     * Computer-run PDC intercept — "The Ship's Computer can also use the Fire Control
+     * program to run dedicated point-defence systems... up to a maximum number of targets
+     * equal to TL-4." // 2300AD B3 p.56, issue #57. Independent of the crew Gunnery action
+     * budget (spendCrewAction) — the ship's computer is acting, not a crew member. Capped by
+     * getPdcComputerCap(ship.TL); the guard below blocks the call once the cap is reached.
+     * @param {string} shipId
+     */
+    recordPdcIntercept: wh(
+      (shipId) => {
+        const ship = get().ships.find((s) => s.id === shipId)
+        return !!ship && (ship.pdcInterceptsUsed ?? 0) < getPdcComputerCap(ship.TL)
+      },
+      (shipId) => {
+        set((s) => ({
+          ships: s.ships.map((sh) => sh.id !== shipId ? sh : {
+            ...sh,
+            pdcInterceptsUsed: (sh.pdcInterceptsUsed ?? 0) + 1,
           }),
         }))
       },

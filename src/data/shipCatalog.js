@@ -12,6 +12,7 @@ import { blankCriticalTracks } from './defaultProfiles.js'
 /**
  * @typedef {{
  *   name: string,
+ *   TL: number,                     — B3 ship stat block Tech Level, used by getPdcComputerCap (issue #57)
  *   class: string,
  *   tonnage: number,
  *   faction: string,
@@ -47,6 +48,7 @@ function blankCrew() {
  */
 function entry(fields) {
   return {
+    TL:             0, // overridden per-entry below — 0 is a "not yet verified" sentinel, matching sourcePage's own default
     class:          fields.name ?? '',
     faction:        'neutral',
     armour:         0,
@@ -74,6 +76,7 @@ export const SHIP_CATALOG = [
 
   entry({
     name:       'Sauvetage-5 Lifeboat',
+    TL:         10,
     class:      'Sauvetage-5 Lifeboat',
     tonnage:    5,
     hullPoints: 0,
@@ -90,6 +93,7 @@ export const SHIP_CATALOG = [
 
   entry({
     name:       'Nécessité 10-ton Drop Pod',
+    TL:         10,
     class:      'Sabourin Nécessité',
     tonnage:    10,
     hullPoints: 1,
@@ -106,6 +110,7 @@ export const SHIP_CATALOG = [
 
   entry({
     name:       'MASIC Star Carrier 50-ton Cargo Rocket',
+    TL:         10,
     class:      'MASIC Star Carrier',
     tonnage:    50,
     hullPoints: 3,
@@ -122,6 +127,7 @@ export const SHIP_CATALOG = [
 
   entry({
     name:       'DC30 Commercial Lander',
+    TL:         10,
     class:      'DC30 Commercial Lander',
     tonnage:    30,
     hullPoints: 3,
@@ -138,6 +144,7 @@ export const SHIP_CATALOG = [
 
   entry({
     name:       'CA-120 Yup\'ik Combat Lander',
+    TL:         12,
     class:      'CA-120 Yup\'ik',
     tonnage:    30,
     hullPoints: 3,
@@ -160,6 +167,7 @@ export const SHIP_CATALOG = [
 
   entry({
     name:       'Turmfalke Commercial Spaceplane',
+    TL:         12,
     class:      'Turmfalke Spaceplane',
     tonnage:    20,
     hullPoints: 2,
@@ -178,6 +186,7 @@ export const SHIP_CATALOG = [
 
   entry({
     name:       'British ExoSpace R40 Pinnace',
+    TL:         11,
     class:      'R40 Commercial Pinnace',
     tonnage:    40,
     hullPoints: 4,
@@ -194,6 +203,7 @@ export const SHIP_CATALOG = [
 
   entry({
     name:       'SLV-55 Scout Lander',
+    TL:         12,
     class:      'SLV-55 Cutter',
     tonnage:    55,
     hullPoints: 5,
@@ -212,6 +222,7 @@ export const SHIP_CATALOG = [
 
   entry({
     name:       'Martel 60-ton Fighter',
+    TL:         12,
     class:      'Martel Fighter (Harrier/Longhorn/Jaeger)',
     tonnage:    60,
     hullPoints: 7,
@@ -232,6 +243,7 @@ export const SHIP_CATALOG = [
 
   entry({
     name:       'UOC70 Long Boat',
+    TL:         12,
     class:      'UOC70 Long Boat',
     tonnage:    70,
     hullPoints: 8,
@@ -255,6 +267,7 @@ export const SHIP_CATALOG = [
 
   entry({
     name:       'ISV-2 Independent Scout',
+    TL:         10,
     class:      'Trilon ISV-2',
     tonnage:    100,
     hullPoints: 10,
@@ -271,6 +284,7 @@ export const SHIP_CATALOG = [
 
   entry({
     name:       'Thorez-Class Courier',
+    TL:         10,
     class:      'Thorez Courier',
     tonnage:    200,
     hullPoints: 20,
@@ -287,6 +301,7 @@ export const SHIP_CATALOG = [
 
   entry({
     name:       'Martinique-Class Yacht',
+    TL:         12,
     class:      'Martinique Yacht',
     tonnage:    200,
     hullPoints: 22,
@@ -303,6 +318,7 @@ export const SHIP_CATALOG = [
 
   entry({
     name:       'Anjou Cargo Ship',
+    TL:         10,
     class:      'Anjou',
     tonnage:    1000,
     hullPoints: 100,
@@ -319,6 +335,7 @@ export const SHIP_CATALOG = [
 
   entry({
     name:       'SSV-21 Special Services Vessel',
+    TL:         12,
     class:      'Trilon C-System SSV-21',
     tonnage:    500,
     hullPoints: 55,
@@ -335,6 +352,7 @@ export const SHIP_CATALOG = [
 
   entry({
     name:       'Liberty Colonial Transport',
+    TL:         11,
     class:      "ALRP 'Liberty' Transport",
     tonnage:    600,
     hullPoints: 60,
@@ -353,6 +371,7 @@ export const SHIP_CATALOG = [
 
   entry({
     name:       'Aconit-Class Frigate',
+    TL:         11,
     class:      'Aconit Frigate',
     tonnage:    300,
     hullPoints: 30,
@@ -378,6 +397,7 @@ export const SHIP_CATALOG = [
 
   entry({
     name:       "Kaefer 'Geist' Spy Craft",
+    TL:         13,
     class:      "Kaefer 'Geist'",
     tonnage:    125,
     hullPoints: 12,

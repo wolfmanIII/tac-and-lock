@@ -44,6 +44,7 @@ function blankCrew() {
 /**
  * @typedef {{
  *   id: string,
+ *   TL: number,                     — B3 ship stat block Tech Level, used by getPdcComputerCap (issue #57)
  *   name: string,
  *   class: string,
  *   tonnage: number,
@@ -72,6 +73,7 @@ export const DEFAULT_PROFILES = [
   {
     // 2300AD B3 p.86 — TL10, 100t
     id: 'default-isv2',
+    TL: 10,
     name: 'BSS Cavendish',
     class: 'Trilon ISV-2 Independent Scout',
     category: 'scout',
@@ -96,6 +98,7 @@ export const DEFAULT_PROFILES = [
   {
     // 2300AD B3 p.88 — TL10, 200t
     id: 'default-thorez',
+    TL: 10,
     name: 'Thorez IV',
     class: 'Thorez-class Courier',
     category: 'civilian',
@@ -120,6 +123,7 @@ export const DEFAULT_PROFILES = [
   {
     // 2300AD B3 p.91 — TL12, 200t
     id: 'default-martinique',
+    TL: 12,
     name: 'Soleil de Nuit',
     class: 'Martinique-class Yacht',
     category: 'civilian',
@@ -144,6 +148,7 @@ export const DEFAULT_PROFILES = [
   {
     // 2300AD B3 p.94 — TL10, 1000t
     id: 'default-anjou',
+    TL: 10,
     name: 'L\'Anjou Libre',
     class: 'Anjou Cargo Ship',
     category: 'civilian',
@@ -170,6 +175,7 @@ export const DEFAULT_PROFILES = [
   {
     // 2300AD B3 p.78 — TL12, 60t
     id: 'default-martel',
+    TL: 12,
     name: 'Martel GAS-77',
     class: 'Martel 60-ton Fighter',
     category: 'military',
@@ -197,6 +203,7 @@ export const DEFAULT_PROFILES = [
   {
     // 2300AD B3 p.80 — TL12, 70t
     id: 'default-uoc70',
+    TL: 12,
     name: 'HMS Vigilance',
     class: 'UOC70 Long Boat',
     category: 'military',
@@ -224,6 +231,7 @@ export const DEFAULT_PROFILES = [
   {
     // 2300AD B3 p.104 — TL11, 300t
     id: 'default-aconit',
+    TL: 11,
     name: 'FNS Aconit',
     class: 'Aconit-class Frigate',
     category: 'military',
@@ -255,6 +263,7 @@ export const DEFAULT_PROFILES = [
   {
     // 2300AD B3 p.107-108 — TL13, 125t
     id: 'default-kaefer-geist',
+    TL: 13,
     name: 'Geist-class Scout',
     class: "Kaefer 'Geist' Spy Craft",
     category: 'alien',

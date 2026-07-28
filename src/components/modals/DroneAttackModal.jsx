@@ -27,7 +27,7 @@ import { WEAPONS }        from '../../data/weapons.js'
 import { SENSOR_TIME_LAG_DM, getDroneLightspeedLagDm } from '../../data/rangeBands.js'
 import { getAssignedSkill, getAssignedCharacteristic } from '../../utils/crew.js'
 import { getCharDM, roll2D6 } from '../../utils/dice.js'
-import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, computeEffectiveSignature, getPointDefenceDm, getPointDefenceTraitAttackDm, getEasyTargetAttackDm, getEasyTargetDamageMultiplier, getAtmosphericTargetDm, getOrtilleryDm, getFireControlDm, getTargetingSystemDm, getScreenDm, getWeaponTraitAttackDm } from '../../utils/combat.js'
+import { getRangeDM, rollDamage, isSurfaceFixtureDamage, isInternalCriticalHit, computeEffectiveSignature, getPointDefenceDm, getPointDefenceTraitAttackDm, getEasyTargetAttackDm, getEasyTargetDamageMultiplier, getAtmosphericTargetDm, getOrtilleryDm, getFireControlDm, getTargetingSystemDm, getScreenDm, getWeaponTraitAttackDm, getPdcComputerCap, getPdcComputerDm } from '../../utils/combat.js'
 import { DiceInput } from '../forms/DiceInput.jsx'
 
 const STEP_PD     = 0
@@ -60,6 +60,32 @@ function InterceptWeaponPicker({ weapons, value, onChange }) {
           </option>
         ))}
       </select>
+    </div>
+  )
+}
+
+/**
+ * Gunner-managed vs computer-run PDC mode toggle — only rendered when the intercepting
+ * weapon has the Point Defence trait. // 2300AD B3 p.56, issue #57
+ */
+function PdcModeToggle({ mode, onChange, remaining, cap }) {
+  return (
+    <div className="space-y-1">
+      <div className="flex gap-2">
+        <button type="button" onClick={() => onChange(false)}
+          className={`flex-1 py-1 text-[10px] font-mono border rounded transition-colors ${!mode ? 'border-emerald-500 text-emerald-300 bg-emerald-900/30' : 'border-gunmetal-700 text-gunmetal-400'}`}>
+          Gunner-managed
+        </button>
+        <button type="button" onClick={() => onChange(true)}
+          className={`flex-1 py-1 text-[10px] font-mono border rounded transition-colors ${mode ? 'border-emerald-500 text-emerald-300 bg-emerald-900/30' : 'border-gunmetal-700 text-gunmetal-400'}`}>
+          Computer-run (PDC)
+        </button>
+      </div>
+      {mode && (
+        <p className="font-mono text-[10px] text-gunmetal-500">
+          {remaining} of {cap} computer-run intercepts left this round (TL−4) — bypasses the Gunnery action budget.
+        </p>
+      )}
     </div>
   )
 }
@@ -126,6 +152,7 @@ export function DroneAttackModal({ payload, onClose }) {
   const depleteScreens  = useBattleStore((s) => s.depleteScreens)
   const interceptDrone = useBattleStore((s) => s.interceptDrone)
   const spendCrewAction = useBattleStore((s) => s.spendCrewAction)
+  const recordPdcIntercept = useBattleStore((s) => s.recordPdcIntercept)
   const updateShip      = useBattleStore((s) => s.updateShip)
   const { openModal } = useUIStore()
 
@@ -149,6 +176,18 @@ export function DroneAttackModal({ payload, onClose }) {
   // no mount set (backward compat). // issue #45
   const interceptGunnerRole  = interceptWeaponSlot?.mount === 'bay' ? 'gunner_bay' : 'gunner_turret'
   const interceptGunnerLabel = interceptWeaponSlot?.mount === 'bay' ? 'Bay Gunner' : 'Turret Gunner'
+
+  // Computer-run PDC mode — "The Ship's Computer can also use the Fire Control program to run
+  // dedicated point-defence systems... up to a maximum number of targets equal to TL-4."
+  // // 2300AD B3 p.56, issue #57. Only offered when the intercepting weapon carries the Point
+  // Defence trait; bypasses the shared Gunnery action budget entirely (spendCrewAction),
+  // tracked instead via its own ship-wide, round-scoped counter.
+  const [pdcComputerMode, setPdcComputerMode] = useState(false)
+  const isPdcWeapon    = !!interceptWeapon?.traits?.includes('Point Defence')
+  const useComputerMode = isPdcWeapon && pdcComputerMode
+  const pdcCap          = getPdcComputerCap(target?.TL)
+  const pdcUsed         = target?.pdcInterceptsUsed ?? 0
+  const pdcRemaining    = Math.max(0, pdcCap - pdcUsed)
 
   const [step, setStep] = useState(mode === 'engage' ? STEP_ENGAGE : STEP_PD)
   const [sensorMode, setSensorMode] = useState('handoff') // 'handoff' | 'self'
@@ -181,6 +220,14 @@ export function DroneAttackModal({ payload, onClose }) {
   // Type 17 PDC), not the incoming drone's warhead — issue #24 fix.
   const pdDms = useMemo(() => {
     if (!target) return { rows: [], total: 0 }
+    if (useComputerMode) {
+      // Computer-run — no crew skill/DEX, just Fire Control + Targeting System + the flat
+      // DM+4 PDC bonus (unconditional here since this mode is PDC-only). // issue #57
+      const fireControlDm = getFireControlDm(target.software)
+      const targetingSystemDm = getTargetingSystemDm(interceptWeaponSlot)
+      const total = getPdcComputerDm(target.software, interceptWeaponSlot)
+      return { rows: [['Fire Control', fireControlDm], ['Targeting System', targetingSystemDm], ['PDC bonus (computer-run)', 4]], total }
+    }
     const gunnerSkill = getAssignedSkill(interceptGunnerRole, target.crewAssignments, target.crew)
     const dexDm       = getCharDM(getAssignedCharacteristic(interceptGunnerRole, target.crewAssignments, target.crew, 'DEX'))
     const pdDm        = getPointDefenceDm(interceptWeapon?.traits)
@@ -191,17 +238,21 @@ export function DroneAttackModal({ payload, onClose }) {
     const targetingSystemDm = getTargetingSystemDm(interceptWeaponSlot)
     const total = gunnerSkill + dexDm + pdDm + fireControlDm + targetingSystemDm
     return { rows: [['Gunner skill', gunnerSkill], ['DEX DM', dexDm], ['Point Defence', pdDm], ['Fire Control', fireControlDm], ['Targeting System', targetingSystemDm]], total }
-  }, [target, interceptWeapon, interceptWeaponSlot, interceptGunnerRole])
+  }, [target, interceptWeapon, interceptWeaponSlot, interceptGunnerRole, useComputerMode])
 
   function rollPd() {
     const dice = roll2D6()
     const total = dice[0] + dice[1] + pdDms.total
     setPdResult({ dice, total, effect: total - 10, success: total >= 10 })
-    if (target) spendOnce(target.id, interceptGunnerRole, 'pd')
+    if (!target) return
+    if (useComputerMode) recordPdcIntercept(target.id)
+    else spendOnce(target.id, interceptGunnerRole, 'pd')
   }
   function manualPd({ dice, total }) {
     setPdResult({ dice, total, effect: total - 10, success: total >= 10 })
-    if (target) spendOnce(target.id, interceptGunnerRole, 'pd')
+    if (!target) return
+    if (useComputerMode) recordPdcIntercept(target.id)
+    else spendOnce(target.id, interceptGunnerRole, 'pd')
   }
   function applyIntercept() {
     interceptDrone(droneId)
@@ -214,6 +265,12 @@ export function DroneAttackModal({ payload, onClose }) {
   const [engageResult, setEngageResult] = useState(null)
   const engageDms = useMemo(() => {
     if (!target) return { rows: [], total: 0 }
+    if (useComputerMode) {
+      const fireControlDm = getFireControlDm(target.software)
+      const targetingSystemDm = getTargetingSystemDm(interceptWeaponSlot)
+      const total = getPdcComputerDm(target.software, interceptWeaponSlot)
+      return { rows: [['Fire Control', fireControlDm], ['Targeting System', targetingSystemDm], ['PDC bonus (computer-run)', 4]], total }
+    }
     const gunnerSkill = getAssignedSkill(interceptGunnerRole, target.crewAssignments, target.crew)
     const dexDm       = getCharDM(getAssignedCharacteristic(interceptGunnerRole, target.crewAssignments, target.crew, 'DEX'))
     const fireControlDm = getFireControlDm(target.software)
@@ -221,17 +278,21 @@ export function DroneAttackModal({ payload, onClose }) {
     const pdTraitDm = getPointDefenceTraitAttackDm(interceptWeapon?.traits, drone?.currentBand)
     const total = gunnerSkill + dexDm + fireControlDm + targetingSystemDm + pdTraitDm
     return { rows: [['Gunner skill', gunnerSkill], ['DEX DM', dexDm], ['Fire Control', fireControlDm], ['Targeting System', targetingSystemDm], ['Point Defence trait', pdTraitDm]], total }
-  }, [target, interceptWeapon, interceptWeaponSlot, interceptGunnerRole, drone])
+  }, [target, interceptWeapon, interceptWeaponSlot, interceptGunnerRole, drone, useComputerMode])
 
   function rollEngage() {
     const dice = roll2D6()
     const total = dice[0] + dice[1] + engageDms.total
     setEngageResult({ dice, total, effect: total - 10, success: total >= 10 })
-    if (target) spendOnce(target.id, interceptGunnerRole, 'engage')
+    if (!target) return
+    if (useComputerMode) recordPdcIntercept(target.id)
+    else spendOnce(target.id, interceptGunnerRole, 'engage')
   }
   function manualEngage({ dice, total }) {
     setEngageResult({ dice, total, effect: total - 10, success: total >= 10 })
-    if (target) spendOnce(target.id, interceptGunnerRole, 'engage')
+    if (!target) return
+    if (useComputerMode) recordPdcIntercept(target.id)
+    else spendOnce(target.id, interceptGunnerRole, 'engage')
   }
   function applyEngage() {
     if (engageResult?.success) interceptDrone(droneId)
@@ -507,12 +568,17 @@ export function DroneAttackModal({ payload, onClose }) {
           <p className="text-[10px] font-display text-bronze-400 tracking-widest uppercase">
             {target.profile?.name} — POINT DEFENCE · {interceptGunnerLabel} DEX · Difficult (10+) // B3 p.55–56
           </p>
-          {targetBudget[interceptGunnerRole] <= 0 && (
+          {!useComputerMode && targetBudget[interceptGunnerRole] <= 0 && (
             <p className="font-mono text-[10px] text-red-400">{target.profile?.name}'s {interceptGunnerLabel} has no actions left this round (Gunnery cap — B3 p.53).</p>
           )}
+          {useComputerMode && pdcRemaining <= 0 && (
+            <p className="font-mono text-[10px] text-red-400">{target.profile?.name}'s PDC has used all its computer-run intercepts this round (TL−4).</p>
+          )}
           <InterceptWeaponPicker weapons={targetWeapons} value={interceptWeaponIdx} onChange={setInterceptWeaponIdx} />
+          {isPdcWeapon && <PdcModeToggle mode={pdcComputerMode} onChange={setPdcComputerMode} remaining={pdcRemaining} cap={pdcCap} />}
           <DmBreakdown rows={pdDms.rows} total={pdDms.total} />
-          <RollBlock dm={pdDms.total} onRoll={rollPd} onManual={manualPd} result={pdResult} target={10} disabled={targetBudget[interceptGunnerRole] <= 0} />
+          <RollBlock dm={pdDms.total} onRoll={rollPd} onManual={manualPd} result={pdResult} target={10}
+            disabled={useComputerMode ? pdcRemaining <= 0 : targetBudget[interceptGunnerRole] <= 0} />
         </div>
 
         <div className="flex gap-2 pt-1">
@@ -549,13 +615,17 @@ export function DroneAttackModal({ payload, onClose }) {
           {drone.currentBand !== 'Close' && (
             <p className="font-mono text-[10px] text-red-400">Point Defence trait's DM+2 only applies at Close range — this drone is at {drone.currentBand}.</p>
           )}
-          {targetBudget[interceptGunnerRole] <= 0 && (
+          {!useComputerMode && targetBudget[interceptGunnerRole] <= 0 && (
             <p className="font-mono text-[10px] text-red-400">{target.profile?.name}'s {interceptGunnerLabel} has no actions left this round (Gunnery cap — B3 p.53).</p>
           )}
+          {useComputerMode && pdcRemaining <= 0 && (
+            <p className="font-mono text-[10px] text-red-400">{target.profile?.name}'s PDC has used all its computer-run intercepts this round (TL−4).</p>
+          )}
           <InterceptWeaponPicker weapons={targetWeapons} value={interceptWeaponIdx} onChange={setInterceptWeaponIdx} />
+          {isPdcWeapon && <PdcModeToggle mode={pdcComputerMode} onChange={setPdcComputerMode} remaining={pdcRemaining} cap={pdcCap} />}
           <DmBreakdown rows={engageDms.rows} total={engageDms.total} />
           <RollBlock dm={engageDms.total} onRoll={rollEngage} onManual={manualEngage} result={engageResult} target={10}
-            disabled={targetBudget[interceptGunnerRole] <= 0 || drone.currentBand !== 'Close'} />
+            disabled={(useComputerMode ? pdcRemaining <= 0 : targetBudget[interceptGunnerRole] <= 0) || drone.currentBand !== 'Close'} />
         </div>
 
         <div className="flex gap-2 pt-1">

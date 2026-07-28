@@ -94,6 +94,7 @@ export async function addShipsToStore(page, ships = DEFAULT_SHIPS) {
         {
           name:            def.name,
           class:           'Test class',
+          TL:              def.TL ?? null, // issue #57 — computer-run PDC intercept cap (TL-4)
           hullPoints:      20,
           armour:          3,
           tacSpeed:        4,

@@ -250,6 +250,21 @@ risolve il proprio attacco, STEP_PD è la reazione dell'intercettazione) vs `'en
 la nave bersaglio spara proattivamente, screen STEP_ENGAGE, raggiungibile solo per droni a Close
 range che la puntano — voce menu contestuale "Fire at incoming drone (Close)…", issue #24).
 
+**Computer-run PDC** (issue #57) — un **modo operativo alternativo**, disponibile per entrambe
+le varianti sopra quando l'arma intercettante ha il trait "Point Defence": *"The Ship's Computer
+can also use the Fire Control program to run dedicated point-defence systems, although they can
+also be managed by a human gunner. Each incoming fighter or drone can be engaged by a Point
+Defence Cluster (PDC), up to a maximum number of targets equal to TL-4. This requires a
+Difficult (10+) Gunner check, adding the Fire Control score. Note that there is an additional
+DM+4 for a PDC."* // B3 p.56. A differenza del modo Gunner-managed (skill+DEX del gunner, cap
+1/round condiviso con Gunnery), il modo computer-run: nessun DM skill/DEX (solo Fire Control +
+Targeting System + DM+4 fisso, `getPdcComputerDm`), fino a **TL−4** intercettazioni per round
+(`getPdcComputerCap(ship.TL)`, nuovo campo `ship.TL` verificato sugli stat block B3 per tutte le
+26 navi canoniche), **non consuma il budget Gunnery condiviso** (`recordPdcIntercept` invece di
+`spendCrewAction`) — tracciato da `ship.pdcInterceptsUsed`, azzerato a inizio round. Toggle UI in
+`DroneAttackModal.jsx` (`PdcModeToggle`), visibile solo quando l'arma selezionata ha il trait
+Point Defence.
+
 > **Fix issue #24**: l'intercettazione reattiva controllava i trait dell'**arma del drone in
 > arrivo** invece dell'arma della **nave difendente** — nessun drone porta il trait "Point
 > Defence", quindi il bonus +4 PDC non scattava mai nella pratica. Ora `DroneAttackModal.jsx` ha un
@@ -345,7 +360,7 @@ Nubi ablative/campi elettromagnetici che disperdono **fasci laser in arrivo** (n
 
 ### Ship Profile Fields (combat-relevant)
 
-`name`, `class`, `hullPoints`, `currentHull`, `armour`, `tacSpeed`, `signature` (base value), `sensors` (type + DM), `computer` (model + bandwidth), `weapons[]` (`{ weaponId, count, label, targetingSystem?, mount? }` — `targetingSystem` B3 p.62; `mount: 'turret' | 'bay'`, default `'turret'`, seleziona quale ruolo Gunner spara quello slot — issue #45), `software[]`, `criticalTracks` (11 track × 6 livelli di severità)
+`name`, `class`, `TL` (Tech Level dello stat block B3 — usato solo da `getPdcComputerCap` per il tetto TL−4 del PDC computer-run, issue #57; verificato per tutte le 26 navi canoniche in `defaultProfiles.js`/`shipCatalog.js`, default 12 per navi custom senza fonte), `hullPoints`, `currentHull`, `armour`, `tacSpeed`, `signature` (base value), `sensors` (type + DM), `computer` (model + bandwidth), `weapons[]` (`{ weaponId, count, label, targetingSystem?, mount? }` — `targetingSystem` B3 p.62; `mount: 'turret' | 'bay'`, default `'turret'`, seleziona quale ruolo Gunner spara quello slot — issue #45), `software[]`, `criticalTracks` (11 track × 6 livelli di severità)
 
 ### Ruoli Crew & Skill — 2300AD B3 p.53
 
