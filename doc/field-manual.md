@@ -195,6 +195,10 @@ weapon slot's `mount` field (`Turret`/`Bay` in the profile editor) picks which G
 skill and action budget the Firing Solution draws from. The attack is a **3-step task chain** —
 each step's positive Effect carries forward as a DM to the next step. // B3 p.56
 
+Note: the Turret/Bay Gunner distinction is a Trav2022 CRB concept (Crew Duties, p.164) with no
+2300AD B3 basis — zero canonical 2300AD ships use a bay-mounted weapon slot. `Bay` mount is kept
+for homebrew ships only; it isn't a sourced 2300AD mechanic. // issue #63
+
 Right-click a ship → **Attack…**
 
 ### Step 1 — Sensor Operator

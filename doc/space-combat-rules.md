@@ -102,10 +102,12 @@ Può esserci **un solo Pilot e un solo Captain**; tutti gli altri ruoli ammetton
 | **Engineer** | Motori, riparazioni, gestione energia |
 | **Sensor Operator** | Sensori, guerra elettronica |
 | **Turret Gunner** | Uno per torretta |
-| **Bay Gunner** | Uno per weapon bay |
+| **Bay Gunner**¹ | Uno per weapon bay |
 | **Remote Pilot** | Pilota droni e missili — Electronics (remote ops) // B3 p.53 |
 | **Marine** | Abbordaggio / difesa da abbordaggio |
 | **Passenger** | Nessuna azione di combattimento |
+
+¹ **Nessuna base 2300AD B3** (issue #63): la distinzione Turret/Bay Gunner è un concetto solo Trav2022 CRB (Crew Duties p.164), fuori dalla lista di eccezioni CRB autorizzate da questo progetto (crit interno + weapon traits, non struttura crew). Zero occorrenze di "bay gunner" nei tre sourcebook 2300AD; zero weapon slot canonici usano `mount: 'bay'`. Supportato solo per navi homebrew, non presentato come meccanica 2300AD sourced.
 
 ### Ruoli automatizzati (software)
 

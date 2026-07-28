@@ -134,7 +134,7 @@ L'attacco in 2300AD è una catena di check interdipendenti. Ogni Effect positivo
 3. **Gunner** — Difficult (10+) Gunner INT — bersaglio **10+**
    - DM: +Fire Control software rating (DM+1/livello)
    - Captain assist opzionale: Difficult (10+) Tactics (naval) INT
-   - **Turret vs Bay routing** (issue #45): quale ruolo Gunner (`gunner_turret` o `gunner_bay`) fornisce skill/characteristic/action budget/`commandBonus` per questo Step 3 dipende da `weaponSlot.mount` (`'turret'` default, o `'bay'`) — `gunnerRole` derivato in `AttackModal.jsx`, editabile per weapon slot in `ShipProfileForm.jsx`. Prima del fix `gunner_turret` era hardcoded ovunque indipendentemente dal weapon slot selezionato, quindi una nave non poteva mai sparare da due batterie nello stesso round. Il Point Defence in `DroneAttackModal.jsx` (sia la reazione di intercettazione che l'azione proattiva `engage`) instrada allo stesso modo, derivando `interceptGunnerRole` dal mount del weapon slot scelto in `InterceptWeaponPicker`. Deploy/Recharge Screens resta **deliberatamente** legato a `gunner_turret` — azione ship-wide, non specifica per weapon slot.
+   - **Turret vs Bay routing** (issue #45; `mount: 'bay'`/`gunner_bay` senza base 2300AD B3, supportato solo per navi homebrew — issue #63, vedi nota¹ in "Ruoli Crew & Skill" sotto): quale ruolo Gunner (`gunner_turret` o `gunner_bay`) fornisce skill/characteristic/action budget/`commandBonus` per questo Step 3 dipende da `weaponSlot.mount` (`'turret'` default, o `'bay'`) — `gunnerRole` derivato in `AttackModal.jsx`, editabile per weapon slot in `ShipProfileForm.jsx`. Prima del fix `gunner_turret` era hardcoded ovunque indipendentemente dal weapon slot selezionato, quindi una nave non poteva mai sparare da due batterie nello stesso round. Il Point Defence in `DroneAttackModal.jsx` (sia la reazione di intercettazione che l'azione proattiva `engage`) instrada allo stesso modo, derivando `interceptGunnerRole` dal mount del weapon slot scelto in `InterceptWeaponPicker`. Deploy/Recharge Screens resta **deliberatamente** legato a `gunner_turret` — azione ship-wide, non specifica per weapon slot.
 
 ### Signature — 2300AD B3 p.57
 
@@ -373,10 +373,12 @@ Nubi ablative/campi elettromagnetici che disperdono **fasci laser in arrivo** (n
 | Pilot | Pilot | Firing Solution step 2, manoeuvre, evasion |
 | Engineer | Engineer (power/stutterwarp) | Assist sensor + pilot, boost power/TAC Speed, repair |
 | Turret Gunner | Gunner (turret) | Firing Solution step 3, point defence |
-| Bay Gunner | Gunner (bay) | Come turret gunner, armi di bay |
+| Bay Gunner¹ | Gunner (bay) | Come turret gunner, armi di bay |
 | Remote Pilot | Electronics (remote ops) | Pilota droni e missili guidati |
 | Damage Control | Mechanic | Riparazione critical hits e hull |
 | Ship's Troops | Vacc Suit, Gun Combat | Damage control assist, boarding |
+
+¹ **Nessuna base 2300AD B3** (issue #63): la distinzione Turret/Bay Gunner è un concetto **solo Trav2022 CRB** (Crew Duties, p.164 — "Turret Gunner... Bay Gunner: Each bay weapon has its own gunner"), fuori dalla lista di eccezioni CRB autorizzate da questo progetto (crit interno + weapon traits, non struttura crew). Ricerca a testo pieno sui tre sourcebook 2300AD: zero occorrenze di "bay gunner"/"gunner (bay)". Zero weapon slot in `defaultProfiles.js`/`shipCatalog.js` usano `mount: 'bay'` — nessuna nave canonica 2300AD ha armi bay-mounted. `gunner_bay` resta disponibile per navi homebrew (feature utile anche senza precedente canonico), ma **non è una meccanica 2300AD sourced** — non rimosso, solo non presentato come tale.
 
 ### 2300AD Specifics
 
