@@ -601,6 +601,68 @@ test.describe('Boarding Action — flat 2D6+mods, no skill check (issue #29)', (
   })
 })
 
+// === Boarding carry-over — boardingDmNextRound now actually applies (issue #54) =============
+// CRB p.175: the side that "wins" a COMBAT CONTINUES boarding round gets DM+2 into the next
+// one. computeBoardingResult already computed and stored this, but nothing ever read it back.
+
+test.describe('Boarding carry-over — boardingDmNextRound (issue #54)', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  test('attacker carrying +2 shows the banner and feeds the roll total', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().updateShip(id, { boardingDmNextRound: 2 })
+    }, id0)
+    await page.evaluate((shipId) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId })
+    }, id0)
+    await page.getByText('Boarding Action', { exact: true }).click()
+    await expect(page.getByText('Carrying +2 into this round', { exact: false })).toBeVisible()
+
+    await page.getByText('manual', { exact: true }).click()
+    const numberInputs = page.locator('input[type="number"]')
+    await numberInputs.nth(1).fill('3')
+    await numberInputs.nth(2).fill('4')
+    await expect(page.getByText('= 9').first()).toBeVisible() // 3+4+2 carry = 9
+  })
+
+  test('defender carrying +2 shows the banner in Repel Boarders', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().updateShip(id, { boardingDmNextRound: 2 })
+    }, id0)
+    await page.evaluate((shipId) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId })
+    }, id0)
+    await page.getByText('Repel Boarders', { exact: true }).click()
+    await expect(page.getByText('Carrying +2 into this round', { exact: false })).toBeVisible()
+  })
+
+  test('no carry-over banner when boardingDmNextRound is 0', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((shipId) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId })
+    }, id0)
+    await page.getByText('Boarding Action', { exact: true }).click()
+    await expect(page.getByText('Carrying', { exact: false })).not.toBeVisible()
+  })
+
+  test('ShipDetailModal shows BOARDING CARRY-OVER when set', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().updateShip(id, { boardingDmNextRound: 2 })
+    }, id0)
+    await page.evaluate((shipId) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('ship-detail', { shipId })
+    }, id0)
+    await expect(page.getByText('BOARDING CARRY-OVER')).toBeVisible()
+    await expect(page.getByText('DM+2 into the next boarding round')).toBeVisible()
+  })
+})
+
 // === Boarding modifier checkboxes — CRB p.175 (issue #48) ===================
 // Attacker's Boarding Action roll and defender's Repel Boarders roll both get checkboxes
 // for the CRB p.175 modifier list (Superior Armour/Weaponry/Skills&Tactics/Numbers) instead

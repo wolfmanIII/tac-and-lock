@@ -18,7 +18,7 @@ const ACTION_ROLE = Object.fromEntries(
 /** Actions that show APPLY on failure too (have a failure-path store effect). */
 const HAS_FAILURE_EFFECT = new Set(['electronic_warfare', 'boost_power_output'])
 
-/** Boarding result table — diff = attacker_total − defender_total. // B3 p.55 */
+/** Boarding result table — diff = attacker_total − defender_total. // Trav2022 CRB p.175 */
 function getBoardingResult(diff) {
   if (diff <= -7) return { label: 'ATTACKERS DEFEATED', detail: 'Defender may counter-attack DM+4 next round.', hullDice: 0, armourPiercing: false, carryDm: 0, side: 'defender' }
   if (diff <= -4) return { label: 'ATTACKERS DEFEATED', detail: 'Attackers must retreat or are captured/killed.', hullDice: 0, armourPiercing: false, carryDm: 0, side: 'none' }
@@ -174,12 +174,19 @@ export function ActionModal({ payload, onClose }) {
     return getBoardingResult(boardingRollTotal - defenderTotal)
   }, [selectedAction, boardingRollTotal, boardingDefenderTotal])
 
-  // CRB p.175 checkbox modifiers + the free-typed override, combined into one net DM
-  // applied to the flat 2D6 roll below. // issue #48
+  // Carry-over DM from a previous boarding round's result (CRB p.175 table: the side that
+  // "wins" a COMBAT CONTINUES round gets DM+2 into the next one) — this ship's own value,
+  // whether it's the attacker (boarding_action) or defender (repel_boarders) rolling here.
+  // Computed and stored by a previous applyAction call (below) but never actually read until
+  // now. // issue #54
+  const boardingCarryDm = ship?.boardingDmNextRound ?? 0
+
+  // CRB p.175 checkbox modifiers + the free-typed override + the carry-over above, combined
+  // into one net DM applied to the flat 2D6 roll below. // issue #48, #54
   const boardingTotalMods = boardingChecklistDm({
     armour: boardingArmour, weaponry: boardingWeaponry, skillsTactics: boardingSkillsTactics,
     numbers: boardingNumbers, noMarines: boardingNoMarines,
-  }) + boardingRollMods
+  }) + boardingRollMods + boardingCarryDm
 
   function rollBoardingFlat() {
     const dice = roll2D6()
@@ -476,6 +483,11 @@ export function ActionModal({ payload, onClose }) {
           {/* Boarding Action — flat 2D+mods both sides, no skill check // Trav2022 CRB p.175 */}
           {action.id === 'boarding_action' && (
             <div className="space-y-3">
+              {boardingCarryDm !== 0 && (
+                <p className="text-[10px] font-mono text-bronze-400 bg-bronze-950/30 border border-bronze-800/50 rounded px-2 py-1">
+                  Carrying {boardingCarryDm > 0 ? '+' : ''}{boardingCarryDm} into this round from the previous boarding result // CRB p.175
+                </p>
+              )}
               <div className="space-y-1.5">
                 <p className="text-[10px] font-display text-gunmetal-500 tracking-widest">ATTACKER — 2D6 + MODIFIERS // CRB p.175</p>
                 <BoardingModifierChecks
@@ -544,6 +556,11 @@ export function ActionModal({ payload, onClose }) {
               result into the attacker's Boarding Action modal as DEFENDER TOTAL. // Trav2022 CRB p.175 */}
           {action.id === 'repel_boarders' && (
             <div className="space-y-1.5">
+              {boardingCarryDm !== 0 && (
+                <p className="text-[10px] font-mono text-bronze-400 bg-bronze-950/30 border border-bronze-800/50 rounded px-2 py-1">
+                  Carrying {boardingCarryDm > 0 ? '+' : ''}{boardingCarryDm} into this round from the previous boarding result // CRB p.175
+                </p>
+              )}
               <p className="text-[10px] font-display text-gunmetal-500 tracking-widest">DEFENDER — 2D6 + MODIFIERS // CRB p.175</p>
               <BoardingModifierChecks
                 armour={boardingArmour} setArmour={setBoardingArmour}

@@ -252,6 +252,17 @@ export function ShipDetailModal({ payload, onClose }) {
         </div>
       )}
 
+      {/* Boarding carry-over — DM from a previous "combat continues" boarding round // Trav2022 CRB p.175, issue #54 */}
+      {ship.boardingDmNextRound !== 0 && (
+        <div className="bg-bronze-950/30 border border-bronze-800/50 rounded px-3 py-2">
+          <p className="text-[10px] font-display text-gunmetal-500 tracking-widest mb-0.5">BOARDING CARRY-OVER</p>
+          <p className="text-sm font-mono font-bold text-bronze-400">
+            DM{ship.boardingDmNextRound > 0 ? '+' : ''}{ship.boardingDmNextRound} into the next boarding round
+          </p>
+          <p className="text-[9px] font-mono text-gunmetal-600 mt-0.5">Auto-applied in the Boarding Action/Repel Boarders roll // Trav2022 CRB p.175</p>
+        </div>
+      )}
+
       {/* Weapons */}
       {(p.weapons ?? []).length > 0 && (
         <div>

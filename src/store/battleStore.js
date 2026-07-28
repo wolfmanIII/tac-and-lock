@@ -82,8 +82,8 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     crewAssignments:    { ...(profile.crewAssignments ?? {}) },
     ewTarget:                null,
     ewEffect:                0,   // negative DM this ship applies to its jammed target // B3 p.55
-    hazards:                 [],  // active hazards [{ id, label }] — GM-managed, damage_control clears
-    boardingDmNextRound:     0,   // carry-over DM from boarding result table to next round // B3 p.55
+    hazards:                 [],  // active hazards [{ id, label }] — purely GM-managed, no skill check clears them (issue #53)
+    boardingDmNextRound:     0,   // carry-over DM from boarding result table to next round // Trav2022 CRB p.175, issue #54
     isDestroyed:             false,
     // Signature modifier toggles — GM-controlled // 2300AD B3 p.57
     radiatorsRetracted:      false,
@@ -1028,7 +1028,7 @@ export const useBattleStore = create((set, get) => {
     ),
 
     /**
-     * Remove a hazard from a ship (damage control success). // B3 p.55
+     * Remove a hazard from a ship — purely GM-managed, no skill check gates this (issue #53).
      * @param {string} shipId
      * @param {string} hazardId
      */
