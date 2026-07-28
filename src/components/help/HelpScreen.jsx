@@ -371,16 +371,12 @@ export function HelpScreen({ onBack } = {}) {
 
           <Note>Evasion (opposed Pilot check, B3 p.54) is resolved in the Manoeuvre… modal, not here — Pilot has no separate Crew Action entry.</Note>
 
-          <Sub title="MECHANIC / ENGINEER">
-            <KV k="Damage Control" v="Average (8+) Mechanic INT/EDU. Pick an active hazard (fire, breach, fuel leak, radiation). Success removes it. Effect ≥ 4: suppressed 1D rounds." />
-          </Sub>
-
           <Sub title="MARINES">
             <KV k="Boarding Action" v="No skill check — flat 2D6 + modifiers. Opposed vs defender — see Boarding section." />
             <KV k="Repel Boarders"  v="No skill check — flat 2D6 + modifiers. Defender's roll for boarding resolution." />
           </Sub>
 
-          <Note>Hazards are added by the GM via Ship Sheet → ACTIVE HAZARDS. Add labels like "Hull Fire", "Coolant Leak", "Radiation Exposure" — Damage Control clears them one at a time.</Note>
+          <Note>Hazards are purely GM-managed bookkeeping — add/remove them directly via Ship Sheet → ACTIVE HAZARDS. Add labels like "Hull Fire", "Coolant Leak", "Radiation Exposure" and remove them manually when resolved; no skill check gates this.</Note>
         </Section>
 
         {/* CRITICAL HITS */}
@@ -409,7 +405,7 @@ export function HelpScreen({ onBack } = {}) {
           </Sub>
 
           <Sub title="ACTIVE HAZARDS">
-            <p>Some critical hits generate ongoing hazards (fire, hull breach, fuel leak, radiation). The GM adds hazards via <span className="text-gunmetal-200">Ship Sheet → ACTIVE HAZARDS</span>. A successful <span className="text-gunmetal-200">Damage Control</span> action removes one hazard.</p>
+            <p>Some critical hits generate ongoing hazards (fire, hull breach, fuel leak, radiation). Purely GM-managed bookkeeping — add/remove them directly via <span className="text-gunmetal-200">Ship Sheet → ACTIVE HAZARDS</span>, no skill check gates this.</p>
           </Sub>
         </Section>
 

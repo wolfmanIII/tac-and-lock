@@ -102,7 +102,6 @@ export function ActionModal({ payload, onClose }) {
   const applyEW              = useBattleStore((s) => s.applyEW)
   const updateShip           = useBattleStore((s) => s.updateShip)
   const applyCommand         = useBattleStore((s) => s.applyCommand)
-  const removeHazard         = useBattleStore((s) => s.removeHazard)
   const applyDamage          = useBattleStore((s) => s.applyDamage)
   const spendCrewAction      = useBattleStore((s) => s.spendCrewAction)
   const grantExtraAction     = useBattleStore((s) => s.grantExtraAction)
@@ -128,7 +127,6 @@ export function ActionModal({ payload, onClose }) {
   const [manualMode,             setManualMode]             = useState(false)
   const [critSystem,             setCritSystem]             = useState('')
   const [repairMode,             setRepairMode]             = useState('system') // 'system' | 'hull'
-  const [selectedHazardId,       setSelectedHazardId]       = useState('')
   // Flat 2D6 + net-modifiers roll helper — used for the attacker's own total on Boarding
   // Action, and reused as a "compute my total" helper on Repel Boarders (the GM then types
   // the result into the attacker's DEFENDER TOTAL field). No skill check either way — CRB
@@ -243,10 +241,6 @@ export function ActionModal({ payload, onClose }) {
           if (repairMode === 'hull') repairHull(shipId, 5)
           else if (critSystem) reduceCritical(shipId, critSystem)
         }
-        break
-
-      case 'damage_control':
-        if (success && selectedHazardId) removeHazard(shipId, selectedHazardId)
         break
 
       case 'overload_stutterwarp': // B3 p.54 — Effect 1-4 → +1 TAC Speed, Effect 5-6 → +2, no failure consequence
@@ -420,21 +414,6 @@ export function ActionModal({ payload, onClose }) {
             </div>
           )}
 
-          {/* Damage Control — hazard picker */}
-          {action.id === 'damage_control' && (
-            <div>
-              <p className="text-[10px] font-display text-gunmetal-500 tracking-widest mb-1">ACTIVE HAZARD</p>
-              {(ship?.hazards ?? []).length === 0 ? (
-                <p className="text-xs font-mono text-gunmetal-500 italic">No active hazards — add them in Ship Sheet.</p>
-              ) : (
-                <select value={selectedHazardId} onChange={(e) => setSelectedHazardId(e.target.value)}
-                  className="w-full bg-gunmetal-800 border border-gunmetal-600 text-gunmetal-200 font-mono text-sm rounded px-2 py-1 focus:border-bronze-400 outline-none">
-                  <option value="">— select hazard —</option>
-                  {(ship?.hazards ?? []).map((h) => <option key={h.id} value={h.id}>{h.label}</option>)}
-                </select>
-              )}
-            </div>
-          )}
 
           {/* Commands — crew role picker (own ship, not an enemy target) */}
           {action.id === 'commands' && (

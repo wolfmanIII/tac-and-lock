@@ -428,12 +428,21 @@ test.describe('Electronic Warfare — applyEW + ewEffect', () => {
 // the source PDF). Point Defence moved to a per-drone reaction inside
 // DroneAttackModal — see e2e/08-drones.spec.js.
 
-// === Damage Control — hazards ===============================================
+// === Active Hazards — GM-managed bookkeeping, no skill check (issue #53) ====
 
-test.describe('Damage Control — addHazard / removeHazard', () => {
+test.describe('Active Hazards — addHazard / removeHazard', () => {
   test.beforeEach(async ({ page }) => {
     await clearAppState(page)
     await gotoBattle(page)
+  })
+
+  test('there is no "Damage Control" crew action button — invented, no B3 basis, removed // issue #53', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId: id })
+    }, id0)
+    await expect(page.getByText('Emergency Repair', { exact: true })).toBeVisible()
+    await expect(page.getByText('Damage Control', { exact: true })).not.toBeVisible()
   })
 
   test('addHazard appends entry to ship.hazards', async ({ page }) => {

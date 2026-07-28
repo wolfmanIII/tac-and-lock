@@ -322,12 +322,6 @@ UTES Array, all sharing the same single Gunnery action per round.
 Evasion (opposed Pilot check, B3 p.54) is resolved directly in the **Manoeuvre…** modal (see
 §6/§8), not as a Crew Action — Pilot has no entry in this menu.
 
-### Mechanic / Engineer
-
-| Action | Check | Effect |
-| ------ | ----- | ------ |
-| **Damage Control** | Average (8+) Mechanic INT/EDU | Pick an active hazard (fire, breach, fuel leak, radiation). Success removes it from the list. Effect ≥ 4: hazard suppressed 1D rounds (GM narration). |
-
 ### Marines / Ship's Troops
 
 | Action | Check | Effect |
@@ -366,8 +360,8 @@ Roll 2D for location (CRB p.158). 2300AD substitutions:
 ### Active Hazards
 
 Some critical hits generate ongoing hazards (fire, hull breach, fuel leak, radiation exposure).
-The GM adds hazards via the **Ship Sheet → ACTIVE HAZARDS** panel.
-A successful **Damage Control** action removes one hazard.
+Purely GM-managed bookkeeping — add/remove them directly via the **Ship Sheet → ACTIVE HAZARDS**
+panel, no skill check gates this.
 
 ---
 

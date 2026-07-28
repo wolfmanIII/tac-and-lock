@@ -292,7 +292,8 @@ export function ShipDetailModal({ payload, onClose }) {
         {ship.ewTarget && <span className="px-2 py-0.5 text-[10px] font-mono bg-violet-900/40 border border-violet-700 text-violet-300 rounded">EW TARGET</span>}
       </div>
 
-      {/* Active hazards — GM-managed, cleared by damage_control // B3 p.55 */}
+      {/* Active hazards — purely GM-managed bookkeeping, add/remove manually here. Previously
+          tied to an invented "Damage Control" skill check with no B3 basis — removed, issue #53. */}
       <div>
         <p className="text-[10px] font-display text-gunmetal-500 tracking-widest mb-1.5">ACTIVE HAZARDS</p>
         {(ship.hazards ?? []).length > 0 ? (

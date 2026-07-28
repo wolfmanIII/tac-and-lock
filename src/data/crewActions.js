@@ -104,9 +104,27 @@ export const CREW_ACTIONS = {
   ],
 
   // B3 p.53 Crew Actions table lists Damage Control as its own role ("Mechanic — Repairs
-  // critical hits and damage to hull"), distinct from Engineer — both actions below used to
-  // sit in the engineer bucket, so their action budget was wrongly gated by Engineer
-  // (stutterwarp) skill instead of Mechanic. // issue #52
+  // critical hits and damage to hull"), distinct from Engineer — this action used to sit in
+  // the engineer bucket, so its action budget was wrongly gated by Engineer (stutterwarp)
+  // skill instead of Mechanic. // issue #52
+  //
+  // Note: B3's own detailed rule text for this role's action (p.57) is itself titled "Damage
+  // Control", not "Emergency Repair" — it's a team-based check (normally 4 people, only the
+  // highest Mechanic skill rolls, +1 DM if others with any technical skill help, -1 DM per
+  // person short of four, solo = DM-3) that restores 5 Hull or reduces one critical severity
+  // by 1, Difficult (10+) Mechanic INT. This project keeps the "Emergency Repair" label
+  // (established since issue #9) as its own house name for that mechanic, distinct from the
+  // crew *role* also called Damage Control above — but they're the same B3 rule. The
+  // team-composition modifier isn't modeled (this engine assigns one crew member per role,
+  // not teams of up to four) — known simplification, same treatment as other single-crew
+  // roles elsewhere in this project.
+  //
+  // A second, separately-invented action used to also be named "damage_control" here (Average
+  // 8+, "halt or slow an active hull breach, fuel leak, or fire") — full-text search of all
+  // three 2300AD core books found zero occurrences of "hull breach" or "fuel leak" anywhere.
+  // Removed — issue #53. The ACTIVE HAZARDS panel (ship.hazards[], addHazard/removeHazard)
+  // stays as a purely GM-managed bookkeeping tool in ShipDetailModal, with no fake skill check
+  // gating it — it never needed one.
   damage_control: [
     {
       id: 'emergency_repair',
@@ -117,17 +135,6 @@ export const CREW_ACTIONS = {
       difficulty: 10,
       difficultyLabel: 'Difficult (10+)',
       description: 'Difficult (10+) Mechanic check (1D minutes). Restore 5 hull points or reduce one critical hit track by 1 severity. Each attempt takes the full Actions phase. // 2300AD B3 p.56–57',
-      requiresTarget: false,
-    },
-    {
-      id: 'damage_control',
-      label: 'Damage Control',
-      phase: 'actions',
-      reaction: false,
-      skill: 'Mechanic',
-      difficulty: 8,
-      difficultyLabel: 'Average (8+)',
-      description: 'Mechanic Average (8+). Halt or slow an active hull breach, fuel leak, or fire. Effect 4+ suppresses secondary effect for 1D rounds.',
       requiresTarget: false,
     },
   ],

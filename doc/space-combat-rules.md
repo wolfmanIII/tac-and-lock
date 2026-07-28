@@ -638,14 +638,24 @@ attacchi. `mode: 'engage'` in `DroneAttackModal.jsx`, menu contestuale "Fire at 
 >
 > Nota: "EW Countermeasures" (skill inventato "Electronics (countermeasures)", contro-jam) non è un'azione 2300AD B3 — ricerca a testo pieno del PDF B3: la regola Electronic Warfare (p.53 e p.56, testo identico in entrambe le occorrenze) nomina solo Electronics (comms) per il check di jamming ed Electronics (sensors) per "altri electronic warfare task". Nessuna specializzazione "(countermeasures)" e nessuna azione per annullare un jam nemico attivo compaiono in B3 p.52–62. Rimosso — issue #38.
 
-### Damage Control — Engineer / Mechanic
+### Active Hazards — puramente GM-managed, nessun check
 
-**Average (8+) Mechanic (o Engineer) INT o EDU** // B3 p.55
+I pericoli attivi (incendio, breccia di scafo, perdita carburante, radiazione) sono tracciati come
+**Hazards** su ciascuna nave — aggiunti/rimossi manualmente dal GM (ShipDetailModal, sezione
+ACTIVE HAZARDS) quando un critical hit genera un effetto secondario continuativo, senza alcuno
+skill check a farli sparire.
 
-- Ferma o rallenta un **pericolo attivo**: incendio, breccia di scafo, perdita carburante, radiazione.
-- I pericoli attivi sono tracciati come **Hazards** su ciascuna nave — aggiunti manualmente dal GM (ShipDetailModal, sezione HAZARDS) quando un critical hit genera un effetto secondario continuativo.
-- Successo: rimuove un hazard scelto dalla lista. Effect 4+: il pericolo è **soppresso per 1D round** (GM narrazione; rimane nella lista con tag "soppresso").
-- Fallimento: nessun effetto — il pericolo continua.
+> Nota: esisteva un'azione "Damage Control" (Average 8+ Mechanic, "ferma o rallenta un pericolo
+> attivo: incendio, breccia di scafo, perdita carburante, radiazione") non sourced — ricerca a
+> testo pieno dei tre core book 2300AD: zero occorrenze di "hull breach"/"fuel leak" da nessuna
+> parte. Rimossa — issue #53. Da non confondere con il ruolo crew **Damage Control** (B3 p.53,
+> skill Mechanic) — quello è reale, e la sua vera azione B3 (p.57, testualmente intitolata
+> "Damage Control" nel libro) è esattamente il meccanismo già implementato come **Emergency
+> Repair** qui sotto (nome scelto dal progetto, non da B3 — issue #9). B3 descrive quel check
+> come un lavoro di squadra (normalmente 4 persone, un solo tiro Mechanic del membro con skill
+> più alta, DM+1 se altri con skill tecnica aiutano, DM−1 per persona sotto quattro, da soli
+> DM−3) — la composizione del team non è modellata in questo motore (un solo membro equipaggio
+> per ruolo), stessa semplificazione già accettata altrove nel progetto.
 
 ### Boarding Action — Marine // Trav2022 CRB p.175 (richiamato da 2300AD B3 p.57)
 
