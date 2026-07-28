@@ -292,7 +292,8 @@ export function HelpScreen({ onBack } = {}) {
             <Table
               headers={['DM source', 'Value']}
               rows={[
-                ['Fire Control software', '+1 per level (FC/1 = +1, /2 = +2, /3 = +3) — DM−8 if none installed at all, including point defence // B3 p.62'],
+                ['Fire Control software', '+1 per level (FC/1 = +1, /2 = +2, /3 = +3) — purely additive, never a penalty // issue #25'],
+                ['Targeting System', 'Light TTA +0, TTA −1, UTES +1, Drone Controller +0 — DM−8 if none assigned to this weapon mount at all, including point defence — separate from and stacks with Fire Control software // B3 p.62, issue #25'],
                 ['Effect from Step 2',    'Positive Effect carries forward'],
                 ['EW jamming',            '−1 (Effect 1–4) / −2 (Effect 5–6) / +1 if jammer badly failed (Effect ≤−5)'],
                 ['Command (Captain)',     '+1 or +2 if targeting gunner_turret this round'],
