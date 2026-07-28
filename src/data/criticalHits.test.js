@@ -191,6 +191,15 @@ describe('CRITICAL_HIT_EFFECTS completeness', () => {
       expect(typeof CRITICAL_HIT_SYSTEM_LABELS[system]).toBe('string')
     }
   })
+
+  // CRB severity table prints identical text for Cargo severity 5 and 6 ("All cargo
+  // destroyed, Hull Severity increased by +1") — no "+1D" escalation like Power Plant/Fuel
+  // have. Verified via fresh PDF extraction. // issue #56
+  it('cargo severity 5 and 6 are identical — no fabricated +1D escalation // issue #56', () => {
+    expect(CRITICAL_HIT_EFFECTS.cargo[6]).toEqual(CRITICAL_HIT_EFFECTS.cargo[5])
+    const hullBump = CRITICAL_HIT_EFFECTS.cargo[6].mechanics.find((m) => m.type === 'hull_severity_increase')
+    expect(hullBump.value).toBe(1)
+  })
 })
 
 // === getMaxSeverity ===

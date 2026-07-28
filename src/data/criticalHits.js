@@ -259,8 +259,12 @@ export const CRITICAL_HIT_EFFECTS = {
     2: { label: '1D×10% of cargo destroyed.', mechanics: [{ type: 'cargo_destroyed_pct', value: '1D6x10' }] },
     3: { label: '2D×10% of cargo destroyed.', mechanics: [{ type: 'cargo_destroyed_pct', value: '2D6x10' }] },
     4: { label: 'All cargo destroyed.', mechanics: [{ type: 'cargo_destroyed_pct', value: 100 }] },
+    // Severity 5 and 6 print identical text in the CRB table ("All cargo destroyed, Hull
+    // Severity increased by +1") — same "repeated text between adjacent severities" pattern
+    // already correctly handled for Power Plant/Fuel/Armour/Stutterwarp elsewhere in this
+    // file. Severity 6 previously fabricated a "+1D" escalation with no source. // issue #56
     5: { label: 'All cargo destroyed. Hull Severity +1.', mechanics: [{ type: 'cargo_destroyed_pct', value: 100 }, { type: 'hull_severity_increase', value: 1 }] },
-    6: { label: 'All cargo destroyed. Hull Severity +1D.', mechanics: [{ type: 'cargo_destroyed_pct', value: 100 }, { type: 'hull_severity_increase', value: '1D6' }] },
+    6: { label: 'All cargo destroyed. Hull Severity +1.', mechanics: [{ type: 'cargo_destroyed_pct', value: 100 }, { type: 'hull_severity_increase', value: 1 }] },
   },
 
   // Stutterwarp Drive — 2300AD B3 p.58: reuses M-Drive's effects table, "Thrust reduced"
