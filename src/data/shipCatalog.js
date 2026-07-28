@@ -386,7 +386,11 @@ export const SHIP_CATALOG = [
       { weaponId: 'aero12',            count: 10, label: 'Aero-12 Missile ×10 (Internal bay)', targetingSystem: 'light_tta' },
       { weaponId: 'anti_missile_laser', count: 1, label: 'Quinn PDC (Retractable)', targetingSystem: 'light_tta' },
     ],
-    software:   ['operations', 'intellect', 'fire_control_2', 'auto_repair_1', 'stutterwarp_control'],
+    // No Fire Control software printed — the "Improved Fire Control +1" on this stat
+    // block is a Targeting-line vehicle-weapon upgrade (autocannon/Aero-12/PDC only,
+    // Book 2 vehicle equipment), not starship Fire Control software. Not modeled —
+    // issue #58.
+    software:   ['operations', 'intellect', 'auto_repair_1', 'stutterwarp_control'],
     faction:    'npc',
     category:   'military',
     sourcePage: 104,

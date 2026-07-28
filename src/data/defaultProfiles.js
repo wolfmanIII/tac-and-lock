@@ -192,7 +192,9 @@ export const DEFAULT_PROFILES = [
       { weaponId: 'ea1000',      count: 2, label: 'Twin EA1000 w/UTES (Fixed)', targetingSystem: 'utes' },
       { weaponId: 'missile_rack', count: 2, label: 'Combat Drones Ritage-2 x2', targetingSystem: 'light_tta' },
     ],
-    software: ['operations', 'fire_control_2', 'auto_repair_1', 'stutterwarp_control'],
+    // Printed Software line: Archive, Auto-Repair/1, Fire Control/1, Intellect, Neural
+    // Interface, Operations — fire_control_1, not 2. // 2300AD B3 p.78, issue #58
+    software: ['operations', 'fire_control_1', 'auto_repair_1', 'stutterwarp_control'],
     criticalTracks: blankCriticalTracks(),
     surfaceFixtureTracks: blankSurfaceFixtureTracks(),
     crew: [],
@@ -220,7 +222,9 @@ export const DEFAULT_PROFILES = [
       { weaponId: 'll98',             count: 1, label: 'LL98 Laser w/UTES (Surface)', targetingSystem: 'utes' },
       { weaponId: 'particle_barbette', count: 1, label: 'Light Plasma Gun PGHP (Fixed)', targetingSystem: 'light_tta' },
     ],
-    software: ['operations', 'fire_control_2', 'stutterwarp_control'],
+    // Printed Software line: Archive, Intellect, Neural Interface, Operations — no Fire
+    // Control at all. // 2300AD B3 p.80, issue #58
+    software: ['operations', 'stutterwarp_control'],
     criticalTracks: blankCriticalTracks(),
     surfaceFixtureTracks: blankSurfaceFixtureTracks(),
     crew: [],
@@ -250,7 +254,12 @@ export const DEFAULT_PROFILES = [
       { weaponId: 'aero12',           count: 10, label: 'Aero-12 Missile x10 (Internal)', targetingSystem: 'light_tta' },
       { weaponId: 'anti_missile_laser', count: 1, label: 'Anti-Missile Laser (Retractable)', targetingSystem: 'light_tta' },
     ],
-    software: ['operations', 'fire_control_2', 'auto_repair_1', 'stutterwarp_control'],
+    // Printed Software line: Archive, Intellect, Operations, Stutterwarp Control,
+    // Auto-Repair/1 — no Fire Control. The "Improved Fire Control +1" on this stat
+    // block is a Targeting-line vehicle-weapon upgrade (autocannon/Aero-12/PDC only,
+    // Book 2 vehicle equipment), not starship Fire Control software. Not modeled —
+    // issue #58.
+    software: ['operations', 'auto_repair_1', 'stutterwarp_control'],
     criticalTracks: blankCriticalTracks(),
     surfaceFixtureTracks: blankSurfaceFixtureTracks(),
     crew: [],
