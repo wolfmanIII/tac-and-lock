@@ -65,15 +65,33 @@ describe('WEAPONS — every weapon', () => {
       expect([...RANGE_BANDS, '—', 'N/A']).toContain(w.optimalRange)
     })
 
-    it(`${id}: traits do not include invented/non-canonical entries (Smart, Reaction)`, () => {
-      expect(w.traits).not.toContain('Smart')
+    // 'Reaction' is invented/non-canonical for every weapon in this file — no B3/CRB source
+    // ever printed it. 'Smart' used to be banned here too, but that was wrong: aero12 (B3 p.29)
+    // and kingfisher (B3 p.110) both genuinely print it — only the p.61 canonical Combat Drones
+    // (ritage1/ritage2/whiskey) lack it, checked separately below. // issue #51
+    it(`${id}: traits do not include the invented 'Reaction' trait`, () => {
       expect(w.traits).not.toContain('Reaction')
       if (w.detonationMode) {
-        expect(w.detonationMode.traits).not.toContain('Smart')
         expect(w.detonationMode.traits).not.toContain('Reaction')
       }
     })
   }
+
+  it.each(['ritage1', 'ritage2', 'whiskey'])(
+    '%s — no Smart trait (not printed on the p.61 Combat Drones table, unlike aero12/kingfisher) // issue #51',
+    (id) => {
+      const w = WEAPONS[id]
+      expect(w.traits).not.toContain('Smart')
+      if (w.detonationMode) expect(w.detonationMode.traits).not.toContain('Smart')
+    },
+  )
+
+  it.each(['aero12', 'kingfisher'])(
+    '%s — has the genuinely-printed Smart trait // issue #51',
+    (id) => {
+      expect(WEAPONS[id].traits).toContain('Smart')
+    },
+  )
 })
 
 // === Specific 2300AD weapon rules // 2300AD B3 p.60 ===

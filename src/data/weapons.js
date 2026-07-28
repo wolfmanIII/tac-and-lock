@@ -254,9 +254,9 @@ export const WEAPONS = {
       VeryLong: -1,
       Distant:  -3,
     },
-    // AP5 was wrong (should be AP16); Smart deferred to issue #51 (companion fix touching the
-    // same trait array plus weapons.test.js's blanket "no Smart" assumption). // issue #50
-    traits: ['AP16', 'One Use', 'Overhead'],
+    // AP5 was wrong (should be AP16); Smart added per issue #51 — genuinely printed for this
+    // weapon (p.29), unlike the p.61 canonical Combat Drones which don't have it. // issue #50, #51
+    traits: ['AP16', 'One Use', 'Overhead', 'Smart'],
     launchable: true, // tracked as an individual unit via DroneLaunchModal, not a "Smart" B3 trait
     notes: 'Homing anti-vehicle missile. Internal bay mount. // 2300AD B3 p.29',
   },
@@ -472,7 +472,9 @@ export const WEAPONS = {
       VeryLong: -1,
       Distant:  -3,
     },
-    traits: ['AP16', 'One Use'],
+    // Smart added per issue #51 — genuinely printed for this weapon (p.110), unlike the p.61
+    // canonical Combat Drones which don't have it.
+    traits: ['AP16', 'One Use', 'Smart'],
     launchable: true, // tracked as an individual unit via DroneLaunchModal, not a "Smart" B3 trait
     notes: 'Kaefer anti-ship missile. High damage, deep armour penetration. // 2300AD B3 p.110',
   },

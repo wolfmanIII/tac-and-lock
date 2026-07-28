@@ -1,9 +1,5 @@
 # TAC & LOCK // Space Combat Simulator — Agent Instructions
 
-## ROLE
-
-Senior Frontend Engineer. Vite + React specialist. Write efficient, maintainable, and performant code. Prefer technical accuracy over politeness.
-
 ## TECH STACK
 
 - **Runtime**: Browser-only — no backend, no server, no network calls
@@ -233,6 +229,7 @@ tutti gli altri `mechanics` di questa tabella — vedi sotto), non applicato aut
 | Radiation | Inflicts rads = Effect × 10 | B3 |
 | Rapid Fire | **Nessuna valutazione numerica** — non definito nella tabella Weapon Traits di B3 (che definisce solo "Auto"), usato unicamente sul Quinn Type 17 PDC senza un rating. `getAutoScore()` restituisce sempre 0 per questo trait: il selettore Single/Burst/Full Auto non appare mai per questa arma — puramente narrativo (issue #11) | B3 weapon table |
 | Slow | DM−2 ai roll di attacco | B3 |
+| Smart | DM = TL arma − TL bersaglio (min +1, max +6) — CRB p.78. Non stampato nella tabella Weapon Traits di B3 p.59 (quella "extended" armi p.29/p.110, non i droni canonici p.61) — puramente narrativo per ora: nessun campo TL nave in questo motore, servirebbe tracciare il TL del bersaglio per calcolare il DM, fuori scope finché non richiesto (issue #51). `aero12` e `kingfisher` portano il trait per completezza dati, `ritage1`/`ritage2`/`whiskey` correttamente non ce l'hanno (verificato contro B3 p.61) | CRB (extended weapons) |
 
 ### Point Defence — due meccaniche distinte, stesso check singolo — 2300AD B3 p.55–56, p.59
 
@@ -392,6 +389,7 @@ consumato da `isInternalCriticalHit(effect, netDamage, hullCurrent, critThreshol
 ## CRITICAL RULES
 
 - DO NOT apologize.
+- Prefer technical accuracy over politeness — no hedging, no sycophancy.
 - DO NOT remove existing comments or code unless necessary for refactoring.
 - DO NOT hallucinate React APIs, Zustand APIs, or Traveller/2300AD rules.
 - DO NOT add synchronous heavy computation on the main thread — offload to `setTimeout`/`requestAnimationFrame` if needed.
