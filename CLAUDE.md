@@ -350,13 +350,15 @@ Nubi ablative/campi elettromagnetici che disperdono **fasci laser in arrivo** (n
 
 #### Combat Drones — B3 p.61
 
-| Drone | TL | Danno | TAC Speed | Endurance | Traits |
-| --- | --- | --- | --- | --- | --- |
-| Ritage-1 | 11 | 1D | 3 | 6 ore | — |
-| Ritage-2 | 12 | 5D | 4 | 4 ore | Blast 6, Radiation, Slow¹ |
-| 'Whiskey' (Kaefer) | 12 | 1D laser / 3D det. laser | 4 | 2 ore | — / Blast 3, Radiation, Slow¹ |
+| Drone | TL | Magazine | Danno | TAC Speed | Endurance | Traits |
+| --- | --- | --- | --- | --- | --- | --- |
+| Ritage-1 | 11 | 5 | 1D | 3 | 6 ore | — |
+| Ritage-2 | 12 | — (single-shot) | 5D | 4 | 4 ore | Blast 6, Radiation, Slow¹ |
+| 'Whiskey' (Kaefer) | 12 | 3 (batteria) / single-use (detonazione) | 1D laser / 3D det. laser | 4 | 2 ore | — / Blast 3, Radiation, Slow¹ |
 
 ¹ `Slow` (DM−2) non è stampato nella tabella Combat Drones di p.61 — deriva dalla regola generale sui detonation laser (B3 p.59): Ritage-2 e la modalità di detonazione di Whiskey sono entrambi warhead nucleari a raggi X ("detonation lasers"), che devono sparare a Close range e soffrono comunque DM−2.
+
+**Magazine** (`weapon.magazine`, campo drone `shotsRemaining`, issue #62): Ritage-1 (5 colpi, "power cell capable of providing five shots") e Whiskey in modalità batteria (3 colpi) sopravvivono a un tentativo d'attacco (hit o miss) e possono essere riattaccati in un round successivo finché il magazine non si esaurisce (`detonateDrone(droneId, usedDetonationMode)` in `battleStore.js` decrementa `shotsRemaining`, azzerandolo a `detonated: true` solo quando raggiunge 0). Ritage-2 e la modalità detonazione di Whiskey sono sempre single-use — un warhead nucleare che distrugge il drone indipendentemente dalla carica di batteria residua, anche se `shotsRemaining` non è ancora esaurito.
 
 ### Ship Profile Fields (combat-relevant)
 

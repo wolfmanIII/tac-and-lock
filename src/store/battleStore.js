@@ -1108,6 +1108,7 @@ export const useBattleStore = create((set, get) => {
           ownerBand:        'Adjacent', // distance from owner — grows each round via advanceDroneOneRound, B3 p.55 lightspeed lag, issue #49
           roundsElapsed:    0,
           enduranceRounds:  weapon?.enduranceRounds ?? 10,
+          shotsRemaining:   weapon?.magazine ?? 1, // Ritage-1: 5, Whiskey (battery): 3, Ritage-2/detonation: 1 // B3 p.61, issue #62
           destroyed:        false,
           detonated:        false,
           sensorLockSource: null, // null = self-generated Firing Solution (DM-2) // B3 p.55
@@ -1146,23 +1147,34 @@ export const useBattleStore = create((set, get) => {
     ),
 
     /**
-     * Mark a drone/missile as consumed after its attack resolves (hit or miss).
-     * The drone is consumed after any resolved attack attempt — these are all
-     * single-shot warheads in the current canonical set; see doc/drone-combat-redesign-spec.md §3.
-     * Damage itself is applied by the caller via applyDamage, same as AttackModal. // 2300AD B3 p.56
+     * Consume one shot from a drone/missile's magazine after its attack resolves (hit or
+     * miss). Ritage-1 (5 shots) and Whiskey battery-laser mode (3 shots) survive to attack
+     * again in a later round until their magazine is exhausted; Ritage-2 and Whiskey's
+     * detonation mode are always single-use — a nuclear warhead that destroys the drone
+     * regardless of any remaining battery charge. // 2300AD B3 p.56, p.61, issue #62
+     * Damage itself is applied by the caller via applyDamage, same as AttackModal.
      * @param {string} droneId
+     * @param {boolean} [usedDetonationMode] — Whiskey's single-use nuclear warhead this shot
      */
     detonateDrone: wh(
       (droneId) => !!get().drones.find((d) => d.id === droneId),
-      (droneId) => {
+      (droneId, usedDetonationMode = false) => {
         const { round, phase } = get()
         const drone  = get().drones.find((d) => d.id === droneId)
         const weapon = WEAPONS[drone?.weaponId]
+        const shotsLeft = Math.max(0, (drone?.shotsRemaining ?? 1) - 1)
+        const exhausted  = usedDetonationMode || shotsLeft <= 0
         set((s) => ({
-          drones: s.drones.map((d) => d.id !== droneId ? d : { ...d, detonated: true }),
+          drones: s.drones.map((d) => d.id !== droneId ? d : {
+            ...d,
+            shotsRemaining: shotsLeft,
+            detonated: exhausted,
+          }),
           log: [...s.log, makeLogEntry({
             round, phase, type: 'attack', shipId: drone?.targetId,
-            message: `${weapon?.name ?? drone?.weaponId ?? 'Drone'} attack resolved.`,
+            message: exhausted
+              ? `${weapon?.name ?? drone?.weaponId ?? 'Drone'} attack resolved — magazine exhausted.`
+              : `${weapon?.name ?? drone?.weaponId ?? 'Drone'} attack resolved — ${shotsLeft} shot(s) remaining.`,
           })],
         }))
       },

@@ -411,7 +411,7 @@ Resolved inline, at the top of the same modal, before the Firing Solution — on
 
 ### Impact
 
-Damage is rolled the same way as a normal weapon hit (Effect does **not** add to damage — B3 p.56 note). After the attack resolves (hit or miss), the drone is consumed. All canonical drones are treated as single-shot in the current model; Ritage-1's multi-shot capacity mentioned in some sources is not yet implemented pending clearer confirmation of the exact mechanic.
+Damage is rolled the same way as a normal weapon hit (Effect does **not** add to damage — B3 p.56 note). After the attack resolves (hit or miss), the drone consumes one shot from its magazine (B3 p.61 Combat Drones table): Ritage-1 (5 shots) and Whiskey's battery-laser mode (3 shots) survive to attack again in a later round until the magazine is exhausted; Ritage-2 and Whiskey's detonation mode are always single-use nuclear warheads that destroy the drone outright, regardless of remaining battery charge.
 
 ---
 

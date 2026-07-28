@@ -28,6 +28,9 @@ export function DroneTracker() {
             <span className="text-gunmetal-300">{WEAPONS[d.weaponId]?.name ?? d.weaponId}</span>
             <span className="text-gunmetal-400">{shipName(d.ownerId)} → {shipName(d.targetId)}</span>
             <span className="text-amber-300 font-bold">{d.currentBand}</span>
+            {WEAPONS[d.weaponId]?.magazine > 1 && (
+              <span className="text-gunmetal-500">{d.shotsRemaining}/{WEAPONS[d.weaponId].magazine}</span>
+            )}
           </div>
         ))}
         {inRange.map((d) => (
@@ -37,7 +40,10 @@ export function DroneTracker() {
             onClick={() => openModal('drone-attack', { droneId: d.id })}
           >
             <span className="text-red-400">💥</span>
-            <span className="text-red-300">{WEAPONS[d.weaponId]?.name ?? d.weaponId} IN RANGE — {shipName(d.ownerId)} → {shipName(d.targetId)}</span>
+            <span className="text-red-300">
+              {WEAPONS[d.weaponId]?.name ?? d.weaponId} IN RANGE — {shipName(d.ownerId)} → {shipName(d.targetId)}
+              {WEAPONS[d.weaponId]?.magazine > 1 && ` (${d.shotsRemaining}/${WEAPONS[d.weaponId].magazine})`}
+            </span>
           </button>
         ))}
       </div>

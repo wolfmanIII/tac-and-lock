@@ -38,9 +38,11 @@ async function launchDrones(page, count = 1) {
  * Inject a drone directly into the store, already at the given band. `ownerBand` defaults to
  * 'Adjacent' (matching real launchDrone) — distance from the drone's owner/controller, used
  * by the B3 p.55 lightspeed lag DM, distinct from `band` (distance from its target). // issue #49
+ * `shotsRemaining` defaults to 1 (single-shot lifecycle, matching every pre-#62 test's
+ * assumption) — tests exercising the magazine mechanic (issue #62) pass it explicitly.
  */
-async function injectDrone(page, { band = 'Close', ownerBand = 'Adjacent', weaponId = 'ritage1' } = {}) {
-  return page.evaluate(({ band, ownerBand, weaponId }) => {
+async function injectDrone(page, { band = 'Close', ownerBand = 'Adjacent', weaponId = 'ritage1', shotsRemaining = 1 } = {}) {
+  return page.evaluate(({ band, ownerBand, weaponId, shotsRemaining }) => {
     const store = window.__ZUSTAND_BATTLE_STORE__
     const ships = store.getState().ships
     const drone = {
@@ -52,6 +54,7 @@ async function injectDrone(page, { band = 'Close', ownerBand = 'Adjacent', weapo
       ownerBand,
       roundsElapsed: 0,
       enduranceRounds: 60,
+      shotsRemaining,
       destroyed: false,
       detonated: false,
       sensorLockSource: null,
@@ -59,7 +62,7 @@ async function injectDrone(page, { band = 'Close', ownerBand = 'Adjacent', weapo
     }
     store.setState((s) => ({ drones: [...s.drones, drone] }))
     return drone.id
-  }, { band, ownerBand, weaponId })
+  }, { band, ownerBand, weaponId, shotsRemaining })
 }
 
 test.describe('Drone launch', () => {
@@ -605,6 +608,101 @@ test.describe('Drone attack — Step 1 self-generated Pilot bonus (issue #61)', 
     await page.getByText('NO INTERCEPT → FIRING SOLUTION').click()
     // Hand-off is the default sensorMode — no need to click it.
     await expect(page.getByText('Drone Pilot bonus')).not.toBeVisible()
+  })
+})
+
+// === Combat Drones Magazine capacity — Ritage-1=5, Whiskey=3 (battery), Ritage-2=1 (issue #62) ===
+// // 2300AD B3 p.61 Combat Drones table. Ritage-1 and Whiskey's battery-laser mode survive an
+// attack attempt (hit or miss) until their magazine is exhausted; Ritage-2 and Whiskey's
+// detonation mode are always single-use nuclear warheads regardless of remaining charge.
+
+/** Drive a drone attack (already past NO INTERCEPT) through all 3 steps with a guaranteed hit. */
+async function resolveDroneAttack(page) {
+  await page.getByText('NO INTERCEPT → FIRING SOLUTION').click()
+  await page.getByText('ROLL 2D6').last().click()
+  await page.getByText('NEXT → PILOT').click()
+  await page.getByText('ROLL 2D6').last().click()
+  await page.getByText('NEXT → GUNNER').click()
+  await page.getByText('enter manually').last().click()
+  await page.locator('input[type="number"]').nth(0).fill('6')
+  await page.locator('input[type="number"]').nth(1).fill('6')
+  await page.getByText('APPLY DAMAGE').click()
+}
+
+test.describe('Drone attack — magazine capacity (issue #62)', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+    await addShipsToStore(page, SHIPS_WITH_DRONES)
+  })
+
+  test('Ritage-1 survives a hit with shots remaining and decrements shotsRemaining', async ({ page }) => {
+    const droneId = await injectDrone(page, { band: 'Close', weaponId: 'ritage1', shotsRemaining: 5 })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await resolveDroneAttack(page)
+    const drone = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().drones.find((d) => d.id === id)
+    , droneId)
+    expect(drone.detonated).toBe(false)
+    expect(drone.shotsRemaining).toBe(4)
+  })
+
+  test('Ritage-1 on its last shot detonates (magazine exhausted)', async ({ page }) => {
+    const droneId = await injectDrone(page, { band: 'Close', weaponId: 'ritage1', shotsRemaining: 1 })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await resolveDroneAttack(page)
+    const drone = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().drones.find((d) => d.id === id)
+    , droneId)
+    expect(drone.detonated).toBe(true)
+    expect(drone.shotsRemaining).toBe(0)
+  })
+
+  test('Ritage-2 (no magazine field) always detonates after one shot', async ({ page }) => {
+    const droneId = await injectDrone(page, { band: 'Close', weaponId: 'ritage2' })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await resolveDroneAttack(page)
+    const detonated = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().drones.find((d) => d.id === id)?.detonated
+    , droneId)
+    expect(detonated).toBe(true)
+  })
+
+  test('Whiskey detonation mode always destroys the drone regardless of remaining battery charge', async ({ page }) => {
+    const droneId = await injectDrone(page, { band: 'Close', weaponId: 'whiskey', shotsRemaining: 3 })
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('drone-attack', { droneId: id })
+    }, droneId)
+    await page.getByText('NO INTERCEPT → FIRING SOLUTION').click()
+    await page.getByText('ROLL 2D6').last().click()
+    await page.getByText('NEXT → PILOT').click()
+    await page.getByText('ROLL 2D6').last().click()
+    await page.getByText('NEXT → GUNNER').click()
+    await page.getByText(/Use detonation mode/).click()
+    await page.getByText('enter manually').last().click()
+    await page.locator('input[type="number"]').nth(0).fill('6')
+    await page.locator('input[type="number"]').nth(1).fill('6')
+    await page.getByText('APPLY DAMAGE').click()
+    const drone = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().drones.find((d) => d.id === id)
+    , droneId)
+    expect(drone.detonated).toBe(true)
+  })
+
+  test('shots-remaining badge shows on the DroneTracker for a multi-shot drone in range', async ({ page }) => {
+    await injectDrone(page, { band: 'Close', weaponId: 'ritage1', shotsRemaining: 3 })
+    await expect(page.getByText('(3/5)')).toBeVisible()
+  })
+
+  test('shots-remaining is not shown for a single-shot drone (Ritage-2)', async ({ page }) => {
+    await injectDrone(page, { band: 'Close', weaponId: 'ritage2' })
+    await expect(page.getByText(/\/1\)/)).not.toBeVisible()
   })
 })
 

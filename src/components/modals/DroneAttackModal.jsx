@@ -20,6 +20,12 @@
  * using the Point Defence weapon trait's own DM+2 (Close range only, single Gunner
  * check, no Sensor/Pilot steps — B3 treats missiles/drones as too small and fast for a
  * full target lock). // 2300AD B3 p.59, issue #24
+ *
+ * Magazine (issue #62): Ritage-1 (5 shots) and Whiskey's battery-laser mode (3 shots)
+ * survive an attack attempt (hit or miss) and can be re-engaged in a later round until
+ * `drone.shotsRemaining` reaches 0. Ritage-2 and Whiskey's detonation mode are always
+ * single-use nuclear warheads that destroy the drone outright, regardless of any
+ * remaining battery charge. // 2300AD B3 p.61
  */
 
 import { useState, useMemo } from 'react'
@@ -529,7 +535,7 @@ export function DroneAttackModal({ payload, onClose }) {
     if (!damageResult || !target) return
     applyDamage(target.id, damageResult.net, owner?.id)
     if (weapon?.isLaser) depleteScreens(target.id) // only laser fire depletes screens // B3 p.62
-    detonateDrone(droneId)
+    detonateDrone(droneId, !!damageOverride)
     const effect = step3Result?.effect ?? 0
     // Improve Critical (Sensor Operator) lowers the threshold for this ship's next shot
     // this round — "next shot" is singular, so it's consumed here regardless of whether
@@ -547,7 +553,7 @@ export function DroneAttackModal({ payload, onClose }) {
   function applyMiss() {
     // "Next shot this round" is consumed by this attempt whether it hit or not.
     if (owner.improveCriticalThreshold != null) updateShip(owner.id, { improveCriticalThreshold: null })
-    detonateDrone(droneId)
+    detonateDrone(droneId, !!damageOverride)
     onClose()
   }
 
@@ -568,6 +574,7 @@ export function DroneAttackModal({ payload, onClose }) {
         <p className="font-display text-xs text-gunmetal-500 tracking-widest uppercase">DRONE ATTACK — {weapon.name}</p>
         <p className="font-mono text-[10px] text-gunmetal-500">
           {owner.profile?.name} → {target.profile?.name} · {drone.currentBand} · Round {drone.roundsElapsed}
+          {weapon.magazine > 1 && ` · ${drone.shotsRemaining}/${weapon.magazine} shots remaining`}
         </p>
 
         <div className="bg-bronze-950/20 border border-bronze-900/50 rounded p-3 space-y-2">
@@ -654,7 +661,10 @@ export function DroneAttackModal({ payload, onClose }) {
     return (
       <div className="p-5 space-y-3">
         <p className="font-display text-xs text-gunmetal-500 tracking-widest uppercase">STEP 1 — SENSOR / FIRING SOLUTION</p>
-        <p className="font-mono text-[10px] text-gunmetal-500">Very Difficult (12+) // 2300AD B3 p.55</p>
+        <p className="font-mono text-[10px] text-gunmetal-500">
+          Very Difficult (12+) // 2300AD B3 p.55
+          {weapon.magazine > 1 && ` · ${drone.shotsRemaining}/${weapon.magazine} shots remaining`}
+        </p>
 
         <div className="flex gap-2">
           <button onClick={() => setSensorMode('handoff')} className={`flex-1 py-1.5 text-xs font-mono border rounded ${sensorMode === 'handoff' ? 'border-emerald-500 text-emerald-300 bg-emerald-900/30' : 'border-gunmetal-700 text-gunmetal-400'}`}>

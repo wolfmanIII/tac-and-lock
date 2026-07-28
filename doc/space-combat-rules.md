@@ -742,7 +742,7 @@ skill check a farli sparire.
 ### Lancio
 
 - Ogni drone/missile è un'**unità individuale** (`launchDrone`) — lanciarne N significa creare N unità distinte, non un contatore di salvo.
-- Statistiche canoniche (p.61): Ritage-1 (TAC Speed 3, Endurance 6h = 60 round), Ritage-2 (TAC Speed 4, Endurance 4h = 40 round, single-shot), 'Whiskey' (TAC Speed 4, Endurance 2h = 20 round, batteria ripetibile o detonazione single-use).
+- Statistiche canoniche (p.61): Ritage-1 (TAC Speed 3, Endurance 6h = 60 round, Magazine 5), Ritage-2 (TAC Speed 4, Endurance 4h = 40 round, single-shot), 'Whiskey' (TAC Speed 4, Endurance 2h = 20 round, Magazine 3 in modalità batteria o detonazione single-use).
 - Ogni round, il drone si avvicina di una fascia verso il bersaglio (come il movimento di una nave, semplificato a "chiude sempre alla massima velocità" — vedi `doc/drone-combat-redesign-spec.md` §2.3), finché non raggiunge Close/Adjacent (fascia d'ingaggio) o supera la propria Endurance (va inerte).
 
 ### Firing Solution del drone — B3 p.55–56
@@ -775,7 +775,7 @@ Distinta dalla Sensor Time-lag (§8, B3 p.47) — quella dipende dalla distanza 
 ### Impatto
 
 - Danno: roll danno singolo (`rollDamage`, con `detonationMode` per Whiskey se il GM sceglie la modalità detonazione). L'Effect del check **non si somma al danno** (come per le armi normali — B3 p.56 nota).
-- Dopo l'attacco (hit o miss), il drone viene consumato (`detonateDrone`) — tutti i droni canonici attuali sono warhead single-shot nella modellazione corrente; vedi `doc/drone-combat-redesign-spec.md` §3 per la nota sulla possibile natura multi-shot di Ritage-1/Whiskey batteria, non ancora implementata per mancanza di conferma testuale precisa.
+- Dopo l'attacco (hit o miss), `detonateDrone` consuma **uno shot** dal magazine dell'arma (`weapon.magazine`, campo nave `drone.shotsRemaining`) — Ritage-1 (Magazine 5) e Whiskey in modalità batteria (Magazine 3) sopravvivono finché il magazine non si esaurisce, e possono essere ringaggiati in un round successivo; Ritage-2 (Magazine "—") e la modalità detonazione di Whiskey sono sempre single-use, distruggendo il drone indipendentemente dalla carica di batteria residua — confermato dal testo B3 p.61 (issue #62).
 
 ---
 

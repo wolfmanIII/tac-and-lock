@@ -216,6 +216,20 @@ describe('2300AD canonical weapons', () => {
     expect(WEAPONS.whiskey.detonationMode.traits).toContain('Slow')
   })
 
+  // === Combat Drones Magazine capacity — B3 p.61, issue #62 ===
+
+  it('ritage1 — Magazine 5 (folding laser array, five shots per B3 prose)', () => {
+    expect(WEAPONS.ritage1.magazine).toBe(5)
+  })
+
+  it('whiskey — Magazine 3 (battery laser mode only)', () => {
+    expect(WEAPONS.whiskey.magazine).toBe(3)
+  })
+
+  it('ritage2 — no magazine field (single-shot nuclear warhead, Magazine "—" in B3)', () => {
+    expect(WEAPONS.ritage2.magazine).toBeUndefined()
+  })
+
   it('missile_rack, aero12, ritage1, ritage2, whiskey, kingfisher — launchable via DroneLaunchModal', () => {
     for (const id of ['missile_rack', 'aero12', 'ritage1', 'ritage2', 'whiskey', 'kingfisher']) {
       expect(WEAPONS[id].launchable).toBe(true)

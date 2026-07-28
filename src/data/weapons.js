@@ -335,6 +335,7 @@ export const WEAPONS = {
     optimalRange: 'Adjacent', // closes to impact range // 2300AD B3 p.61
     tacSpeed: 3,
     enduranceRounds: 60, // 6 hours // 2300AD B3 p.61
+    magazine: 5, // "power cell capable of providing five shots" — 2300AD B3 p.60, p.61, issue #62
     rangeDm: {
       Adjacent:  2,
       Close:     0,
@@ -390,6 +391,8 @@ export const WEAPONS = {
     optimalRange: 'Adjacent',
     tacSpeed: 4,
     enduranceRounds: 20, // 2 hours // 2300AD B3 p.61
+    magazine: 3, // "3 (battery laser)" — battery mode only; detonation mode is always single-use
+                 // regardless of remaining battery charge, since it destroys the drone // issue #62
     rangeDm: {
       Adjacent:  2,
       Close:     0,
