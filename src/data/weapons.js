@@ -38,7 +38,7 @@ export const WEAPONS = {
     mount: 'turret',
     TL: 9,
     damage: '2D',
-    damageBonus: 2, // +2 per additional laser in turret (multi-weapon rule, Trav2022 CRB p.167)
+    damageBonus: 2, // +2 per additional laser in turret (multi-weapon rule, Trav2022 CRB p.168)
     optimalRange: 'Short',
     rangeDm: {
       Adjacent: -1,
@@ -82,7 +82,7 @@ export const WEAPONS = {
     mount: 'turret',
     TL: 6,
     damage: '4D',   // per missile on impact // Trav2022 CRB p.168
-    damageBonus: 0, // missiles do not gain the multi-weapon bonus // Trav2022 CRB p.167
+    damageBonus: 0, // missiles do not gain the multi-weapon bonus // Trav2022 CRB p.168
     optimalRange: 'Long',
     // Same optimalRange as particle_barbette — reuses its rangeDm shape, this file's existing
     // convention for weapons sharing an optimalRange (e.g. ea1000/autocannon_25mm, both

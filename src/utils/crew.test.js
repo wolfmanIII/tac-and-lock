@@ -1,6 +1,6 @@
 /**
  * Tests for crew role helpers.
- * // Trav2022 CRB p.161 — Ship crew roles and skill resolution
+ * // Trav2022 CRB p.164 — Ship crew roles and skill resolution
  */
 
 import { describe, it, expect } from 'vitest'

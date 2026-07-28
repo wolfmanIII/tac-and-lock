@@ -11,7 +11,7 @@ import { computeCriticalSeverity } from '../data/criticalHits.js'
 // Stages: 'setup' → 'initiative' → 'combat'. There is no "Manoeuvre/Attack/Actions
 // Step" in 2300AD B3 — that structure does not appear anywhere in B3 p.52-62 (verified
 // by full-text search); it is the Traveller 2022 CRB's own generic spacecraft combat
-// loop (CRB p.163-165), which this project's rules hierarchy forbids using for core
+// loop (CRB p.164), which this project's rules hierarchy forbids using for core
 // mechanics. B3 p.53 instead gives each crew role its own per-round action budget
 // (see ship.actionsRemaining, buildActionBudget in utils/crew.js) — a ship's turn in
 // 'combat' is open-ended: the GM spends any role's remaining actions in any order via

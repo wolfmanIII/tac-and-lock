@@ -1,6 +1,6 @@
 # Tac-and-Lock — Regole del Combattimento Spaziale
 
-## Fonte: 2300AD Core Book 3 p.52–62 (primario) | Trav2022 CRB: solo crit interno p.158–159, weapon traits p.78
+## Fonte: 2300AD Core Book 3 p.52–62 (primario) | Trav2022 CRB: solo crit interno p.158–159, weapon traits p.79
 
 > **Nota 2300AD**: in 2300AD il Manoeuvre Drive del Traveller standard non esiste.
 > Il movimento tattico è fornito dallo **Stutterwarp Drive**, che produce una statistica di velocità tattica.
@@ -903,4 +903,4 @@ Prezzo parti di ricambio: Cr100.000 per tonnellata.
 
 ---
 
-Fonti: 2300AD Core Book 3 p.52–62 (primario); Trav2022 CRB p.158–159 (crit interno), p.78 (weapon traits)
+Fonti: 2300AD Core Book 3 p.52–62 (primario); Trav2022 CRB p.158–159 (crit interno), p.79 (weapon traits)

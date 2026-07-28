@@ -31,7 +31,7 @@
 It is GM-operated and designed for shared-screen play — one person drives, everyone watches.
 
 Rules source: **2300AD Core Book 3: Vehicles and Spacecraft** pp.52–62 (primary).
-**Traveller 2022 Core Rulebook** is used only for internal critical hit tables (p.158–159) and weapon traits (p.78).
+**Traveller 2022 Core Rulebook** is used only for internal critical hit tables (p.158–159) and weapon traits (p.79).
 Where B3 and CRB diverge, **B3 wins**.
 
 Combat uses **range bands** — no hex grid, no velocity vectors.

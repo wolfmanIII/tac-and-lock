@@ -305,7 +305,7 @@ function resolveArmour(traits, armour) {
 /**
  * Auto X trait rating, for the Single/Burst/Full Auto fire-mode selector. // 2300AD B3
  * p.59 ("Auto: As described on page 75 of the Traveller Core Rulebook" — B3's own cross-
- * reference is wrong; the real "WEAPON TRAITS" section is Trav2022 CRB p.78, verified
+ * reference is wrong; the real "WEAPON TRAITS" section is Trav2022 CRB p.79, verified
  * against the local PDF, same class of error as the internal-crit-table page fix)
  * defines Burst (+Auto score to damage) and Full Auto (Auto-score separate attacks).
  * "Rapid Fire" (Quinn Type 17 PDC — B3 p.60) is not a numbered Auto rating and has no
@@ -322,14 +322,14 @@ export function getAutoScore(traits = []) {
  * Roll damage for a weapon hit.
  * Handles flat bonus in dice notation ("2D+2"), AP X trait, multi-weapon bonus, and the
  * Burst fire mode of the Auto X trait (flat +score to damage, one attack). // 2300AD B3
- * p.59–60; Trav2022 CRB p.78, p.167
+ * p.59–60; Trav2022 CRB p.79, p.168
  *
  * @param {string} weaponId
  * @param {number} weaponCount — number of same weapon type in turret (1–3)
  * @param {number} armour      — target's current armour value
  * @param {{ damage?: string, traits?: string[] }} [overrides] — e.g. a drone's detonationMode
  * @param {number} [damageMultiplier] — e.g. 2 for a stationary/reaction-drive target // B3 p.56
- * @param {number} [autoBurstBonus] — Burst fire mode: flat +Auto score to damage // CRB p.78
+ * @param {number} [autoBurstBonus] — Burst fire mode: flat +Auto score to damage // CRB p.79
  * @returns {{ rolls: number[], bonus: number, gross: number, armour: number, net: number }}
  */
 export function rollDamage(weaponId, weaponCount = 1, armour = 0, overrides = null, damageMultiplier = 1, autoBurstBonus = 0) {
@@ -341,7 +341,7 @@ export function rollDamage(weaponId, weaponCount = 1, armour = 0, overrides = nu
   const rolls = Array.from({ length: n }, () => Math.floor(Math.random() * sides) + 1)
   const diceTotal = rolls.reduce((a, b) => a + b, 0)
 
-  // Multi-weapon bonus: +damageBonus per additional weapon (not per die) // Trav2022 CRB p.167
+  // Multi-weapon bonus: +damageBonus per additional weapon (not per die) // Trav2022 CRB p.168
   const multiBonus = weapon.damageBonus * Math.max(0, weaponCount - 1)
 
   // Per-die trait modifiers // 2300AD B3 p.59
@@ -364,7 +364,7 @@ export function rollDamage(weaponId, weaponCount = 1, armour = 0, overrides = nu
 /**
  * Full Auto fire mode of the Auto X trait: make N separate attacks (N = Auto score),
  * each its own damage roll against the (single) target, armour applied per volley.
- * // Trav2022 CRB p.78 ("Full Auto: Make a number of attacks equal to the Auto score")
+ * // Trav2022 CRB p.79 ("Full Auto: Make a number of attacks equal to the Auto score")
  * @param {string} weaponId
  * @param {number} weaponCount
  * @param {number} armour
