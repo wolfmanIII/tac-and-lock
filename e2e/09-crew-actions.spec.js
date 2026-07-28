@@ -417,6 +417,54 @@ test.describe('Electronic Warfare — applyEW + ewEffect', () => {
   })
 })
 
+// === Encrypted Comms — DM+2 to the target of an EW check, folded in as DM-2 // B3 p.58, issue #66 ===
+
+test.describe('Encrypted Comms — EW roll penalty', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  test('ShipDetailModal toggles ship.encryptedComms', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('ship-detail', { shipId: id })
+    }, id0)
+    await page.getByText('Encrypted Comms', { exact: true }).click()
+    const encryptedComms = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id).encryptedComms
+    , id0)
+    expect(encryptedComms).toBe(true)
+  })
+
+  test('EW roll against an Encrypted Comms target shows the DM-2 note and reduces the total', async ({ page }) => {
+    const { id0, id1 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().updateShip(id, { encryptedComms: true })
+    }, id1)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId: id })
+    }, id0)
+    await page.getByText('Electronic Warfare', { exact: true }).click()
+    await expect(page.getByText(/Encrypted Comms — DM-2/)).toBeVisible()
+    await page.getByText('manual', { exact: true }).click()
+    const numberInputs = page.locator('input[type="number"]')
+    await numberInputs.nth(0).fill('4')
+    await numberInputs.nth(1).fill('4')
+    // dice(8) + skillLevel(default 1) - encryptedCommsDm(2) = 7
+    await expect(page.getByText('= 7', { exact: true })).toBeVisible()
+  })
+
+  test('EW roll against a non-Encrypted-Comms target shows no DM-2 note', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId: id })
+    }, id0)
+    await page.getByText('Electronic Warfare', { exact: true }).click()
+    await expect(page.getByText(/Encrypted Comms — DM-2/)).not.toBeVisible()
+  })
+})
+
 // EW Countermeasures removed entirely — not a 2300AD B3 mechanic. Verified by
 // full-text search of the B3 PDF: the Electronic Warfare rules (p.53 and p.56,
 // identical text both times) name only Electronics (comms) for the jamming

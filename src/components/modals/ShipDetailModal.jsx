@@ -184,6 +184,22 @@ export function ShipDetailModal({ payload, onClose }) {
         )}
       </div>
 
+      {/* Encrypted Comms — DM+2 to this ship's side of an opposed Electronic Warfare
+          check against it, folded in as DM-2 on the jammer's roll // B3 p.58, issue #66 */}
+      <div>
+        <p className="text-[10px] font-display text-gunmetal-500 tracking-widest mb-1.5">COMMUNICATIONS</p>
+        <button
+          onClick={() => toggleShipFlag(shipId, 'encryptedComms')}
+          className={`w-full flex items-center justify-between px-2 py-1 rounded text-[10px] font-mono border transition-colors
+            ${ship.encryptedComms
+              ? 'bg-bronze-900/40 border-bronze-700 text-bronze-300'
+              : 'bg-gunmetal-800/50 border-gunmetal-700 text-gunmetal-500 hover:border-gunmetal-500 hover:text-gunmetal-300'}`}
+        >
+          <span>Encrypted Comms</span>
+          <span className="font-bold ml-2 text-bronze-400">DM−2 to enemy EW rolls against this ship</span>
+        </button>
+      </div>
+
       {/* Planetary/atmospheric condition — attack range DM, applies regardless of range band // 2300AD B3 p.56 */}
       <div>
         <p className="text-[10px] font-display text-gunmetal-500 tracking-widest mb-1.5">PLANETARY / ATMOSPHERIC CONDITION</p>

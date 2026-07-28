@@ -320,7 +320,7 @@ Select the action type, choose applicable target/options, roll (if required), th
 
 | Action | Check | Effect |
 | ------ | ----- | ------ |
-| **Electronic Warfare** | Difficult (10+) Electronics(comms) INT | Effect 1–4: jammed ship suffers DM−1 to Gunner checks. Effect 5–6: DM−2. Effect ≤−5: jam backfires, jammed ship instead gains DM+1. Resets at round end. // 2300AD B3 p.54 |
+| **Electronic Warfare** | Difficult (10+) Electronics(comms) INT | Effect 1–4: jammed ship suffers DM−1 to Gunner checks. Effect 5–6: DM−2. Effect ≤−5: jam backfires, jammed ship instead gains DM+1. Resets at round end. Target ship's Encrypted Comms toggle applies DM−2 to this roll (B3 p.58, issue #66). // 2300AD B3 p.54 |
 | **Active Sensors** | Easy (6+) Electronics(sensors) | Activates active sensor sweep. Signature +1 while active (flag persists until toggled off in Ship Sheet). |
 
 ### Gunner

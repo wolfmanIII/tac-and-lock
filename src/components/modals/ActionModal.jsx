@@ -199,10 +199,15 @@ export function ActionModal({ payload, onClose }) {
     setBoardingHullDamage(null)
   }
 
+  // Encrypted Comms (B3 p.58, issue #66): "DM+2 to the target of the check" — this engine
+  // simplifies EW to a single roll against a fixed threshold rather than a true opposed
+  // check, so the target's DM+2 is folded in as DM-2 on the attacker's own roll.
+  const encryptedCommsDm = (action?.id === 'electronic_warfare' && target?.encryptedComms) ? -2 : 0
+
   function doRoll() {
     if (!action) return
     const dice  = roll2D6()
-    const total = dice[0] + dice[1] + skillLevel
+    const total = dice[0] + dice[1] + skillLevel + encryptedCommsDm
     const result = formatCheckResult(total, action.difficulty)
     setRollResult({ ...result, dice, total })
     setBoardingHullDamage(null)
@@ -617,7 +622,12 @@ export function ActionModal({ payload, onClose }) {
                 <button className="px-4 py-2 text-xs font-display tracking-widest text-emerald-400 border border-emerald-800 hover:bg-emerald-900/20 rounded" onClick={doRoll}>ROLL DICE</button>
                 <button className="text-xs font-mono text-gunmetal-400 underline" onClick={() => setManualMode((m) => !m)}>manual</button>
               </div>
-              {manualMode && <DiceInput dm={skillLevel} onChange={onManual} />}
+              {action.id === 'electronic_warfare' && encryptedCommsDm !== 0 && (
+                <p className="text-[10px] font-mono text-amber-400">
+                  {target?.profile?.name} has Encrypted Comms — DM{encryptedCommsDm} to this roll // B3 p.58
+                </p>
+              )}
+              {manualMode && <DiceInput dm={skillLevel + encryptedCommsDm} onChange={onManual} />}
               <p className="text-[9px] font-mono text-gunmetal-600">
                 Acting out of the Captain's declared order: apply DM−1 manually // 2300AD B3 p.53
               </p>

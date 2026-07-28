@@ -164,7 +164,7 @@ export const CREW_ACTIONS = {
       skill: 'Electronics (comms)',
       difficulty: 10,
       difficultyLabel: 'Difficult (10+)',
-      description: 'Disrupt a target ship\'s locks. Effect 1–4: target suffers DM−1 to Gunner checks this round. Effect 5–6: DM−2. Effect ≤−5: the target instead gains DM+1, having triangulated the jammer\'s emissions. // 2300AD B3 p.54',
+      description: 'Disrupt a target ship\'s locks. Effect 1–4: target suffers DM−1 to Gunner checks this round. Effect 5–6: DM−2. Effect ≤−5: the target instead gains DM+1, having triangulated the jammer\'s emissions. If the target has Encrypted Comms, this roll suffers DM−2 (folds in the target\'s own DM+2 to this opposed check). // 2300AD B3 p.54, p.58, issue #66',
       requiresTarget: true,
     },
     {

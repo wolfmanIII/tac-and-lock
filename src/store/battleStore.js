@@ -98,6 +98,12 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     stealthActive:           false,
     isStationary:            false, // not manoeuvring — DM+2/×2 damage to attackers // 2300AD B3 p.56
     atmosphericCondition:    'none', // 'none' | 'surface_atmo' | 'surface_vacuum' | 'atmo_flight' — attack range DM // 2300AD B3 p.56
+    // "Encrypted comms provide DM+2 to the target of the check" (an enemy's Electronic
+    // Warfare jam attempt, an opposed Electronics(comms) check). This engine simplifies
+    // opposed checks to a single roll against a fixed threshold, so a DM+2 for the
+    // defending (target) side is folded in as DM-2 on the attacker's own EW roll —
+    // same simplification pattern as evasionDm. // B3 p.58, issue #66
+    encryptedComms:          false,
     screenRating:            profile.screenRating ?? 0,  // installed max Rating (0 = no screens fitted) // 2300AD B3 p.62
     screenReloads:           profile.screenReloads ?? 0, // spare reloads carried, consumed by rechargeScreens
     screenDeployed:          false, // has this ship activated its screen at all this battle
