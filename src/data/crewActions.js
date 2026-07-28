@@ -101,6 +101,13 @@ export const CREW_ACTIONS = {
       description: 'Push power plant output past rated limits. Difficult (10+) Engineer (power) EDU, repeated every round it\'s used. Success: Effect is the percentage increase in available Power — no Power resource is tracked in this engine, informational only, GM narrates the effect (e.g. temporarily buying back a system offline from a Power Plant/Radiator critical). Effect −5 or worse: the ship suffers a critical hit to the Power Plant from the stress, applied automatically. Distinct from Overload Stutterwarp (Boost Tac Speed), which has no failure consequence. // 2300AD B3 p.54',
       requiresTarget: false,
     },
+  ],
+
+  // B3 p.53 Crew Actions table lists Damage Control as its own role ("Mechanic — Repairs
+  // critical hits and damage to hull"), distinct from Engineer — both actions below used to
+  // sit in the engineer bucket, so their action budget was wrongly gated by Engineer
+  // (stutterwarp) skill instead of Mechanic. // issue #52
+  damage_control: [
     {
       id: 'emergency_repair',
       label: 'Emergency Repair',

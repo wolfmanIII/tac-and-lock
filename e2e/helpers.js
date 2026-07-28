@@ -33,6 +33,7 @@ export function fullCrew(skillLevel = 2) {
   const crewAssignments = {
     pilot: id, captain: id, engineer: id, sensor_operator: id,
     gunner_turret: id, gunner_bay: id, marine: id, remote_pilot: id,
+    damage_control: id,
   }
   return { crew, crewAssignments }
 }

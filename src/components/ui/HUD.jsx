@@ -27,6 +27,7 @@ const PHASE_COLOR = {
 const ROLE_ABBR = {
   pilot: 'Pilot', captain: 'Capt', engineer: 'Eng', sensor_operator: 'Sensor',
   gunner_turret: 'Gun', gunner_bay: 'Bay', marine: 'Marine', remote_pilot: 'RC',
+  damage_control: 'DC',
 }
 
 export function HUD() {

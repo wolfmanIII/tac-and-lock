@@ -43,6 +43,7 @@ async function setupShips(page) {
           crewAssignments: {
             pilot: 'crew-full', captain: 'crew-full', engineer: 'crew-full', sensor_operator: 'crew-full',
             gunner_turret: 'crew-full', gunner_bay: 'crew-full', marine: 'crew-full', remote_pilot: 'crew-full',
+            damage_control: 'crew-full',
           },
         },
         def.faction, 'Close',

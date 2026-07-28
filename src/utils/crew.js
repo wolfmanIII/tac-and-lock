@@ -14,6 +14,10 @@ export const CREW_SKILLS = {
   gunner_bay:      'Gunner (bay)',
   marine:          'Gun Combat',
   remote_pilot:    'Electronics (remote ops)', // pilots and fights drones/fighters // 2300AD B3 p.53, p.55
+  // B3 p.53 Crew Actions table lists this as its own role, distinct from Engineer — was
+  // missing entirely, so emergency_repair/damage_control (both Mechanic-skill actions) were
+  // wrongly budget-gated by Engineer (stutterwarp) skill instead. // issue #52
+  damage_control:  'Mechanic',
 }
 
 /**
@@ -76,6 +80,7 @@ export function getCrewSkill(crew) {
     gunner_bay:      crew.skills.gunner          ?? 0,
     marine:          crew.skills.gunCombat       ?? 0,
     remote_pilot:    crew.skills.remoteOps       ?? 0,
+    damage_control:  crew.skills.mechanic        ?? 0,
   }
   return skillMap[crew.role] ?? 0
 }
@@ -162,6 +167,7 @@ export const ROLE_PRIMARY_CHARACTERISTIC = {
   gunner_bay:      'INT', // same as turret gunner
   marine:          'STR', // boarding actions
   remote_pilot:    'DEX', // drone/fighter Pilot-equivalent checks // 2300AD B3 p.55
+  damage_control:  'INT', // Mechanic checks — B3 documents "INT/EDU", INT picked for consistency with the other roles // 2300AD B3 p.57, issue #52
 }
 
 /**

@@ -19,7 +19,7 @@ import {
 // === CREW_SKILLS ===
 
 describe('CREW_SKILLS', () => {
-  it('has all 7 canonical roles', () => {
+  it('has all 9 canonical roles', () => {
     const roles = Object.keys(CREW_SKILLS)
     expect(roles).toContain('pilot')
     expect(roles).toContain('captain')
@@ -28,6 +28,8 @@ describe('CREW_SKILLS', () => {
     expect(roles).toContain('gunner_turret')
     expect(roles).toContain('gunner_bay')
     expect(roles).toContain('marine')
+    expect(roles).toContain('remote_pilot')
+    expect(roles).toContain('damage_control') // issue #52
   })
 })
 
@@ -102,6 +104,10 @@ describe('getCrewSkill', () => {
 
   it('marine role uses gunCombat skill', () => {
     expect(getCrewSkill(member('marine', { gunCombat: 2 }))).toBe(2)
+  })
+
+  it('damage_control role uses mechanic skill // issue #52', () => {
+    expect(getCrewSkill(member('damage_control', { mechanic: 3 }))).toBe(3)
   })
 
   it('unknown role → 0', () => {
@@ -285,6 +291,12 @@ describe('buildActionBudget', () => {
     const budget = buildActionBudget(undefined, undefined)
     expect(budget.pilot).toBe(0)
     expect(budget.gunner_turret).toBe(0)
+  })
+
+  it('damage_control budgets like a non-gunner role (skill level, not capped at 1) // issue #52', () => {
+    const crew = [{ ...blankCrewMember('c1'), skills: { ...blankCrewMember('x').skills, mechanic: 3 } }]
+    const budget = buildActionBudget({ damage_control: 'c1' }, crew)
+    expect(budget.damage_control).toBe(3)
   })
 })
 
