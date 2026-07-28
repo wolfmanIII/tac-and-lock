@@ -57,7 +57,6 @@ async function injectDrone(page, { band = 'Close', ownerBand = 'Adjacent', weapo
       shotsRemaining,
       destroyed: false,
       detonated: false,
-      sensorLockSource: null,
       launchedRound: 1,
     }
     store.setState((s) => ({ drones: [...s.drones, drone] }))
@@ -146,7 +145,7 @@ test.describe('Drone advancing', () => {
         drones: [...s.drones, {
           id: 'test-drone-inert', ownerId: ships[0].id, targetId: ships[1].id, weaponId: 'ritage1',
           currentBand: 'Long', roundsElapsed: 60, enduranceRounds: 60,
-          destroyed: false, detonated: false, sensorLockSource: null, launchedRound: 1,
+          destroyed: false, detonated: false, launchedRound: 1,
         }],
       }))
       store.getState().setInitiativeOrder(ships.map((s) => s.id))
@@ -807,7 +806,7 @@ async function injectIncomingDrone(page, { band = 'Close', id = 'incoming-001' }
       drones: [...s.drones, {
         id, ownerId: ships[1].id, targetId: ships[0].id, weaponId: 'ritage1',
         currentBand: band, roundsElapsed: 0, enduranceRounds: 60,
-        destroyed: false, detonated: false, sensorLockSource: null, launchedRound: 1,
+        destroyed: false, detonated: false, launchedRound: 1,
       }],
     }))
     return id
@@ -842,7 +841,7 @@ test.describe('Drone attack — proactive engage (Point Defence weapon trait, is
         drones: [...s.drones, {
           id: 'other-target', ownerId: ships[0].id, targetId: ships[1].id, weaponId: 'ritage1',
           currentBand: 'Close', roundsElapsed: 0, enduranceRounds: 60,
-          destroyed: false, detonated: false, sensorLockSource: null, launchedRound: 1,
+          destroyed: false, detonated: false, launchedRound: 1,
         }],
       }))
     })
@@ -939,7 +938,7 @@ test.describe('Context menu — real right-click, drone items', () => {
         drones: [...s.drones, {
           id: 'ctx-menu-drone', ownerId: ships[0].id, targetId: ships[1].id, weaponId: 'ritage1',
           currentBand: 'Close', roundsElapsed: 0, enduranceRounds: 60,
-          destroyed: false, detonated: false, sensorLockSource: null, launchedRound: 1,
+          destroyed: false, detonated: false, launchedRound: 1,
         }],
       }))
     })
@@ -956,7 +955,7 @@ test.describe('Context menu — real right-click, drone items', () => {
         drones: [...s.drones, {
           id: 'ctx-menu-drone-2', ownerId: ships[0].id, targetId: ships[1].id, weaponId: 'ritage1',
           currentBand: 'Adjacent', roundsElapsed: 0, enduranceRounds: 60,
-          destroyed: false, detonated: false, sensorLockSource: null, launchedRound: 1,
+          destroyed: false, detonated: false, launchedRound: 1,
         }],
       }))
     })

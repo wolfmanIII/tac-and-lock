@@ -539,7 +539,7 @@ indipendentemente da quanto alto sia l'Effect (`computeCriticalSeverity` lo spec
 
 ### Evade — Pilot
 
-**Check opposto Pilot (DEX)**. Il pilot evadente dichiara Evade; il check avviene in opposizione al Pilot check (step 2 della Firing Solution) del nemico.
+**Check opposto Pilot (DEX)**. Il pilot evadente dichiara Evade; B3 p.54 dice solo "an opposed Pilot check (DEX)", senza specificare contro quale check nemico. **Semplificazione implementativa** (issue #68): Evade si applica a **tutti** i nemici contemporaneamente, quindi un vero check opposto per-attaccante (contro lo step 2 Pilot di ciascuno) non è rappresentabile — `rollEvasion()` in `ManoeuvreModal.jsx` confronta il tiro del pilota evadente contro una soglia fissa 10 (`effect = total - 10`, commento nel codice: "assume enemy also rolls ~10"), non contro il vero Firing Solution step 2 di un nemico specifico.
 
 | Effect del Pilot evadente | Effetto su tutti i check Electronics (sensors) e Gunner del nemico |
 | --- | --- |

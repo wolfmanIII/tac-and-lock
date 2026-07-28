@@ -16,6 +16,7 @@ import { useProfileImport } from './useProfileImport.js'
 import { Tooltip }          from '../ui/Tooltip.jsx'
 import { FACTIONS, FACTION_COLOR } from '../../data/factions.js'
 import { RANGE_BANDS, RANGE_BAND_ORDER } from '../../data/rangeBands.js'
+import { isDogfightRange } from '../../utils/rangeBands.js'
 import { pairKey }          from '../../utils/rangeBands.js'
 import { useShipTokenIcon } from '../battle/useShipTokenIcon.js'
 
@@ -68,7 +69,7 @@ function RosterTelemetry({ band }) {
 function RosterStatus({ ship, band }) {
   const badge = ship.isDestroyed
     ? { label: '💥 DESTROYED', className: 'text-red-400' }
-    : (band === 'Adjacent' || band === 'Close')
+    : isDogfightRange(band)
       ? { label: '⚔ DOGFIGHT', className: 'text-amber-400' }
       : ship.faction === 'neutral'
         ? { label: '○ NEUTRAL', className: 'text-gunmetal-400' }

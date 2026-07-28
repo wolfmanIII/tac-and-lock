@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { v7 as uuidv7 } from 'uuid'
-import { pairKey, getCloserBand, getFartherBand, moveBands, computeEndedPursuits } from '../utils/rangeBands.js'
+import { pairKey, getCloserBand, getFartherBand, moveBands, computeEndedPursuits, isDogfightRange } from '../utils/rangeBands.js'
 import { FACTION_COLOR } from '../data/factions.js'
 import { WEAPONS } from '../data/weapons.js'
 import { exportBattle, importBattle } from '../utils/io.js'
@@ -178,7 +178,7 @@ export const useBattleStore = create((set, get) => {
     if (roundsElapsed > drone.enduranceRounds) {
       return { ...drone, roundsElapsed, detonated: true } // endurance exceeded — inert
     }
-    if (drone.currentBand === 'Adjacent' || drone.currentBand === 'Close') {
+    if (isDogfightRange(drone.currentBand)) {
       return { ...drone, roundsElapsed } // already within engagement range — holds position
     }
     return {
@@ -202,8 +202,7 @@ export const useBattleStore = create((set, get) => {
     const advancedDrones  = s.drones.map(advanceDroneOneRound)
     const newlyInRange    = advancedDrones.filter((d, i) =>
       !d.destroyed && !d.detonated &&
-      (d.currentBand === 'Close' || d.currentBand === 'Adjacent') &&
-      !(s.drones[i].currentBand === 'Close' || s.drones[i].currentBand === 'Adjacent'),
+      isDogfightRange(d.currentBand) && !isDogfightRange(s.drones[i].currentBand),
     )
 
     // Emergency Repair's critical-hit fix relapses once its 1D-round timer expires
@@ -1163,7 +1162,6 @@ export const useBattleStore = create((set, get) => {
           shotsRemaining:   weapon?.magazine ?? 1, // Ritage-1: 5, Whiskey (battery): 3, Ritage-2/detonation: 1 // B3 p.61, issue #62
           destroyed:        false,
           detonated:        false,
-          sensorLockSource: null, // null = self-generated Firing Solution (DM-2) // B3 p.55
           launchedRound:    round,
         }
 
@@ -1313,7 +1311,7 @@ export const useBattleStore = create((set, get) => {
 
     /** Whether any drones/missiles are in engagement range awaiting resolution. */
     hasPendingImpacts: () => get().drones.some((d) =>
-      !d.destroyed && !d.detonated && (d.currentBand === 'Close' || d.currentBand === 'Adjacent'),
+      !d.destroyed && !d.detonated && isDogfightRange(d.currentBand),
     ),
   }
 })

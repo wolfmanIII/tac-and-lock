@@ -1,6 +1,7 @@
 import { useBattleStore } from '../../store/battleStore.js'
 import { useUIStore } from '../../store/uiStore.js'
 import { WEAPONS } from '../../data/weapons.js'
+import { isDogfightRange } from '../../utils/rangeBands.js'
 
 /** Displays individually tracked drones/missiles in flight. // 2300AD B3 p.61 */
 export function DroneTracker() {
@@ -11,8 +12,8 @@ export function DroneTracker() {
   const shipName = (id) => ships.find((s) => s.id === id)?.profile?.name ?? id
 
   const active   = drones.filter((d) => !d.destroyed && !d.detonated)
-  const inFlight = active.filter((d) => d.currentBand !== 'Close' && d.currentBand !== 'Adjacent')
-  const inRange  = active.filter((d) => d.currentBand === 'Close' || d.currentBand === 'Adjacent')
+  const inFlight = active.filter((d) => !isDogfightRange(d.currentBand))
+  const inRange  = active.filter((d) => isDogfightRange(d.currentBand))
 
   if (active.length === 0) return null
 

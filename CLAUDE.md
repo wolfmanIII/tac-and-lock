@@ -56,6 +56,7 @@ B3 p.53 descrive invece un'economia di azioni **per membro d'equipaggio**, senza
 - Ogni **ruolo** (non la nave nel suo complesso) ha un budget di azioni/round = il proprio skill level nello skill primario del ruolo (`ship.actionsRemaining[role]`, calcolato da `buildActionBudget()` in `utils/crew.js`). **Gunnery è hard-capped a 1** (Fire Weapon / Deploy-Recharge Screens / Point Defence condividono lo stesso singolo uso).
 - Il turno di una nave termina quando il GM clicca **END SHIP'S TURN** (bottone in HUD, non più legato a un singolo "hasActedThisPhase" — la nave può finire il turno anche con azioni residue).
 - Il Capitano può anche **Issue Order** (B3 p.53, intro): spende una propria azione per dare **+1 azione** (non un DM) a un altro ruolo questo round — distinto da **Commands** (B3 p.54, DM+1/+2, attivo immediatamente questo round, cap sui comandi/round = livello Leadership del Capitano — non il suo budget azioni Tactics naval).
+  > **Decisione (issue #68)**: B3 p.53 dice testualmente "that makes use of one of their own actions (equal to their Leadership skill level)" — ambiguo tra "un cap separato a livello Leadership" (come Commands, p.54, esplicitamente cappato a Leadership) o semplicemente "una delle proprie azioni" del Capitano (già budget Tactics naval in questo motore). Bassa confidenza (audit #68) — **non implementato un cap Leadership separato**: `issue_order` resta gated solo dal budget azioni generico del Capitano (`ActionModal.jsx`), stessa lettura di prima. Nessuna fonte secondaria per dirimere.
 
 ### Fascie di Distanza — 2300AD B3 p.52
 
@@ -153,6 +154,8 @@ Ogni nave ha un valore **Signature** (basato su tonnellaggio + power plant). Usa
 | Spin Habitat ritirato | −1 |
 | Stealth | −4 |
 
+> **Decisione (issue #68)**: B3 p.57 è auto-contraddittorio sulla soglia "Damage > 50% Hull" — l'intestazione della tabella dice "over 50%", la prosa adiacente dice "50% or more". `computeEffectiveSignature` (`combat.js`) legge `currentHull/hp < 0.5` (stretto, "over 50%"), coerente con l'intestazione della tabella. Lettura esplicita e intenzionale (tabella prevale sulla prosa), non un bug — nessuna fonte secondaria disponibile per dirimere l'ambiguità del testo originale.
+
 ### Critical Hits — 2300AD B3 p.58
 
 #### Surface Fixture Damage (esterno, non penetrante)
@@ -212,6 +215,12 @@ tutti gli altri `mechanics` di questa tabella — vedi sotto), non applicato aut
 > automaticamente lo stato di gioco (DM, TAC Speed, Hull, equipaggio) — sono testo descrittivo che
 > il GM applica manualmente, stesso pattern delle azioni "informative" (`scan_target`,
 > `re_route_power`). Automatizzarli sarebbe un cambio di design più ampio, fuori scope.
+>
+> **Decisione (issue #68)**: "Sustained Damage" (CRB p.169, immediatamente prima della Location
+> table: ogni volta che una nave subisce danno pari al 10% del suo Hull iniziale, tirare 2D per un
+> critical hit Severity 1) **non è implementata e non lo sarà** — B3 p.58 autorizza esplicitamente
+> solo "the Critical Hit tables" (Location p.169 + Effects p.170) per citazione CRB, non le regole
+> narrative adiacenti come Sustained Damage. Fuori scope per costruzione, non un gap dimenticato.
 
 ### Weapon Traits — 2300AD B3 p.59
 

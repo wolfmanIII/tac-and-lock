@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useUIStore } from '../../store/uiStore.js'
 import { useBattleStore } from '../../store/battleStore.js'
+import { isDogfightRange } from '../../utils/rangeBands.js'
 
 function MenuItem({ icon, label, onClick, danger = false, disabled = false, hint = '' }) {
   return (
@@ -63,8 +64,7 @@ function ShipMenu({ x, y, menuRef, shipId, close }) {
 
   // This ship's own drones that have closed to engagement range // 2300AD B3 p.61
   const ownDronesInRange = drones.filter((d) =>
-    d.ownerId === shipId && !d.destroyed && !d.detonated &&
-    (d.currentBand === 'Close' || d.currentBand === 'Adjacent'),
+    d.ownerId === shipId && !d.destroyed && !d.detonated && isDogfightRange(d.currentBand),
   )
 
   // Enemy drones/missiles incoming at THIS ship, close enough for a proactive Point

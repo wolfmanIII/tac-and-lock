@@ -8,6 +8,7 @@ import { useBattleStore } from '../../store/battleStore.js'
 import { useUIStore } from '../../store/uiStore.js'
 import { Tooltip } from './Tooltip.jsx'
 import { Modal } from '../modals/Modal.jsx'
+import { isDogfightRange } from '../../utils/rangeBands.js'
 
 // No "Manoeuvre/Attack/Actions Step" in 2300AD B3 (see battleStore.js) — a ship's
 // turn in 'combat' is open-ended, gated by per-role actionsRemaining instead.
@@ -58,7 +59,7 @@ export function HUD() {
 
   // Drones/missiles that have closed to engagement range and still need a GM resolution // 2300AD B3 p.61
   const dronesInRange = useMemo(
-    () => drones.filter((d) => !d.destroyed && !d.detonated && (d.currentBand === 'Close' || d.currentBand === 'Adjacent')),
+    () => drones.filter((d) => !d.destroyed && !d.detonated && isDogfightRange(d.currentBand)),
     [drones],
   )
 

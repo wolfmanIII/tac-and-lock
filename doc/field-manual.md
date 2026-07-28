@@ -180,9 +180,10 @@ TAC Speed is a **fixed DM**, never spent or depleted. Pilot's action budget (ski
 multiple manoeuvre attempts in the same round, unlike Gunner which is always capped at 1. // 2300AD B3 p.53–54
 
 **Combat ends one round after Distant**: if a ship pair is still at Distant range at the start of
-the round after a successful Open put them there, a **COMBAT ENDED** badge appears on that pair's
-DISTANCES row and in the Manoeuvre modal — informational only (doesn't force anything), citing
-the pursuer's failure to close in time. Use **GM SET** to re-engage the pair and clear it.
+the round after any resolved Open/Close Pilot check moved them there (not a GM override), a
+**COMBAT ENDED** badge appears on that pair's DISTANCES row and in the Manoeuvre modal —
+informational only (doesn't force anything), citing the pursuer's failure to close in time. Use
+**GM SET** to re-engage the pair and clear it.
 // 2300AD B3 p.54, issue #46
 
 ---
@@ -229,7 +230,9 @@ Right-click a ship → **Attack…**
 
 | DM source | Value |
 | --------- | ----- |
-| Fire Control software | +1 per level (Fire Control/1 = +1, /2 = +2, /3 = +3) |
+| Fire Control software | +1 per level (Fire Control/1 = +1, /2 = +2, /3 = +3) — purely additive, never a penalty |
+| Targeting System (per weapon slot) | Light TTA +0, TTA −1, UTES +1, Drone Controller +0 — **DM−8 if the weapon mount has no Targeting System assigned at all**, including Point Defence. Separate from and stacks with Fire Control software. // B3 p.62 |
+| Defensive Screens (target's) | −Rating (1/2/3), laser weapons only (`weapon.isLaser === true`) — each laser hit depletes the target's active Rating by 1 // B3 p.62 |
 | Effect from Step 2 | Positive Effect carries forward |
 | EW jamming | −1 (Effect 1–4) / −2 (Effect 5–6) / +1 if the jammer badly failed (Effect ≤−5) |
 | Command (Captain) | +commandBonus, only if the Captain's Command from last round targeted `gunner_turret` (see §9) |
@@ -391,11 +394,13 @@ Right-click attacker → **Launch Drone…** Pick a target, a weapon (Ritage-1, 
 
 Each unit is tracked independently in the **Drone Tracker** with its own TAC Speed and Endurance (maximum rounds before it goes inert if it never reaches its target). Each round it closes one range band toward its target.
 
-| Drone | TL | Damage | TAC Speed | Endurance | Traits |
-| ----- | -- | ------ | --------- | --------- | ------ |
-| Ritage-1 | 11 | 1D | 3 | 60 rounds (6h) | Smart |
-| Ritage-2 | 12 | 5D | 4 | 40 rounds (4h) | Smart, Blast 6, Radiation — single-shot |
-| 'Whiskey' | 12 | 1D laser / 3D detonation | 4 | 20 rounds (2h) | Smart; detonation mode is single-use |
+No canonical combat drone carries the Smart trait (B3 p.61 lists none for any of the three — only the vehicle-sourced missiles `aero12`/`kingfisher` have it, issue #50/#51).
+
+| Drone | TL | Magazine | Damage | TAC Speed | Endurance | Traits |
+| ----- | -- | -------- | ------ | --------- | --------- | ------ |
+| Ritage-1 | 11 | 5 | 1D | 3 | 60 rounds (6h) | — |
+| Ritage-2 | 12 | — (single-shot) | 5D | 4 | 40 rounds (4h) | Blast 6, Radiation |
+| 'Whiskey' | 12 | 3 (battery) / single-use (detonation) | 1D laser / 3D detonation | 4 | 20 rounds (2h) | — / Blast 3, Radiation |
 
 ### Resolving an Attack
 
