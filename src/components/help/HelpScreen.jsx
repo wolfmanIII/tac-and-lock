@@ -361,7 +361,7 @@ export function HelpScreen({ onBack } = {}) {
           <Sub title="SENSOR OPERATOR">
             <KV k="Electronic Warfare" v="Difficult (10+) Electronics(comms) INT. Effect 1–4: target suffers DM−1 to Gunner checks. Effect 5–6: DM−2. Effect ≤−5: jam backfires, target instead gains DM+1. Resets at round end." />
             <KV k="Active Sensors"    v="Easy (6+) Electronics(sensors). Signature +1 while active (toggle off in Ship Sheet)." />
-            <KV k="Scan Target"       v="Routine (8+) Electronics(sensors) INT, DM−1 per range band. Informational only — read the Effect off the roll result and narrate (Trav CRB p.151)." />
+            <KV k="Scan Target"       v="Routine (8+) Electronics(sensors) INT, DM−1 per range band. Informational only — read the Effect off the roll result and narrate (Sensor Target/Sensor Detail tables, Trav CRB p.160)." />
             <KV k="Improve Critical"  v="Very Difficult (12+) Electronics(sensors) INT, DM−1 per range band. Success: this ship's next shot this round crits at Effect 5+ (or 4+ if this check scored Effect 6+) — consumed after one attempt, hit or miss. Shown as a banner in the Attack modal and Ship Sheet." />
           </Sub>
 

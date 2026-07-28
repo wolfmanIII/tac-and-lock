@@ -175,7 +175,14 @@ export const CREW_ACTIONS = {
       skill: 'Electronics (sensors)',
       difficulty: 8,
       difficultyLabel: 'Routine (8+)',
-      description: 'Scan a target for information (DM−1 per range band between ships). Effect 1–3: base info at current range (Trav CRB p.151). Effect 4–5: info as if one range band closer. Effect 6: as if two range bands closer. Informational — GM narrates the result. // 2300AD B3 p.54',
+      // Effect-tier text verbatim from B3 p.54 itself (not invented) — B3's own
+      // cross-reference to "page 151 of the Traveller Core Rulebook" for base sensor
+      // info doesn't resolve in this project's CRB PDF (p.151 is Airlocks/Docking/
+      // Power, unrelated); the real analogous content — the Full/Limited/Minimal/None
+      // Sensor Target/Sensor Detail tables by sensor type and range band — is on CRB
+      // p.160. Same class of error as B3's Auto-trait cross-reference to CRB p.75
+      // (real page 79, issue #42/#59). Issue #60.
+      description: 'Scan a target for information (DM−1 per range band between ships). Effect 1–3: base info at current range (see the Sensor Target/Sensor Detail tables, Trav CRB p.160). Effect 4–5: info as if one range band closer. Effect 6: as if two range bands closer. Informational — GM narrates the result. // 2300AD B3 p.54',
       requiresTarget: true,
     },
     {
