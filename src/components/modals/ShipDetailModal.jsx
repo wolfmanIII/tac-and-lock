@@ -53,6 +53,9 @@ export function ShipDetailModal({ payload, onClose }) {
 
   const crits          = Object.entries(ship.criticalTracks ?? {}).filter(([, sev]) => sev > 0)
   const surfaceHits    = Object.entries(ship.surfaceFixtureTracks ?? {}).filter(([, hits]) => hits > 0)
+  // Emergency Repair's fix is temporary — shown even for systems currently at severity 0,
+  // since a relapse (B3 p.57) restores the crit the GM might otherwise think is gone. // issue #64
+  const pendingRelapses = Object.entries(ship.criticalRepairExpiry ?? {}).filter(([, r]) => r != null)
   const evasionDm      = ship.evasionDm ?? 0
 
   return (
@@ -369,6 +372,21 @@ export function ShipDetailModal({ payload, onClose }) {
               <div key={sys} className="flex items-center justify-between bg-red-950/30 border border-red-900/40 rounded px-2 py-1">
                 <span className="text-[10px] font-mono text-gunmetal-300">{CRITICAL_HIT_SYSTEM_LABELS[sys] ?? sys}</span>
                 <span className={`text-xs font-mono font-bold ${SEV_COLOR[sev] ?? 'text-red-400'}`}>SEV {sev}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Emergency Repair relapse timers — B3 p.57, issue #64 */}
+      {pendingRelapses.length > 0 && (
+        <div>
+          <p className="text-[10px] font-display text-gunmetal-500 tracking-widest mb-1">REPAIR HOLDING (TEMPORARY)</p>
+          <div className="grid grid-cols-2 gap-1">
+            {pendingRelapses.map(([sys, expiresRound]) => (
+              <div key={sys} className="flex items-center justify-between bg-amber-950/30 border border-amber-900/40 rounded px-2 py-1">
+                <span className="text-[10px] font-mono text-gunmetal-300">{CRITICAL_HIT_SYSTEM_LABELS[sys] ?? sys}</span>
+                <span className="text-[10px] font-mono text-amber-400">until R{expiresRound}</span>
               </div>
             ))}
           </div>

@@ -633,8 +633,8 @@ attaccare.
 - **Overload Stutterwarp** — Difficult (10+) Engineer (stutterwarp) **INT**: porta il motore oltre i limiti di sicurezza. Successo: Effect 1–4 → TAC Speed +1, Effect 5–6 → +2 questo round. Nessuna conseguenza in caso di fallimento. // B3 p.54
 - **Emergency Repair** ("Damage Control team") — Difficult (10+) **Mechanic** (1D minuti, INT): ripara un danno nella fase corrente. // B3 p.56–57
   - Modalità *Critical System*: riduce la severity di un critical hit track di 1.
-  - Modalità *Hull*: ripristina **5 Hull Points**.
-  - Riparazione temporanea (dura 1D ore); se nuovo critical hit sulla stessa location: ricominciare da capo.
+  - Modalità *Hull*: ripristina **5 Hull Points** — **permanente** (B3: "Hull damage repairs are effectively permanent").
+  - Modalità *Critical System* è invece **temporanea** (issue #64, non più un bug — B3: *"Repaired critical hits will last for 1D rounds. With Effect 5+ the critical repair will last the remainder of the combat."*): Effect < 5 → tiene per **1D round** (`roll1D6()` al momento della riparazione, `ship.criticalRepairExpiry[system]` = round assoluto di scadenza); Effect ≥ 5 → tiene per il resto del combattimento (`expiresRound: null`, nessun relapse tracciato). Alla scadenza (`buildNextRoundState` in `battleStore.js`), la severity **relapse** di nuovo +1 (fino al cap `getMaxSeverity(system)`), voce di log, e banner "REPAIR HOLDING (TEMPORARY)" in `ShipDetailModal.jsx` finché la riparazione è attiva. Il relapse **1D ore dopo la fine del combattimento** (se non si fanno riparazioni permanenti) non è tracciato — fuori dalla granularità a round di questo motore, stessa classe di semplificazione dei modificatori di composizione team di Auto-Repair.
   - Hull damage e armi distrutte NON sono riparabili in combattimento.
 
 ### Reload Turret — Gunner

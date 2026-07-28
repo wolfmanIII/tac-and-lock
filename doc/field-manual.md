@@ -314,7 +314,7 @@ Select the action type, choose applicable target/options, roll (if required), th
 | ------ | ----- | ------ |
 | **Overload Stutterwarp** | Difficult (10+) Engineer(stutterwarp) INT | Success: Effect 1–4 → TAC Speed +1, Effect 5–6 → +2 this round. No failure consequence. |
 | **Boost Power Output** | Difficult (10+) Engineer(power) EDU | Repeated every round. Success: Effect is the % Power increase — informational only, no Power resource tracked. Effect ≤−5: automatic critical hit to the Power Plant. // 2300AD B3 p.54 |
-| **Emergency Repair** | Difficult (10+) Mechanic INT/EDU | *System mode*: reduce one critical hit severity by 1. *Hull mode*: restore 5 Hull Points. |
+| **Emergency Repair** | Difficult (10+) Mechanic INT/EDU | *System mode*: reduce one critical hit severity by 1 — **temporary**: Effect < 5 holds for 1D rounds, Effect 5+ holds for the rest of combat, then relapses back up by 1 (issue #64). *Hull mode*: restore 5 Hull Points — permanent. |
 
 ### Sensor Operator
 

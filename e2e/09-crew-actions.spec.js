@@ -798,6 +798,121 @@ test.describe('Emergency Repair — skill, difficulty, and repair amount', () =>
   })
 })
 
+// === Emergency Repair — critical-hit fix is temporary, not permanent // B3 p.57, issue #64 ===
+// "Repaired critical hits will last for 1D rounds. With Effect 5+ the critical repair will
+// last the remainder of the combat." Only Hull-point repair (tested above) is permanent.
+
+test.describe('Emergency Repair — critical-hit fix is temporary (issue #64)', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearAppState(page)
+    await gotoBattle(page)
+  })
+
+  /**
+   * Repair the given system. `skillLevel` (0-4, GM-picked button) + dice sum determines
+   * the check's Effect against Difficult (10+): effect = dice[0]+dice[1]+skillLevel-10.
+   */
+  async function repairSystem(page, shipId, system, skillLevel, dice) {
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('action', { shipId: id })
+    }, shipId)
+    await page.getByText('Emergency Repair', { exact: true }).click()
+    await page.getByText('Critical System', { exact: true }).click()
+    await page.locator('select').selectOption(system)
+    await page.getByRole('button', { name: String(skillLevel), exact: true }).click()
+    await page.getByText('manual', { exact: true }).click()
+    const numberInputs = page.locator('input[type="number"]')
+    await numberInputs.nth(0).fill(String(dice[0]))
+    await numberInputs.nth(1).fill(String(dice[1]))
+    await expect(page.getByText('SUCCESS', { exact: false })).toBeVisible()
+    await page.getByText('APPLY RESULT', { exact: true }).click()
+  }
+
+  test('a low-Effect repair sets a 1D-round expiry and reduces severity by 1', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().updateShip(id, { criticalTracks: { sensors: 2 } })
+    }, id0)
+
+    const round = await page.evaluate(() => window.__ZUSTAND_BATTLE_STORE__.getState().round)
+    await repairSystem(page, id0, 'sensors', 2, [4, 4]) // total 4+4+2 = 10, Effect 0
+
+    const ship = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
+    , id0)
+    expect(ship.criticalTracks.sensors).toBe(1)
+    expect(ship.criticalRepairExpiry.sensors).not.toBeNull()
+    expect(ship.criticalRepairExpiry.sensors).toBeGreaterThan(round)
+  })
+
+  test('a high-Effect (5+) repair sets expiry to null — lasts rest of combat', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().updateShip(id, { criticalTracks: { sensors: 2 } })
+    }, id0)
+    await repairSystem(page, id0, 'sensors', 4, [6, 6]) // total 6+6+4 = 16, Effect 6
+
+    const ship = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
+    , id0)
+    expect(ship.criticalTracks.sensors).toBe(1)
+    expect(ship.criticalRepairExpiry.sensors).toBeNull()
+  })
+
+  test('a repair relapses back to its prior severity once its expiry round is reached', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().updateShip(id, { criticalTracks: { sensors: 2 } })
+    }, id0)
+    await repairSystem(page, id0, 'sensors', 2, [4, 4])
+
+    const expiresRound = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id).criticalRepairExpiry.sensors
+    , id0)
+    const currentRound = await page.evaluate(() => window.__ZUSTAND_BATTLE_STORE__.getState().round)
+
+    for (let i = currentRound; i < expiresRound; i++) {
+      await page.evaluate(() => window.__ZUSTAND_BATTLE_STORE__.getState().startNextRound())
+    }
+
+    const ship = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id)
+    , id0)
+    expect(ship.criticalTracks.sensors).toBe(2) // relapsed back up
+    expect(ship.criticalRepairExpiry.sensors).toBeUndefined()
+  })
+
+  test('a rest-of-combat (Effect 5+) repair does not relapse across many rounds', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().updateShip(id, { criticalTracks: { sensors: 2 } })
+    }, id0)
+    await repairSystem(page, id0, 'sensors', 4, [6, 6])
+
+    for (let i = 0; i < 8; i++) {
+      await page.evaluate(() => window.__ZUSTAND_BATTLE_STORE__.getState().startNextRound())
+    }
+
+    const severity = await page.evaluate((id) =>
+      window.__ZUSTAND_BATTLE_STORE__.getState().ships.find((s) => s.id === id).criticalTracks.sensors
+    , id0)
+    expect(severity).toBe(1)
+  })
+
+  test('ShipDetailModal shows "REPAIR HOLDING (TEMPORARY)" for a system with a pending relapse', async ({ page }) => {
+    const { id0 } = await setupShips(page)
+    await page.evaluate((id) => {
+      window.__ZUSTAND_BATTLE_STORE__.getState().updateShip(id, { criticalTracks: { sensors: 2 } })
+    }, id0)
+    await repairSystem(page, id0, 'sensors', 2, [4, 4])
+
+    await page.evaluate((id) => {
+      window.__ZUSTAND_UI_STORE__.getState().openModal('ship-detail', { shipId: id })
+    }, id0)
+    await expect(page.getByText('REPAIR HOLDING (TEMPORARY)')).toBeVisible()
+  })
+})
+
 // === Overload Stutterwarp — Engineer // 2300AD B3 p.54 ======================
 // A failed roll has no consequence at all (B3's "Boost Tac Speed" table has no
 // failure entry) — a Stutterwarp critical hit on failure was invented and has

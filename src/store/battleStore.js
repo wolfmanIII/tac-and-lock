@@ -6,7 +6,8 @@ import { WEAPONS } from '../data/weapons.js'
 import { exportBattle, importBattle } from '../utils/io.js'
 import { rollInitiative, getPdcComputerCap } from '../utils/combat.js'
 import { buildActionBudget } from '../utils/crew.js'
-import { computeCriticalSeverity } from '../data/criticalHits.js'
+import { computeCriticalSeverity, getMaxSeverity } from '../data/criticalHits.js'
+import { roll1D6 } from '../utils/dice.js'
 
 // Stages: 'setup' → 'initiative' → 'combat'. There is no "Manoeuvre/Attack/Actions
 // Step" in 2300AD B3 — that structure does not appear anywhere in B3 p.52-62 (verified
@@ -124,6 +125,15 @@ function shipFromProfile(profile, faction, startBand = 'Long', color = null) {
     // applyResults), cleared at the start of every new round if unused. // 2300AD B3 p.53
     utesSolutionDm:          null, // 1 or 2
     utesSolutionSlotIdx:     null, // index into ship.weapons[] this solution applies to
+    // Emergency Repair's critical-hit fix is temporary, not permanent (only Hull-point
+    // repair is permanent) — B3 p.57: "Repaired critical hits will last for 1D rounds.
+    // With Effect 5+ the critical repair will last the remainder of the combat." Maps
+    // system -> the round number it relapses on; a null value means Effect 5+ ("rest of
+    // combat" — no relapse tracked within a single engagement). The 1D-hour relapse after
+    // combat ends (unless permanent repairs are made) is out of this engine's granularity
+    // — rounds only, no post-combat clock — same class of simplification as the
+    // Auto-Repair team-composition modifiers. // issue #64
+    criticalRepairExpiry:    {},
   }
 }
 
@@ -190,9 +200,36 @@ export const useBattleStore = create((set, get) => {
       !(s.drones[i].currentBand === 'Close' || s.drones[i].currentBand === 'Adjacent'),
     )
 
+    // Emergency Repair's critical-hit fix relapses once its 1D-round timer expires
+    // (Effect 5+ repairs have expiresRound === null — "lasts rest of combat", no
+    // relapse tracked within a single engagement). // B3 p.57, issue #64
+    const repairRelapseLog = []
+    const relapseCriticalTracks = (sh) => {
+      const expiry = sh.criticalRepairExpiry ?? {}
+      const tracks = { ...sh.criticalTracks }
+      const nextExpiry = {}
+      for (const [system, expiresRound] of Object.entries(expiry)) {
+        if (expiresRound != null && nextRound >= expiresRound) {
+          const relapsed = Math.min(getMaxSeverity(system), (tracks[system] ?? 0) + 1)
+          tracks[system] = relapsed
+          repairRelapseLog.push(makeLogEntry({
+            round: nextRound, phase: 'initiative', type: 'critical', shipId: sh.id,
+            message: `⚠ ${sh.profile.name}: ${system} repair relapsed — back to severity ${relapsed}.`,
+          }))
+        } else {
+          nextExpiry[system] = expiresRound
+        }
+      }
+      return { tracks, nextExpiry }
+    }
+
     // Reset per-round ship state. // 2300AD B3 p.53
-    const ships = s.ships.map((sh) => ({
+    const ships = s.ships.map((sh) => {
+      const { tracks, nextExpiry } = relapseCriticalTracks(sh)
+      return {
       ...sh,
+      criticalTracks:           tracks,
+      criticalRepairExpiry:     nextExpiry,
       evasionDm:                0,
       ewTarget:                 null,
       ewEffect:                 0,
@@ -210,7 +247,7 @@ export const useBattleStore = create((set, get) => {
       // at the round boundary, same as Improve Critical. // 2300AD B3 p.53
       utesSolutionDm:           null,
       utesSolutionSlotIdx:      null,
-    }))
+    }})
 
     // Pairs whose range has held at Distant for a full round with no successful Close —
     // "combat ends one round after the range becomes Distant". // 2300AD B3 p.54
@@ -247,6 +284,7 @@ export const useBattleStore = create((set, get) => {
           message: `⚑ ${nameA} ↔ ${nameB}: combat ends — range held at Distant, pursuer could not close. // B3 p.54`,
         })
       }),
+      ...repairRelapseLog,
     ]
 
     return {
@@ -713,33 +751,41 @@ export const useBattleStore = create((set, get) => {
     ),
 
     /**
-     * Reduce a critical hit track severity (from repair).
+     * Reduce a critical hit track severity (from repair). The repair is temporary, not
+     * permanent (only Hull-point repair is permanent) — B3 p.57: Effect 1-4 lasts 1D
+     * rounds, Effect 5+ lasts the remainder of combat (no relapse tracked). Relapse is
+     * applied at the start of the round it expires on, in buildNextRoundState. // issue #64
      * @param {string} shipId
      * @param {string} system
+     * @param {number} effect — the Emergency Repair check's Effect, determines duration
      */
     reduceCriticalSeverity: wh(
       (shipId, system) => {
         const ship = get().ships.find((s) => s.id === shipId)
         return !!(ship && (ship.criticalTracks[system] ?? 0) > 0)
       },
-      (shipId, system) => {
+      (shipId, system, effect = 0) => {
         const { round, phase } = get()
         const ship = get().ships.find((s) => s.id === shipId)
         if (!ship) return
 
         const current = ship.criticalTracks[system] ?? 0
         const next    = Math.max(0, current - 1)
+        const expiresRound = effect >= 5 ? null : round + roll1D6()
 
         set((s) => ({
           ships: s.ships.map((sh) =>
             sh.id !== shipId ? sh : {
               ...sh,
               criticalTracks: { ...sh.criticalTracks, [system]: next },
+              criticalRepairExpiry: { ...sh.criticalRepairExpiry, [system]: expiresRound },
             },
           ),
           log: [...s.log, makeLogEntry({
             round, phase, type: 'action', shipId,
-            message: `🔧 ${ship.profile.name}: ${system} repaired to severity ${next}.`,
+            message: expiresRound == null
+              ? `🔧 ${ship.profile.name}: ${system} repaired to severity ${next} (lasts rest of combat).`
+              : `🔧 ${ship.profile.name}: ${system} repaired to severity ${next} (holds until round ${expiresRound}).`,
           })],
         }))
       },

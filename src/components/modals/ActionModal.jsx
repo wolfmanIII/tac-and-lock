@@ -246,7 +246,7 @@ export function ActionModal({ payload, onClose }) {
       case 'emergency_repair':
         if (success) {
           if (repairMode === 'hull') repairHull(shipId, 5)
-          else if (critSystem) reduceCritical(shipId, critSystem)
+          else if (critSystem) reduceCritical(shipId, critSystem, effect)
         }
         break
 
