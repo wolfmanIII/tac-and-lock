@@ -233,6 +233,9 @@ Right-click a ship → **Attack…**
 | Fire Control software | +1 per level (Fire Control/1 = +1, /2 = +2, /3 = +3) — purely additive, never a penalty |
 | Targeting System (per weapon slot) | Light TTA +0, TTA −1, UTES +1, Drone Controller +0 — **DM−8 if the weapon mount has no Targeting System assigned at all**, including Point Defence. Separate from and stacks with Fire Control software. // B3 p.62 |
 | Defensive Screens (target's) | −Rating (1/2/3), laser weapons only (`weapon.isLaser === true`) — each laser hit depletes the target's active Rating by 1 // B3 p.62 |
+| Range Modifiers | Adjacent +2 / Close +0 / Short −6, applied at the weapon's own max Range and every band below it — e.g. a Short-range weapon still takes −6 at Short, not 0 (`weapon.rangeDm`) // B3 p.57 |
+| Atmospheric/planetary condition (target's) | Planetary surface w/atmosphere −6 / w/o atmosphere −4 / atmospheric flight −2 — independent of range band, GM toggle in Ship Detail // B3 p.56 |
+| Weapon trait Ortillery | +4 vs. a target on a planetary surface (with or without atmosphere, not in flight) // B3 p.59 |
 | Effect from Step 2 | Positive Effect carries forward |
 | EW jamming | −1 (Effect 1–4) / −2 (Effect 5–6) / +1 if the jammer badly failed (Effect ≤−5) |
 | Command (Captain) | +commandBonus, only if the Captain's Command from last round targeted `gunner_turret` (see §9) |
