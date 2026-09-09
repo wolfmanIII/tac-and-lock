@@ -86,8 +86,8 @@ export const CREW_ACTIONS = {
       reaction: false,
       skill: 'Engineer (stutterwarp)',
       difficulty: 10,
-      difficultyLabel: 'Difficult (10+)',
-      description: 'Push the tactical stutterwarp past safe limits. Difficult (10+). Success: Effect 1–4 → +1 TAC Speed, Effect 5–6 → +2 this round. // 2300AD B3 p.54',
+      difficultyLabel: 'Very Difficult (10+)',
+      description: 'Push the tactical stutterwarp past safe limits. Very Difficult (10+) — B3 prints this label at a 10+ threshold, inconsistent with every other "Very Difficult" elsewhere in the book being 12+, likely a book erratum; the numeric threshold is unchanged. Success: Effect 1–4 → +1 TAC Speed, Effect 5–6 → +2 this round. // 2300AD B3 p.54, issue #77',
       requiresTarget: false,
     },
     {
