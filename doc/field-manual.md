@@ -373,7 +373,8 @@ Destroyed at the 2nd hit; Radiator has its own 5-stage escalation instead.
 
 ### Internal Critical Hits // B3 p.58 (cites CRB "p.158–159" — actually p.169/p.170 in this PDF, issue #23/#67)
 
-Triggered when the attack Effect is ≥ 6, or when hull reaches 0.
+Triggered when the attack Effect is ≥ 6 (B3-sourced), or when hull reaches 0 (house rule — not
+B3/CRB-sourced, kept for narration on a killing blow // issue #76).
 
 Roll 2D for location (CRB p.169); per-severity effects come from the Effects table (CRB p.170). 2300AD substitutions:
 - **J-Drive → Stutterwarp Drive** (severity reduces TAC Speed by −1 per severity level)

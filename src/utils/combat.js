@@ -401,8 +401,11 @@ export function isSurfaceFixtureDamage(attackEffect) {
 }
 
 /**
- * Internal Critical Hit check. // 2300AD B3 p.58
- * Effect ≥ 6 with net damage > 0 (penetrating hit), OR hull drops to 0.
+ * Internal Critical Hit check.
+ * B3-sourced trigger: Effect ≥ 6 with net damage > 0 (penetrating hit). // 2300AD B3 p.58
+ * The `netDamage >= hullCurrent` (hull reduced to 0) branch is a deliberate house-rule
+ * addition, NOT B3/CRB-sourced — neither B3 p.58 nor CRB p.169 grants an automatic
+ * critical hit on a killing blow; kept for narration purposes. // issue #76
  * The threshold lowers to 5 (or 4) for one shot when the attacker's Sensor
  * Operator succeeded at Improve Critical last round // 2300AD B3 p.54, see
  * `ship.improveCriticalThreshold`.
