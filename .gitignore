@@ -29,6 +29,9 @@ doc/*.pdf
 # Claude Code local settings
 .claude/settings.local.json
 
+# Serena MCP tool state
+.serena/
+
 # Playwright
 test-results/
 playwright-report/
