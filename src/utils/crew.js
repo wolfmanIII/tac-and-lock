@@ -167,7 +167,7 @@ export const ROLE_PRIMARY_CHARACTERISTIC = {
   gunner_bay:      'INT', // same as turret gunner
   marine:          'STR', // boarding actions
   remote_pilot:    'DEX', // drone/fighter Pilot-equivalent checks // 2300AD B3 p.55
-  damage_control:  'INT', // Mechanic checks — B3 documents "INT/EDU", INT picked for consistency with the other roles // 2300AD B3 p.57, issue #52
+  damage_control:  'INT', // Mechanic checks — B3 p.57 states INT only ("1D minutes, INT") // 2300AD B3 p.57, issue #52, #72
 }
 
 /**
