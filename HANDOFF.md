@@ -6,20 +6,25 @@
 
 ## Stato Attuale
 
-**Versione**: 1.6.0
+**Versione**: 1.6.1
 
 **Test**: 603 unit test (Vitest, 7 file) — eseguiti in questa sessione, tutti verdi. 236 test E2E
 (Playwright, 11 spec file) — conteggio statico (`grep -c "test("`), non rieseguiti in questa
 sessione (richiedono dev server su :5173, `npm run e2e`).
 
 **Issue tracker**: nessuna issue aperta. Quarto audit rules-fidelity (2026-09-09, post-v1.6.0)
-completamente chiuso — issue #69–77 tutte risolte (6 agenti paralleli, ri-estrazione fresca PDF).
-Due bug funzionali reali trovati anche dopo tre audit "completamente chiusi": #69 (Boarding "-7 o
-meno" non applicava mai il DM+4 contrattacco, `carryDm` era hardcoded a 0) e #70 (Signature
-sbagliata su 4 navi in `defaultProfiles.js` — Martel/UOC70/Aconit/Anjou — mai verificata a stampa,
-`shipCatalog.js` aveva già i valori giusti). Il resto (#71–75) erano citazioni/doc fantasma; #76–77
-decisioni di giudizio documentate (hull=0 auto-crit rietichettato come house-rule non B3-sourced;
-Overload Stutterwarp allineato al "Very Difficult (10+)" stampato da B3, soglia invariata).
+completamente chiuso — issue #69–78 tutte risolte (6 agenti paralleli, ri-estrazione fresca PDF,
+più un follow-up mirato). Due bug funzionali reali trovati anche dopo tre audit "completamente
+chiusi": #69 (Boarding "-7 o meno" non applicava mai il DM+4 contrattacco, `carryDm` era hardcoded
+a 0) e #70 (Signature sbagliata su 4 navi in `defaultProfiles.js` — Martel/UOC70/Aconit/Anjou —
+mai verificata a stampa, `shipCatalog.js` aveva già i valori giusti). #78 (follow-up): Martel
+`sensors.dm` raddoppiava il bonus Advanced Military (4 invece di 2, B3 p.56) — trovato per
+confronto incrociato con l'unica altra nave Advanced Military del catalogo (SSV-21); il resto del
+campo `sensors.dm` (contributi DSS/GADS/Telescope/Survey) non ha invece nessuna formula B3
+recuperabile — house-balance non documentata, ora dichiarata come tale nel JSDoc, non ritoccarla
+alla cieca. Il resto (#71–75) erano citazioni/doc fantasma; #76–77 decisioni di giudizio
+documentate (hull=0 auto-crit rietichettato come house-rule non B3-sourced; Overload Stutterwarp
+allineato al "Very Difficult (10+)" stampato da B3, soglia invariata).
 Terzo audit rules-fidelity (2026-07-28/29): issue #50–68 tutte risolte (l'audit trovò anche una
 propria fix precedente sbagliata — #55 correggeva #35). Prossimo lavoro: nessuno pianificato, in
 attesa di richiesta utente o di un nuovo audit.

@@ -9,6 +9,64 @@ ___
 
 ___
 
+## [1.6.1] — 2026-09-09
+
+Fourth rules-fidelity audit pass against 2300AD B3 p.52–62 — issues #69–78, six parallel audit
+agents re-extracting the B3/CRB PDF text fresh, plus one follow-up issue filed after a
+reverse-engineering pass on ship sensor data. Found two real functional bugs even after three
+prior "fully closed" audit cycles.
+
+### Fixed
+
+- **[#69](https://github.com/wolfmanIII/tac-and-lock/issues/69)** — Boarding Action's "-7 or
+  less" result described a DM+4 counter-attack bonus for the defender in its UI text, but
+  `carryDm` was hardcoded to 0 on that branch, so the bonus was never actually applied to
+  `boardingDmNextRound`.
+- **[#70](https://github.com/wolfmanIII/tac-and-lock/issues/70)** — `defaultProfiles.js`'s
+  Signature field for four canonical ships had never been checked against the printed B3 stat
+  blocks (`shipCatalog.js` already had the correct values): Martel 60-ton Fighter 4→2, UOC70
+  Long Boat 3→2, Aconit-class Frigate 5→3, Anjou Cargo Ship 4→5.
+- **[#78](https://github.com/wolfmanIII/tac-and-lock/issues/78)** — Martel's `sensors.dm: 4`
+  double-counted the Advanced Military sensor tier — B3's only printed rule is Basic+0/
+  Improved+1/Advanced+2, no stacking. Cross-checked against the only other Advanced-Military
+  ship in the catalog (SSV-21) to confirm +2 is correct, not +4; corrected in both
+  `defaultProfiles.js` and `shipCatalog.js`. The rest of the `sensors.dm` field (DSS/GADS/
+  Telescope/Survey contributions) has no B3 source at all — confirmed via full-text search, no
+  such DM table exists in the book — left untouched and now documented as an undocumented house
+  balance value in both files' JSDoc, not a formula to blindly re-derive.
+- **[#71](https://github.com/wolfmanIII/tac-and-lock/issues/71)** — `CriticalHitModal.jsx`'s UI
+  still showed the stale "CRB p.158–159" citation to the GM on every internal-crit roll; issue
+  #67 fixed `criticalHits.js` but missed this string.
+- **[#72](https://github.com/wolfmanIII/tac-and-lock/issues/72)** — `crew.js` fabricated a "B3
+  documents INT/EDU" citation for Damage Control's characteristic — B3 p.57 states INT only. The
+  resolved value was already correct, only the citation comment was invented.
+- **[#73](https://github.com/wolfmanIII/tac-and-lock/issues/73)** — `field-manual.md` listed
+  Electronic Warfare's characteristic as INT; B3 states EDU consistently (p.54 and the duplicate
+  Enemy Actions text p.58–59) — documentation only, no code-behavior impact.
+- **[#74](https://github.com/wolfmanIII/tac-and-lock/issues/74)** — `battleStore.js`'s
+  `addHazard` JSDoc carried a fabricated "B3 p.55" citation contradicting issue #53's own
+  established finding that hazards are pure GM bookkeeping with no B3 mechanic behind them.
+- **[#75](https://github.com/wolfmanIII/tac-and-lock/issues/75)** — `field-manual.md`'s Step 3
+  Gunner DM table was missing Range Modifiers, atmospheric/planetary condition, and Ortillery
+  rows entirely — zero mentions anywhere in the file despite being live DM sources applied on
+  every attack.
+
+### Changed
+
+- **[#76](https://github.com/wolfmanIII/tac-and-lock/issues/76)** — `isInternalCriticalHit`'s
+  hull-reduced-to-0 auto-crit trigger has no B3/CRB basis (neither source grants a crit on a
+  killing blow). Kept the behavior — reasonable for narrating ship destruction — but relabeled
+  it explicitly as a deliberate house-rule addition rather than presenting it as B3-sourced.
+- **[#77](https://github.com/wolfmanIII/tac-and-lock/issues/77)** — Overload Stutterwarp's
+  difficulty label said "Difficult (10+)"; B3 p.54 literally prints "Very Difficult (10+)" at
+  that same threshold — likely a B3 erratum (every other "Very Difficult" elsewhere in the book
+  is 12+). Matched the printed label; the numeric threshold (10) is unchanged.
+- `CLAUDE.md`'s "Blast X: Close range only" phrasing reworded — B3's own Weapon Traits table
+  doesn't restrict the trait to Close range (true for every current Blast weapon incidentally,
+  the trait itself is unimplemented) — doc-only, no issue filed.
+
+___
+
 ## [1.6.0] — 2026-09-09
 
 Third full rules-fidelity audit pass against 2300AD B3 p.52–62 — issues #50–68, six parallel
