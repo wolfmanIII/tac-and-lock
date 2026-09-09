@@ -12,10 +12,17 @@
 (Playwright, 11 spec file) — conteggio statico (`grep -c "test("`), non rieseguiti in questa
 sessione (richiedono dev server su :5173, `npm run e2e`).
 
-**Issue tracker**: nessuna issue aperta. Terzo audit rules-fidelity (2026-07-28/29) completamente
-chiuso — issue #50–68 tutte risolte (6 agenti paralleli, ognuno con ri-estrazione fresca del PDF
-B3/CRB; l'audit ha trovato anche una propria fix precedente sbagliata — #55 correggeva #35).
-Prossimo lavoro: nessuno pianificato, in attesa di richiesta utente o di un nuovo audit.
+**Issue tracker**: nessuna issue aperta. Quarto audit rules-fidelity (2026-09-09, post-v1.6.0)
+completamente chiuso — issue #69–77 tutte risolte (6 agenti paralleli, ri-estrazione fresca PDF).
+Due bug funzionali reali trovati anche dopo tre audit "completamente chiusi": #69 (Boarding "-7 o
+meno" non applicava mai il DM+4 contrattacco, `carryDm` era hardcoded a 0) e #70 (Signature
+sbagliata su 4 navi in `defaultProfiles.js` — Martel/UOC70/Aconit/Anjou — mai verificata a stampa,
+`shipCatalog.js` aveva già i valori giusti). Il resto (#71–75) erano citazioni/doc fantasma; #76–77
+decisioni di giudizio documentate (hull=0 auto-crit rietichettato come house-rule non B3-sourced;
+Overload Stutterwarp allineato al "Very Difficult (10+)" stampato da B3, soglia invariata).
+Terzo audit rules-fidelity (2026-07-28/29): issue #50–68 tutte risolte (l'audit trovò anche una
+propria fix precedente sbagliata — #55 correggeva #35). Prossimo lavoro: nessuno pianificato, in
+attesa di richiesta utente o di un nuovo audit.
 
 **Nota**: questo file era rimasto fermo al 2026-07-17 (stato pre-audit3) per ~2 mesi — vedi
 `feedback_handoff_doc` in memoria: va rinfrescato ad ogni bump versione o batch di fix grosso,
