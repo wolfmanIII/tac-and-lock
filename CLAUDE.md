@@ -230,7 +230,7 @@ tutti gli altri `mechanics` di questa tabella — vedi sotto), non applicato aut
 | Advanced | +1 damage per dado | B3 |
 | AP X | Ignora X punti di Armatura | B3 |
 | Auto X | Selettore Single/Burst/Full Auto in `AttackModal.jsx` — CRB p.79. Burst: +X danno (un tiro). Full Auto: X tiri di danno separati contro lo stesso bersaglio (armatura applicata per tiro) | B3 (ref CRB) |
-| Blast X | Max X bersagli aggiuntivi a Close range (non ancora implementato — multi-bersaglio) | B3 |
+| Blast X | Max X bersagli aggiuntivi (non ancora implementato — multi-bersaglio). B3 p.59 non lo limita esplicitamente a Close range — vero per ogni arma Blast attuale (sono tutte detonation laser, Close per la regola separata sui detonation laser), ma non è una restrizione del trait in sé | B3 |
 | EM | Roll aggiuntivo sulla crit table ad ogni crit | B3 |
 | Hardened | Ignora il primo crit che subisce | B3 |
 | Inefficient | Raddoppia il consumo di Power/heat | B3 |
