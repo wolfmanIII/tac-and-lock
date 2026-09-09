@@ -9,6 +9,98 @@ ___
 
 ___
 
+## [1.6.0] — 2026-09-09
+
+Third full rules-fidelity audit pass against 2300AD B3 p.52–62 — issues #50–68, six parallel
+audit agents each re-extracting the B3/CRB PDF text fresh, every finding re-verified against
+the source PDF before being fixed. The audit process caught one of its own prior fixes as wrong
+(#55 reverting #35) — a reminder that audit findings, including this project's own, aren't
+infallible.
+
+### Added
+
+- **[#52](https://github.com/wolfmanIII/tac-and-lock/issues/52)** — Added Damage Control as its
+  own crew role (B3 p.53 Crew Actions table lists it separately from Engineer) — Emergency
+  Repair's action budget was wrongly gated by Engineer (stutterwarp) skill instead of Mechanic.
+- **[#57](https://github.com/wolfmanIII/tac-and-lock/issues/57)** — Implemented computer-run
+  Point Defence Cluster mode (B3 p.56): Difficult (10+) Gunner + Fire Control + DM+4, up to
+  TL−4 simultaneous intercepts per round, doesn't consume the shared Gunnery action budget —
+  distinct from the existing gunner-managed single-intercept mode. New `ship.TL` field
+  (verified against all 26 canonical stat blocks) and `ship.pdcInterceptsUsed`.
+- **[#62](https://github.com/wolfmanIII/tac-and-lock/issues/62)** — Implemented Combat Drones
+  Magazine capacity (B3 p.61): Ritage-1 (5 shots) and Whiskey's battery-laser mode (3 shots)
+  now survive a hit/miss and can be re-attacked across rounds until exhausted; Ritage-2 and
+  Whiskey's detonation mode stay single-use nuclear warheads regardless of remaining charge.
+- **[#66](https://github.com/wolfmanIII/tac-and-lock/issues/66)** — Implemented Encrypted Comms
+  (B3 p.58): DM+2 to the target of an Electronic Warfare jamming attempt, folded in as a DM−2
+  penalty on the jammer's roll (this engine resolves EW as a single roll vs. threshold, not a
+  full opposed check) — new `ship.encryptedComms` toggle.
+
+### Changed
+
+- **[#64](https://github.com/wolfmanIII/tac-and-lock/issues/64)** — Emergency Repair's Critical
+  System mode is now temporary, not permanent: Effect < 5 holds for 1D rounds then relapses
+  (severity +1, capped), Effect 5+ holds for the rest of combat. New
+  `ship.criticalRepairExpiry` tracked per system, checked in `buildNextRoundState`.
+- **[#61](https://github.com/wolfmanIII/tac-and-lock/issues/61)** — Drone's flat DM+2 "to all
+  Pilot checks" (B3 p.55) was only applied at Firing Solution Step 2 — now also applied at
+  Step 1 for self-generated (Remote Pilot) sensor checks.
+
+### Removed
+
+- **[#53](https://github.com/wolfmanIII/tac-and-lock/issues/53)** — Removed the invented
+  `damage_control` crew action ("halt a hull breach/fuel leak") — zero occurrences of either
+  phrase across all three 2300AD core books. The real B3 mechanic for this role is Emergency
+  Repair (issue #52); the ACTIVE HAZARDS panel stays as GM-managed bookkeeping with no fake
+  skill check gating it.
+
+### Fixed
+
+- **[#50](https://github.com/wolfmanIII/tac-and-lock/issues/50)**,
+  **[#51](https://github.com/wolfmanIII/tac-and-lock/issues/51)** — `aero12`'s damage (4D→8D)
+  and traits (AP5→AP16/One Use/Overhead/Smart) corrected against the printed stat block; both
+  `aero12` and `kingfisher` were missing the Smart trait; `weapons.test.js`'s blanket ban on
+  the Smart trait (previously believed universally invented) narrowed accordingly.
+- **[#54](https://github.com/wolfmanIII/tac-and-lock/issues/54)** — `boardingDmNextRound`
+  carry-over was computed and stored on a winning boarding party but never read or applied
+  anywhere — now wired into the UI.
+- **[#55](https://github.com/wolfmanIII/tac-and-lock/issues/55)** — Restored Surface Fixture
+  Damage's 3rd-hit "destroyed" tier for Fire Control, Sensors, and Weapon — issue #35's earlier
+  fix had wrongly removed it.
+- **[#56](https://github.com/wolfmanIII/tac-and-lock/issues/56)** — Cargo internal-crit severity
+  6 fabricated a "+1D" Hull Severity escalation not present in B3; corrected to a flat +1.
+- **[#58](https://github.com/wolfmanIII/tac-and-lock/issues/58)** — Fire Control software
+  ratings on Martel, UOC70, and Aconit didn't match the printed B3 stat blocks and disagreed
+  between `defaultProfiles.js` and `shipCatalog.js`; corrected in both files.
+- **[#59](https://github.com/wolfmanIII/tac-and-lock/issues/59)** — Corrected stale Trav2022 CRB
+  page citations off by 1–3 pages (Weapon Traits, multi-weapon bonus, combat steps, crew
+  duties) — documentation only.
+- **[#60](https://github.com/wolfmanIII/tac-and-lock/issues/60)** — `scan_target`'s Effect-tier
+  table cited CRB p.151 (unrelated content); corrected to p.160, the real Sensor Target/Sensor
+  Detail tables — documentation only, the mechanic itself was already genuine B3 p.54 text.
+- **[#63](https://github.com/wolfmanIII/tac-and-lock/issues/63)** — Bay Gunner (issue #45) has
+  zero 2300AD B3 basis — it's a Trav2022 CRB-only concept and no canonical ship uses it. Kept
+  for homebrew ships, but docs no longer imply B3 sourcing.
+- **[#65](https://github.com/wolfmanIII/tac-and-lock/issues/65)** — `HelpScreen.jsx` had
+  re-conflated Fire Control software with the Targeting System DM−8 penalty (a regression of
+  issue #25's own doc split) — split back apart.
+- **[#67](https://github.com/wolfmanIII/tac-and-lock/issues/67)** — `field-manual.md` still
+  cited the stale CRB p.158–159 internal-critical-hit pages, never updated for issue #23's
+  p.169/p.170 correction.
+- **[#68](https://github.com/wolfmanIII/tac-and-lock/issues/68)** — Low-confidence grab-bag (8
+  items, one commit): widened the distant-pursuit trigger wording, corrected Evade's
+  description (compares against a hardcoded baseline, not a live opposed roll), fixed a
+  combat-drone table wrongly listing Smart on all three entries plus added the missing
+  Magazine column, added Targeting System and Defensive Screens rows to the Step 3 Gunner
+  table, and removed dead code (`isDogfightRound()` consolidated 4+ duplicated inline checks;
+  unused `drone.sensorLockSource` field removed). Also recorded three explicit non-fixes as
+  intentional, documented decisions rather than gaps: Sustained Damage (out of this project's
+  CRB-authorization scope), Issue Order's Leadership-cap ambiguity (genuinely ambiguous B3
+  text, left as-is), and Signature's ">50%"/"50%+" self-contradiction (code follows the table
+  header reading).
+
+___
+
 ## [1.5.0] — 2026-07-17
 
 Rules-fidelity fixes and features from closed GitHub issues #28–#43 and #45–#49 — the second
