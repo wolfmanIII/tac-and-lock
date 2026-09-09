@@ -161,7 +161,7 @@ function InternalCritMode({ ship, effect: attackEffect, onClose }) {
       <div>
         <p className="font-display text-red-400 text-sm tracking-widest">INTERNAL CRITICAL</p>
         <p className="font-mono text-[10px] text-gunmetal-500 mt-0.5">
-          Roll 2D on location table // Trav2022 CRB p.158–159 + 2300AD substitutions
+          Roll 2D on location table // Trav2022 CRB p.169–170 + 2300AD substitutions
         </p>
         <p className="font-mono text-xs text-gunmetal-300 mt-1">{ship?.profile?.name ?? ship?.id}</p>
       </div>
