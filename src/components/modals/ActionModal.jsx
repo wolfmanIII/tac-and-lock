@@ -20,7 +20,7 @@ const HAS_FAILURE_EFFECT = new Set(['electronic_warfare', 'boost_power_output'])
 
 /** Boarding result table — diff = attacker_total − defender_total. // Trav2022 CRB p.175 */
 function getBoardingResult(diff) {
-  if (diff <= -7) return { label: 'ATTACKERS DEFEATED', detail: 'Defender may counter-attack DM+4 next round.', hullDice: 0, armourPiercing: false, carryDm: 0, side: 'defender' }
+  if (diff <= -7) return { label: 'ATTACKERS DEFEATED', detail: 'Defender may counter-attack DM+4 next round.', hullDice: 0, armourPiercing: false, carryDm: 4, side: 'defender' }
   if (diff <= -4) return { label: 'ATTACKERS DEFEATED', detail: 'Attackers must retreat or are captured/killed.', hullDice: 0, armourPiercing: false, carryDm: 0, side: 'none' }
   if (diff <= -1) return { label: 'COMBAT CONTINUES', detail: 'Defender DM+2 next round; defending ship takes 2D Hull.', hullDice: 2, armourPiercing: false, carryDm: 2, side: 'defender' }
   if (diff === 0) return { label: 'COMBAT CONTINUES', detail: 'No advantage — roll again next round.', hullDice: 0, armourPiercing: false, carryDm: 0, side: 'none' }
