@@ -158,7 +158,7 @@ export const DEFAULT_PROFILES = [
     currentHull: 100,
     armour: 0,
     tacSpeed: 1,       // Stutterwarp: 1.1 ly/day, Tac Speed: 1
-    signature: 4,      // large civilian freighter, large radiator surface // 2300AD B3 p.57
+    signature: 5,      // large civilian freighter, large radiator surface // 2300AD B3 p.95, issue #70
     sensors: { type: 'Basic Nav Array, DSS', dm: 1 },
     computer: { model: 'Computer/15', bandwidth: 15 },
     weapons: [],       // 4 hardpoints available, unarmed by default
@@ -185,7 +185,7 @@ export const DEFAULT_PROFILES = [
     currentHull: 7,
     armour: 8,
     tacSpeed: 3,       // Stutterwarp: 3.29 ly/day, Tac Speed: 3
-    signature: 4,      // military fighter, discharge vanes available // 2300AD B3 p.57
+    signature: 2,      // military fighter, discharge vanes available // 2300AD B3 p.78, issue #70
     sensors: { type: 'Advanced Military, Basic Military', dm: 4 },
     computer: { model: 'Computer/30fib', bandwidth: 30 },
     weapons: [
@@ -215,7 +215,7 @@ export const DEFAULT_PROFILES = [
     currentHull: 8,
     armour: 4,
     tacSpeed: 2,       // Stutterwarp: 1.98 ly/day, Tac Speed: 2
-    signature: 3,      // small patrol craft // 2300AD B3 p.57
+    signature: 2,      // small patrol craft // 2300AD B3 p.80, issue #70
     sensors: { type: 'Basic Military, DSS, GADS', dm: 3 },
     computer: { model: 'Computer/15fib', bandwidth: 15 },
     weapons: [
@@ -245,7 +245,7 @@ export const DEFAULT_PROFILES = [
     currentHull: 30,
     armour: 4,
     tacSpeed: 3,       // Stutterwarp: 2.65 ly/day, Tac Speed: 3
-    signature: 5,      // medium military frigate // 2300AD B3 p.57
+    signature: 3,      // medium military frigate // 2300AD B3 p.105, issue #70
     sensors: { type: 'Basic Military, DSS, GADS, Basic Survey', dm: 3 },
     computer: { model: 'Computer/20', bandwidth: 20 },
     weapons: [
