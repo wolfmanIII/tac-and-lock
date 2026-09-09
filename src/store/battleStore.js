@@ -1082,7 +1082,8 @@ export const useBattleStore = create((set, get) => {
     ),
 
     /**
-     * Add a GM-defined hazard to a ship (fire, breach, fuel leak, etc.). // B3 p.55
+     * Add a GM-defined hazard to a ship (fire, breach, fuel leak, etc.).
+     * Purely GM-managed bookkeeping, no B3/CRB mechanic behind it — see issue #53. // issue #74
      * @param {string} shipId
      * @param {string} label
      */
