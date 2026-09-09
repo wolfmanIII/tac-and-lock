@@ -54,7 +54,10 @@ function blankCrew() {
  *   armour: number,
  *   tacSpeed: number,
  *   signature: number,              — base Signature for enemy Electronics(sensors) checks // 2300AD B3 p.57
- *   sensors: { type: string, dm: number },
+ *   sensors: { type: string, dm: number },  — only the Military-tier component of `dm` is
+ *     B3-sourced (Basic +0 / Improved +1 / Advanced +2 // B3 p.56); DSS/GADS/Telescope/Survey
+ *     array contributions have no printed DM table anywhere in B3 and are an undocumented,
+ *     non-formulaic house balance value tuned per ship — issue #78
  *   computer: { model: string, bandwidth: number },
  *   weapons: { weaponId: string, count: number, label: string }[],
  *   software: string[],
@@ -186,7 +189,7 @@ export const DEFAULT_PROFILES = [
     armour: 8,
     tacSpeed: 3,       // Stutterwarp: 3.29 ly/day, Tac Speed: 3
     signature: 2,      // military fighter, discharge vanes available // 2300AD B3 p.78, issue #70
-    sensors: { type: 'Advanced Military, Basic Military', dm: 4 },
+    sensors: { type: 'Advanced Military, Basic Military', dm: 2 },  // B3 p.56: "Advanced [Military Sensors] add DM+2" — issue #78
     computer: { model: 'Computer/30fib', bandwidth: 30 },
     weapons: [
       { weaponId: 'ea1000',      count: 2, label: 'Twin EA1000 w/UTES (Fixed)', targetingSystem: 'utes' },
